@@ -8,7 +8,7 @@ NDAE/CAMTUC/UFPA
   
 				        Map
 				C3  C1  Cz  C2  C4 	    4  3  1  6  7
-				  CP3   CPz  CP4          5   2   8
+				  CP3   CPz  CP4              5   2   8
 				  
   Fs 250Hz
   
