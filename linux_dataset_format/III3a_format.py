@@ -9,9 +9,8 @@ from datetime import datetime
     K3->(360 trials (90 por classe)) - 2 sessões
     K6,L1->(240 trials (60 por classe)) - 2 sessões 
     startTrial=0; beep/cross=2; startCue=3; startMI=4; endMI=7; endTrial(break)=10    
-"""
-
-""" Dataset description/Meta-info MNE (Linux) (by vboas):
+    
+    Dataset description/Meta-info MNE (Linux) (by vboas):
     1=Beep (accustic stimulus, BCI experiment)
     2=Cross on screen (BCI experiment)
     3=Rejection of whole trial
@@ -35,7 +34,7 @@ for suj in ['K3','K6','L1']:
     data = raw.get_data() # [channels x samples]
     data = data[:60]
     # data = corrigeNaN(data) # Correção de NaN nos dados brutos
-    events_raw = raw.find_edf_events()
+    events_raw = mne.events_from_annotations(raw) #raw.find_edf_events()
     ev = np.delete(events_raw[0],1,axis=1) # elimina coluna de zeros
     truelabels = np.ravel(pd.read_csv(path + 'gdf/true_labels/trues_' + suj + '.csv'))
        
@@ -58,8 +57,8 @@ for suj in ['K3','K6','L1']:
     # ev[np.where(cond),1] = truelabels
     
     info = {'fs': 250, 'class_ids': [1, 2, 3, 4], 'trial_tcue': 3.0,
-            'trial_tpause': 7.0, 'trial_mi_time': 4.0, 'trials_per_class': 60,
-            'eeg_channels': 90 if suj == 'K3' else 60, 'ch_labels': raw.ch_names,
+            'trial_tpause': 7.0, 'trial_mi_time': 4.0, 'trials_per_class': 90 if suj == 'K3' else 60,
+            'eeg_channels': 60, 'ch_labels': raw.ch_names,
             'datetime': datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
     
     # with open(path + '/omi/' + suj + '.omi', 'wb') as handle: pickle.dump([data, ev, info], handle)

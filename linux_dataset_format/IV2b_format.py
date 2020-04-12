@@ -18,9 +18,8 @@ from scipy.io import loadmat
 	     2 evaluate sessions (WITH feedback) - 04E,05E
          
     # startTrial=0; cue=3; startMI=4; endMI=7; endTrial=8.5-9.5
-"""
-
-""" Dataset Description (by vboas): more info in http://bbci.de/competition/iv/desc_2b.pdf
+    
+    Dataset Description (by vboas): more info in http://bbci.de/competition/iv/desc_2b.pdf
     01T e 02T (without feedback)
     		10 trials * 2 classes * 6 runs * 2 sessions = 240 trials (120 per class)
     		Cross t=0 (per 3s)
@@ -93,7 +92,7 @@ for suj in range(1,10):
         data = raw.get_data() # [channels x samples]
         data = data[:3]
         # data = corrigeNaN(data) # Correção de NaN nos dados brutos
-        ev = raw.find_edf_events()
+        ev = mne.events_from_annotations(raw) #raw.find_edf_events()
         ev = np.delete(ev[0],1,axis=1) # elimina coluna de zeros
         truelabels = np.ravel(loadmat(path + 'gdf/true_labels/B0' + str(suj) + ds + '.mat')['classlabel'])
     
@@ -116,6 +115,9 @@ for suj in range(1,10):
             ev = np.delete(ev,np.where(ev[:,1]==1),axis=0) # delete feedback continuous
             ev[:,1] = np.where(ev[:,1]==3, 0, ev[:,1]) # altera label start trial de 3 para 0
             ev[np.where(ev[:,1]==4),1] = truelabels #rotula momento da dica conforme truelabels
+            
+        for i in range(0, len(ev)):
+            if ev[i,1]==0: ev[i,1] = (ev[i+1,1]+10) # labeling start trial [11,12] according cue [1,2]
         
         np.save(path + 'npy/B0' + str(suj) + ds, [ data, ev, info ], allow_pickle=True)
         

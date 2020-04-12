@@ -4,7 +4,6 @@
 Created on Sat Mar 28 01:09:46 2020
 @author: vboas
 """
-import mne
 import math
 import itertools
 import numpy as np
@@ -13,8 +12,7 @@ from sklearn.svm import SVC
 from scipy.stats import norm
 from scipy.linalg import eigh
 from scipy.fftpack import fft
-# from bci_utils import extractEpochs
-from scipy.io import loadmat
+from bci_utils import labeling, extractEpochs
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import cohen_kappa_score
 from sklearn.tree import DecisionTreeClassifier
@@ -22,85 +20,63 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from scipy.signal import lfilter, butter, iirfilter, filtfilt
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
-
-
-def extractEpochs(data, events, smin, smax, class_ids):
-    events_list = events[:, 1] # get class labels column
-    cond = False
-    for i in range(len(class_ids)): cond += (events_list == class_ids[i]) #get only class_ids pos in events_list
-    idx = np.where(cond)[0]
-    s0 = events[idx, 0] # get initial timestamps of each class epochs
-    sBegin = s0 + smin
-    sEnd = s0 + smax
-    n_epochs = len(sBegin)
-    n_channels = data.shape[0]
-    n_samples = smax - smin
-    epochs = np.zeros([n_epochs, n_channels, n_samples])
-    labels = events_list[idx]
-    bad_epoch_list = []
-    for i in range(n_epochs):
-        epoch = data[:, sBegin[i]:sEnd[i]]
-        if epoch.shape[1] == n_samples: epochs[i, :, :] = epoch # Check if epoch is complete
-        else:
-            print('Incomplete epoch detected...')
-            bad_epoch_list.append(i)
-    labels = np.delete(labels, bad_epoch_list)
-    epochs = np.delete(epochs, bad_epoch_list, axis=0)
-    return epochs, labels
-
-def labeling(path, suj):   
-    raw = mne.io.read_raw_gdf(path + '/A0'+str(suj)+'T.gdf').load_data()
-    dt = raw.get_data()[:22] # [channels x samples]
-    et_raw = raw.find_edf_events()
-    et = np.delete(et_raw[0], 1, axis=1) # remove MNE zero columns
-    et = np.delete(et,np.where(et[:,1]==1), axis=0) # remove rejected trial
-    et = np.delete(et,np.where(et[:,1]==3), axis=0) # remove eye movements/unknown
-    et = np.delete(et,np.where(et[:,1]==8), axis=0) # remove eyes closed
-    et = np.delete(et,np.where(et[:,1]==9), axis=0) # remove eyes open 
-    et = np.delete(et,np.where(et[:,1]==10), axis=0) # remove start of a new run/segment
-    et[:,1] = np.where(et[:,1]==2, 0, et[:,1]) # start trial t=0
-    et[:,1] = np.where(et[:,1]==4, 1, et[:,1]) # LH 
-    et[:,1] = np.where(et[:,1]==5, 2, et[:,1]) # RH 
-    et[:,1] = np.where(et[:,1]==6, 3, et[:,1]) # Foot
-    et[:,1] = np.where(et[:,1]==7, 4, et[:,1]) # Tongue
-    for i in range(0, len(et)):
-        if et[i,1]==0: et[i,1] = (et[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
-             
-    raw = mne.io.read_raw_gdf(path + '/A0'+str(suj)+'E.gdf').load_data()
-    trues = np.ravel(loadmat(path + '/true_labels/A0'+str(suj)+'E.mat' )['classlabel'])
-    dv = raw.get_data()[:22] # [channels x samples]
-    ev_raw = raw.find_edf_events()
-    ev = np.delete(ev_raw[0], 1, axis=1) # remove MNE zero columns
-    ev = np.delete(ev,np.where(ev[:,1]==1), axis=0) # remove rejected trial
-    ev = np.delete(ev,np.where(ev[:,1]==3), axis=0) # remove eye movements/unknown
-    ev = np.delete(ev,np.where(ev[:,1]==5), axis=0) # remove eyes closed
-    ev = np.delete(ev,np.where(ev[:,1]==6), axis=0) # remove eyes open
-    ev = np.delete(ev,np.where(ev[:,1]==7), axis=0) # remove start of a new run/segment
-    ev[:,1] = np.where(ev[:,1]==2, 0, ev[:,1]) # start trial t=0
-    ev[np.where(ev[:,1]==4),1] = trues # change unknown value labels(4) to value in [1,2,3,4]
-    for i in range(0, len(ev)):
-        if ev[i,1]==0: ev[i,1] = (ev[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
+          
+#%% SET DATA SET INFO
+''' Value Space::: 
+    IV2a: subjects={1,2,...,9} 
+          class_ids={1,2,3,4} 
+          sessions={'T','E'} 
+          channels=[:22]
     
-    return dt, et, dv, ev
-
-
-path = '/mnt/dados/eeg_data/IV2a/gdf' ## >>> SET HERE THE DATA SET PATH
+    IV2b: subjects={1,2,...,9} 
+          class_ids={1,2}     
+          sessions={'01T','02T','03T','04E','05E'} 
+          channels=[:3]        
+    
+    III3a: subjects={'K3','K6','L1'}
+           class_ids={1,2,3,4}
+           sessions={None} 
+           channels=[:60]
+           
+    III4a: subjects={'aa','al','av','aw','ay'}; 
+           class_ids={1,3} 
+           sessions={None} 
+           channels=[:118]
+    
+    Lee19: subjects={1,2,...,54} 
+           class_ids={1,2} 
+           sessions={1,2} 
+           channels=[:62] 
+           ch_cortex=[7,32,8,9,33,10,34,12,35,13,36,14,37,17,38,18,39,19,40,20] 
+'''
+dataset = 'IV2a' #{'IV2a','IV2b','III3a','III4a','Lee19'}      
+path = '/mnt/dados/eeg_data/IV2a/gdf/' 
 subject = 1
-Fs = 250
+channels = None
 class_ids = [1, 2]
 
-dt_train, ev_train, dt_test, ev_test = labeling(path, subject)
+d_train, e_train, i_train = labeling(path=path, ds=dataset, session='T', subj=subject, channels=channels)
+d_test, e_test, i_test = labeling(path=path, ds=dataset, session='E', subj=subject, channels=channels)
 
-# data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A01T.npy', allow_pickle=True) ## >>> PUT HERE THE DATA SET PATH
+#%% Segmentation
+# Fs = 250 if dataset in ['IV2a', 'IV2b', 'III3a', 'Lee19'] else 100
+Fs = i_train['fs']
+
 smin, smax = math.floor(0.5 * Fs), math.floor(2.5 * Fs)
-epochs, labels = extractEpochs(dt_train, ev_train, smin, smax, class_ids)
-ZT = [epochs[np.where(labels==i)] for i in class_ids]
+epochsT, labelsT = extractEpochs(d_train, e_train, smin, smax, class_ids)
+epochsV, labelsV = extractEpochs(d_test, e_test, smin, smax, class_ids)
+
+ZT = [epochsT[np.where(labelsT==i)] for i in class_ids]
 ZT = np.r_[ZT[0],ZT[1]]
 tT = np.r_[class_ids[0]*np.ones(int(len(ZT)/2)), class_ids[1]*np.ones(int(len(ZT)/2))]
 
+ZV = [epochsV[np.where(labelsV==i)] for i in class_ids]
+ZV = np.r_[ZV[0],ZV[1]]
+tV = np.r_[class_ids[0]*np.ones(int(len(ZV)/2)), class_ids[1]*np.ones(int(len(ZV)/2))]
+
 #%% Sub-band definitions
 f_low, f_high = 0, 40
-DFT = 1
+DFT = 1 # 0=IIR, 1=DFT
 nbands = 10    
 
 n_bins = f_high - f_low
@@ -118,7 +94,7 @@ for i in range(nbands):
     # ... para casos em que a razão entre a banda total e n_bands não é exata 
 
 nbands = len(sub_bands)
-print(sub_bands)
+# print(sub_bands)
 
 #%%  Filtering
 if DFT:
@@ -142,7 +118,7 @@ if DFT:
         bmin, bmax = int(bmin_), int(bmax_)
         bins.append([bmin, bmax])
         XT.append(ZTF[:, :, bmin:bmax])
-    print(bins)
+    # print(bins)
 
 else: # IIR Filtering
     nyq = 0.5 * Fs
@@ -220,62 +196,58 @@ clf_final.fit(META_SCORE_T, tT)
 #%% ################# EVALUATE UNIQUE EPOCH
 ############################################################
 
-# data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A01E.npy', allow_pickle=True)
-smin, smax = math.floor(0.5 * Fs), math.floor(2.5 * Fs)
-epochs, labels = extractEpochs(dt_test, ev_test, smin, smax, class_ids)
-
-# for ep in range(1):
-idx = int(np.random.choice(epochs.shape[0], 1)) # escolhe uma época de teste
-Z, t = epochs[idx], labels[idx]
-
-#%%  Filtering
-if DFT:
-    ZF = fft(Z)[:,:m]
-    REAL, IMAG = np.real(ZF).T, np.imag(ZF).T
-    ZF = np.transpose(list(itertools.chain.from_iterable(zip(IMAG, REAL))))
+for ep in range(1):
+    idx = int(np.random.choice(epochsV.shape[0], 1)) # escolhe uma época de teste
+    Z, t = epochsV[idx], labelsV[idx]
     
-    X = []
-    for i in range(nbands):
-        bmin_ = sub_bands[i][0] * size_freq # round(2/rf), rf=Fs/q 
-        bmax_ = sub_bands[i][1] * size_freq
-        bmin, bmax = round(bmin_), round(bmax_)
-        # print(bmin_, bmin, bmax_, bmax)
-        X.append(ZF[:, bmin:bmax])
-    
-
-else: # IIR Filtering
-    nyq = 0.5 * Fs
-    X = []
-    for i in range(nbands):
-        low = sub_bands[i][0] / nyq
-        high = sub_bands[i][1] / nyq
-        if high >= 1: high = 0.99
-        b, a = butter(5, [low, high], btype='bandpass')
-        # b, a = iirfilter(5, [low,high], btype='band')
-        # X.append(lfilter(b, a, Z)) 
-        X.append(filtfilt(b, a, Z))  
-    
-#%% CSP
-features = []
-for i in range(nbands):
-    Y = np.dot(csp_filters[i], X[i])
-    f = np.log(np.mean(Y**2, axis=1)) # Feature extraction
-    features.append(f)
-    
-# csp0 = csp_filters[0] 
-# X0 = X[0]
-# Y0 = np.dot(csp0, X0)  
-# f0_a = Y0**2
-# f0_b = np.mean(f0_a, axis=1)
-# f0 = np.log(f0_b)
+    #%%  Filtering
+    if DFT:
+        ZF = fft(Z)[:,:m]
+        REAL, IMAG = np.real(ZF).T, np.imag(ZF).T
+        ZF = np.transpose(list(itertools.chain.from_iterable(zip(IMAG, REAL))))
         
-#%% LDA
-lda_scores = np.asarray([ np.ravel(lda_list[i].transform(features[i].reshape(1,-1))) for i in range(nbands) ]).T  
-     
-#%% Bayesian Meta-classifier
-meta_score = np.log(p0.pdf(lda_scores) / p1.pdf(lda_scores))
-
-#%% Final classification
-y_label = clf_final.predict(meta_score.reshape(1, -1))
-y_prob = clf_final.predict_proba(meta_score.reshape(1, -1))
-print('\n', idx, t, y_label==t, y_prob, '\n')
+        X = []
+        for i in range(nbands):
+            bmin_ = sub_bands[i][0] * size_freq # round(2/rf), rf=Fs/q 
+            bmax_ = sub_bands[i][1] * size_freq
+            bmin, bmax = round(bmin_), round(bmax_)
+            # print(bmin_, bmin, bmax_, bmax)
+            X.append(ZF[:, bmin:bmax])
+        
+    
+    else: # IIR Filtering
+        nyq = 0.5 * Fs
+        X = []
+        for i in range(nbands):
+            low = sub_bands[i][0] / nyq
+            high = sub_bands[i][1] / nyq
+            if high >= 1: high = 0.99
+            b, a = butter(5, [low, high], btype='bandpass')
+            # b, a = iirfilter(5, [low,high], btype='band')
+            # X.append(lfilter(b, a, Z)) 
+            X.append(filtfilt(b, a, Z))  
+        
+    #%% CSP
+    features = []
+    for i in range(nbands):
+        Y = np.dot(csp_filters[i], X[i])
+        f = np.log(np.mean(Y**2, axis=1)) # Feature extraction
+        features.append(f)
+        
+    # csp0 = csp_filters[0] 
+    # X0 = X[0]
+    # Y0 = np.dot(csp0, X0)  
+    # f0_a = Y0**2
+    # f0_b = np.mean(f0_a, axis=1)
+    # f0 = np.log(f0_b)
+            
+    #%% LDA
+    lda_scores = np.asarray([ np.ravel(lda_list[i].transform(features[i].reshape(1,-1))) for i in range(nbands) ]).T  
+         
+    #%% Bayesian Meta-classifier
+    meta_score = np.log(p0.pdf(lda_scores) / p1.pdf(lda_scores))
+    
+    #%% Final classification
+    y_label = clf_final.predict(meta_score.reshape(1, -1))
+    y_prob = clf_final.predict_proba(meta_score.reshape(1, -1))
+    print(f'Epoch idx: {idx}\nTrue target (t): {t}\nPredicted target (y): {y_label}\nLikely: {y_label==t}\nClasses Prob: {y_prob}')
