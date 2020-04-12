@@ -3,7 +3,7 @@
 
 ### Pré-Requisitos (Linux): ###
 
-Para garantir a reprodução satisfatória dos scripts, certifique-se que seu computador possui as dependências listadas abaixo. Caso contrário, execute a sequencia de comandos para solucioná-las:
+Para garantir a reprodução satisfatória dos scripts, certifique-se que seu computador possui as dependências listadas abaixo. Caso contrário, execute a sequência de comandos para solucioná-las:
 
 ```shell
 
