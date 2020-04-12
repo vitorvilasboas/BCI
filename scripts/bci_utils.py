@@ -4,6 +4,7 @@ import os
 import mne
 import math
 import pickle
+import warnings
 import itertools
 import numpy as np
 import pandas as pd
@@ -26,6 +27,84 @@ from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit, Str
 from sklearn.metrics import cohen_kappa_score 
 
 np.seterr(divide='ignore', invalid='ignore')
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+def labeling(path=None, ds=None, session=None, subj=None, n_channels=None, prefix=None):
+    
+    if ds == 'IV2a':
+        """ 72 trials per classe * 2 sessions
+            T = startTrial=0; cue=2; startMI=3.25; endMI=6; endTrial=7.5-8.5
+            
+            Dataset description MNE (Linux) (by vboas): more info in http://bbci.de/competition/iv/desc_2a.pdf
+            Meta-info (Training data _T):
+             	1=1023 (rejected trial)
+             	2=768 (start trial)
+             	3=1072 (Unknown/ Eye Moviments)
+             	4=769 (Class 1 - LH - cue onset)
+             	5=770 (Class 2 - RH - cue onset)
+             	6=771 (Class 3 - Foot - cue onset)
+             	7=772 (Class 4 - Tongue - cue onset)
+             	8=277 (Eye closed) [suj 4 = 32766 (Start a new run)]
+             	9=276 (Eye open)   [suj 4 = None ]
+             	10=32766 (Start a new run) [suj 4 = None ]
+            Meta-info (Test data _E):
+             	1=1023 (rejected trial)
+             	2=768 (start trial)
+             	3=1072 (Unknown/ Eye Moviments)
+             	4=783 (Cue unknown/undefined)
+             	5=277 (Eye closed)
+             	6=276 (Eye open)
+             	7=32766 (Start a new run)
+            
+            Dataset description MNE (MAC & Windows) (by vboas): more info in http://bbci.de/competition/iv/desc_2a.pdf
+            Meta-info (Training data _T):
+             	1=1023 (rejected trial)
+             	2=1072 (Unknown/ Eye Moviments) 
+             	3=276 (Eye open)                      [suj 4 = 32766 (Start a new run)]  
+             	4=277 (Eye closed)                    [suj 4 = 768 (start trial)]
+             	5=32766 (Start a new run)             [suj 4 = 769 (Class 1 - LH - cue onset)]
+             	6=768 (start trial)                   [suj 4 = 770 (Class 2 - RH - cue onset)]
+             	7=769 (Class 1 - LH - cue onset)      [suj 4 = 771 (Class 3 - Foot - cue onset)]
+             	8=770 (Class 2 - RH - cue onset)      [suj 4 = 772 (Class 4 - Tongue - cue onset)]
+             	9=771 (Class 3 - Foot - cue onset)    [suj 4 = None ] 
+             	10=772 (Class 4 - Tongue - cue onset) [suj 4 = None ]
+            Meta-info (Test data _E):
+             	1=1023 (rejected trial)
+             	2=1072 (Unknown/ Eye Moviments) 
+             	3=276 (Eye open)
+             	4=277 (Eye closed) 
+             	5=32766 (Start a new run)
+             	6=768 (start trial)
+             	7=783 (Cue unknown/undefined)
+        """
+        
+        # mne.set_log_level(50, 50)
+        raw = mne.io.read_raw_gdf(path + '/A0' + str(subj) + session + '.gdf').load_data()
+        d = raw.get_data()[:22] # [channels x samples]
+        e_raw = mne.events_from_annotations(raw) #raw.find_edf_events()
+        e = np.delete(e_raw[0], 1, axis=1) # remove MNE zero columns
+        e = np.delete(e,np.where(e[:,1]==1), axis=0) # remove rejected trial
+        e = np.delete(e,np.where(e[:,1]==3), axis=0) # remove eye movements/unknown
+        if session == 'T':
+            e = np.delete(e,np.where(e[:,1]==8), axis=0) # remove eyes closed
+            e = np.delete(e,np.where(e[:,1]==9), axis=0) # remove eyes open 
+            e = np.delete(e,np.where(e[:,1]==10), axis=0) # remove start of a new run/segment
+            e[:,1] = np.where(e[:,1]==2, 0, e[:,1]) # start trial t=0
+            e[:,1] = np.where(e[:,1]==4, 1, e[:,1]) # LH 
+            e[:,1] = np.where(e[:,1]==5, 2, e[:,1]) # RH 
+            e[:,1] = np.where(e[:,1]==6, 3, e[:,1]) # Foot
+            e[:,1] = np.where(e[:,1]==7, 4, e[:,1]) # Tongue
+        else:
+            trues = np.ravel(loadmat(path + '/true_labels/A0' + str(subj) + 'E.mat' )['classlabel'])
+            e = np.delete(e,np.where(e[:,1]==5), axis=0) # remove eyes closed
+            e = np.delete(e,np.where(e[:,1]==6), axis=0) # remove eyes open
+            e = np.delete(e,np.where(e[:,1]==7), axis=0) # remove start of a new run/segment
+            e[:,1] = np.where(e[:,1]==2, 0, e[:,1]) # start trial t=0
+            e[np.where(e[:,1]==4),1] = trues # change unknown value labels(4) to value in [1,2,3,4]
+            
+        for i in range(0, len(e)):
+            if e[i,1]==0: e[i,1] = (e[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
+        return d, e
 
 
 def create_omi(suj, ds_name, path, channels):

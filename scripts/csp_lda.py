@@ -4,106 +4,43 @@
 Created on Sun Mar 22 08:24:12 2020
 @author: vboas
 """
-import warnings
-import mne
 import math
 import itertools
 import numpy as np
 from scipy.linalg import eigh
 from scipy.fftpack import fft
-# from bci_utils import extractEpochs
-from scipy.io import loadmat
+from bci_utils import labeling, extractEpochs
 from scipy.signal import lfilter, butter, iirfilter, filtfilt
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-def extractEpochs(data, events, smin, smax, class_ids):
-    events_list = events[:, 1] # get class labels column
-    cond = False
-    for i in range(len(class_ids)): cond += (events_list == class_ids[i]) #get only class_ids pos in events_list
-    idx = np.where(cond)[0]
-    s0 = events[idx, 0] # get initial timestamps of each class epochs
-    sBegin = s0 + smin
-    sEnd = s0 + smax
-    n_epochs = len(sBegin)
-    n_channels = data.shape[0]
-    n_samples = smax - smin
-    epochs = np.zeros([n_epochs, n_channels, n_samples])
-    labels = events_list[idx]
-    bad_epoch_list = []
-    for i in range(n_epochs):
-        epoch = data[:, sBegin[i]:sEnd[i]]
-        if epoch.shape[1] == n_samples: epochs[i, :, :] = epoch # Check if epoch is complete
-        else:
-            print('Incomplete epoch detected...')
-            bad_epoch_list.append(i)
-    labels = np.delete(labels, bad_epoch_list)
-    epochs = np.delete(epochs, bad_epoch_list, axis=0)
-    return epochs, labels
-
-def labeling(path, suj):   
-    #mne.set_log_level(50, 50)
-    raw = mne.io.read_raw_gdf(path + '/A0'+str(suj)+'T.gdf').load_data()
-    dt = raw.get_data()[:22] # [channels x samples]
-    et_raw = mne.events_from_annotations(raw) # raw.find_edf_events()
-    et = np.delete(et_raw[0], 1, axis=1) # remove MNE zero columns
-    et = np.delete(et,np.where(et[:,1]==1), axis=0) # remove rejected trial
-    et = np.delete(et,np.where(et[:,1]==3), axis=0) # remove eye movements/unknown
-    et = np.delete(et,np.where(et[:,1]==8), axis=0) # remove eyes closed
-    et = np.delete(et,np.where(et[:,1]==9), axis=0) # remove eyes open 
-    et = np.delete(et,np.where(et[:,1]==10), axis=0) # remove start of a new run/segment
-    et[:,1] = np.where(et[:,1]==2, 0, et[:,1]) # start trial t=0
-    et[:,1] = np.where(et[:,1]==4, 1, et[:,1]) # LH 
-    et[:,1] = np.where(et[:,1]==5, 2, et[:,1]) # RH 
-    et[:,1] = np.where(et[:,1]==6, 3, et[:,1]) # Foot
-    et[:,1] = np.where(et[:,1]==7, 4, et[:,1]) # Tongue
-    for i in range(0, len(et)):
-        if et[i,1]==0: et[i,1] = (et[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
-             
-    raw = mne.io.read_raw_gdf(path + '/A0'+str(suj)+'E.gdf').load_data()
-    trues = np.ravel(loadmat(path + '/true_labels/A0'+str(suj)+'E.mat' )['classlabel'])
-    dv = raw.get_data()[:22] # [channels x samples]
-    ev_raw = mne.events_from_annotations(raw) #raw.find_edf_events()
-    ev = np.delete(ev_raw[0], 1, axis=1) # remove MNE zero columns
-    ev = np.delete(ev,np.where(ev[:,1]==1), axis=0) # remove rejected trial
-    ev = np.delete(ev,np.where(ev[:,1]==3), axis=0) # remove eye movements/unknown
-    ev = np.delete(ev,np.where(ev[:,1]==5), axis=0) # remove eyes closed
-    ev = np.delete(ev,np.where(ev[:,1]==6), axis=0) # remove eyes open
-    ev = np.delete(ev,np.where(ev[:,1]==7), axis=0) # remove start of a new run/segment
-    ev[:,1] = np.where(ev[:,1]==2, 0, ev[:,1]) # start trial t=0
-    ev[np.where(ev[:,1]==4),1] = trues # change unknown value labels(4) to value in [1,2,3,4]
-    for i in range(0, len(ev)):
-        if ev[i,1]==0: ev[i,1] = (ev[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
-    
-    return dt, et, dv, ev
-
-
-path = '/mnt/dados/eeg_data/IV2a/gdf' ## >>> SET HERE THE DATA SET PATH
+#%% SET DATA SET INFO
+path = '/mnt/dados/eeg_data/IV2a/gdf' 
+dataset = 'IV2a'
 subject = 1
-Fs = 250
 class_ids = [1, 2]
 
-dt_train, ev_train, dt_test, ev_test = labeling(path, subject)
+d_train, e_train = labeling(path=path, ds=dataset, session='T', subj=subject)
+d_test, e_test = labeling(path=path, ds=dataset, session='E', subj=subject)
 
-# data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A01T.npy', allow_pickle=True) 
+#%% Segmentation
+Fs = 250 if dataset in ['IV2a', 'IV2b', 'III3a', 'Lee19'] else 100
+
 smin, smax = math.floor(0.5 * Fs), math.floor(2.5 * Fs)
-epochs, labels = extractEpochs(dt_train, ev_train, smin, smax, class_ids)
-ZT = [epochs[np.where(labels==i)] for i in class_ids]
+epochsT, labelsT = extractEpochs(d_train, e_train, smin, smax, class_ids)
+epochsV, labelsV = extractEpochs(d_test, e_test, smin, smax, class_ids)
+
+ZT = [epochsT[np.where(labelsT==i)] for i in class_ids]
 ZT = np.r_[ZT[0],ZT[1]]
 tT = np.r_[class_ids[0]*np.ones(int(len(ZT)/2)), class_ids[1]*np.ones(int(len(ZT)/2))]
 
-# data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A01E.npy', allow_pickle=True) 
-smin, smax = math.floor(0.5 * Fs), math.floor(2.5 * Fs)
-epochs, labels = extractEpochs(dt_test, ev_test, smin, smax, class_ids)
-ZV = [epochs[np.where(labels==i)] for i in class_ids]
+ZV = [epochsV[np.where(labelsV==i)] for i in class_ids]
 ZV = np.r_[ZV[0],ZV[1]]
 tV = np.r_[class_ids[0]*np.ones(int(len(ZV)/2)), class_ids[1]*np.ones(int(len(ZV)/2))]
 
-f_low, f_high = 8, 30
-DFT = 0
-
 #%% Filtering
+f_low, f_high = 8, 30
+DFT = 0 # 0=IIR, 1=DFT
+
 if DFT:
     buffer_len = smax - smin
     dft_res_freq = Fs/buffer_len # resolução em frequência fft
