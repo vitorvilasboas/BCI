@@ -23,6 +23,12 @@ sudo chmod 777 /dev/input/event*
 
 ```
 
+### Ferramentas Recomendadas: ###
+
+* Plataforma Anaconda: https://www.anaconda.com/distribution/
+* IDE Spyder (Disponível via Anaconda)
+* IDE PyCharm: https://www.jetbrains.com/pycharm/promo/anaconda/
+
 ### Datasets Públicos de EEG: ###
 * BCI Competition III: http://bbci.de/competition/iii/index.html
 
