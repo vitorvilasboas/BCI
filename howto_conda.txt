@@ -1,0 +1,28 @@
+# Configuração do ambiente Anaconda no Debian e derivados linux:
+
+1. Instalar Anaconda:
+	sudo apt-get install sox
+	sudo chmod +x Anaconda3-2019.03-Linux-x86_64.sh
+	./Anaconda3-2019.03-Linux-x86_64.sh
+	source ~/.bashrc
+	conda list
+
+2. Preparar ambiente	
+	conda update -n base -c defaults conda
+	conda create --name bci python=3.7
+	conda activate bci
+
+3. Instalar módulos e dependências (python 2.7 ou 3.5+) - (Windows ou Linux):
+	conda install numpy
+	conda install scipy
+	conda install matplotlib
+	conda install scikit-learn      	ou (pip install -U sklearn)
+	conda install pyserial     			ou (pip install serial)
+	conda install -c conda-forge kivy   ou (pip install git+https://github.com/kivy/kivy)
+	pip install kivy-garden
+	garden install bar
+	garden install graph
+	pip install hyperopt
+	pip install -U https://api.github.com/repos/mne-tools/mne-python/zipball/master   ou (pip install -U mne)
+	sudo apt-get install xclip xsel
+	sudo chmod 777 /dev/input/event*
