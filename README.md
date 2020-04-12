@@ -1,6 +1,6 @@
 # BCI projects #
 -------------------------------------------------------------------------
-* .\overmind\    - Overmind: a MI-based BCI Platform
+* .\overmind\&nbsp;&nbsp;&nbsp;    - Overmind: a MI-based BCI Platform
 * .\scrips\      - Scripts de laboratório (independentes da plataforma Overmind)
 * .\linux_dataset_format\    - Scripts para compatibilizar o formato dos arquivos dos conjuntos de dados públicos de EEG
 
