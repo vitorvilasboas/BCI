@@ -1,7 +1,7 @@
-### BCI projects ###
+# BCI projects #
 -------------------------------------------------------------------------
 
-## Atenção: 
+### Atenção: 
 
 * A fim de garantir a execução dos scripts sem erros. Certifique-se que seu computador já possui as dependências listadas abaixo. Caso contrário, execute a sequencia de comandos a seguir para solucioná-las:
 
