@@ -19,6 +19,8 @@ from sklearn.metrics import cohen_kappa_score
 
 
 ds = 'III4a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TW
+
+## >>> PUT HERE THE DATA SET PATH
 path = '/mnt/dados/eeg_data/' + ds + '/npy/' + ('S' if ds=='Lee19' else 'A0' if ds=='IV2a' else 'B0' if ds=='IV2b' else '') 
 fs = 250 if ds=='Lee19' else 100 if ds=='III4a' else 125 if ds=='CL' else 250
 subjects = range(1,55) if ds=='Lee19' else ['aa','al','av','aw','ay'] if ds=='III4a' else ['K3','K6','L1'] if ds=='III4a' else range(1,10)

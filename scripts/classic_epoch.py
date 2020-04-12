@@ -15,7 +15,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 
 class_ids = [1, 2]
 
-data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A01T.npy', allow_pickle=True)
+data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A01T.npy', allow_pickle=True) ## >>> PUT HERE THE DATA SET PATH
 smin, smax = math.floor(0.5 * info['fs']), math.floor(2.5 * info['fs'])
 epochs, labels = extractEpochs(data, events, smin, smax, class_ids)
 ZT = [epochs[np.where(labels==i)] for i in class_ids]
@@ -90,7 +90,7 @@ clf.fit(XT_CSP, tT)
 #%% ################# EVALUATE UNIQUE EPOCH
 ############################################################
 
-data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A01E.npy', allow_pickle=True)
+data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A01E.npy', allow_pickle=True) ## >>> PUT HERE THE DATA SET PATH
 smin, smax = math.floor(0.5 * info['fs']), math.floor(2.5 * info['fs'])
 epochs, labels = extractEpochs(data, events, smin, smax, class_ids)
 

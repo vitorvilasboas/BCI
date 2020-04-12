@@ -15,7 +15,7 @@ crossval = False
 overlap = True
 nfolds = 10
 test_perc = 0.1 if crossval else 0.5 
-path = '/mnt/dados/eeg_data/' + ds + '/npy/'
+path = '/mnt/dados/eeg_data/' + ds + '/npy/'  ## >>> PUT HERE THE DATA SET PATH
 
 
 if ds == 'III3a':

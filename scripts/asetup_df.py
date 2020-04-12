@@ -8,6 +8,8 @@ from bci_utils import BCI
 
 ds = 'III3a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TW
 path = '/mnt/dados/eeg_data/' + ds + '/npy/' + ('S' if ds=='Lee19' else 'A0' if ds=='IV2a' else 'B0' if ds=='IV2b' else '')
+## >>> PUT HERE THE DATA SET PATH
+
 
 fs = 250 if ds=='Lee19' else 100 if ds=='III4a' else 125 if ds=='CL' else 250
 subjects = range(1,55) if ds=='Lee19' else ['aa','al','av','aw','ay'] if ds=='III4a' else ['K3','K6','L1'] if ds=='III4a' else range(1,10)
@@ -36,7 +38,7 @@ df = pd.DataFrame(columns=header)
 
 for class_ids in classes:
     for suj, i in zip(subjects, range(len(subjects))):
-        path_to_trials = '/home/vboas/cloud/devto/overmind/tests/as_results/' + ds + ((lee_option + '/') if ds=='Lee19' else '/') + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
+        path_to_trials = './asetup_results/' + ds + ((lee_option + '/') if ds=='Lee19' else '/') + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
         trials = pickle.load(open(path_to_trials, 'rb'))
         # print(path_to_trials)
         
@@ -164,4 +166,4 @@ for class_ids in classes:
         df.loc[len(df)] = [suj, class_ids[0], class_ids[1], tmin, tmax, fl, fh, ncsp, nbands, clf_type, clf_details, acc, acc_cla_dft, acc_cla_iir, acc_sb_dft, acc_sb_iir]
         
 
-pd.to_pickle(df, '/home/vboas/cloud/devto/overmind/tests/as_results/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl')))
+pd.to_pickle(df, './asetup_results/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl')))
