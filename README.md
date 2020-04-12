@@ -24,6 +24,6 @@ sudo chmod 777 /dev/input/event*
 ```
 
 ### Datasets Públicos de EEG: ###
-BCI Competition III: http://bbci.de/competition/iii/index.html
+*BCI Competition III: http://bbci.de/competition/iii/index.html
 
-BCI Competition IV: http://bbci.de/competition/iv/index.html
+*BCI Competition IV: http://bbci.de/competition/iv/index.html
