@@ -1,6 +1,6 @@
 # BCI projects #
 -------------------------------------------------------------------------
-*.\overmind\*  >> Overmind: a MI-based BCI Platform
+_.\overmind\_  >> Overmind: a MI-based BCI Platform
 
 *.\scrips\*    >> Scripts de laboratório (independentes da plataforma Overmind)
 
