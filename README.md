@@ -1,9 +1,9 @@
 # BCI projects #
 -------------------------------------------------------------------------
 
-### Atenção: 
+### Pré-Requisitos (Linux): 
 
-* A fim de garantir a execução dos scripts sem erros. Certifique-se que seu computador já possui as dependências listadas abaixo. Caso contrário, execute a sequencia de comandos a seguir para solucioná-las:
+Para garantir a reprodução satisfatória dos scripts, certifique-se que seu computador possui as dependências listadas abaixo. Caso contrário, execute a sequencia de comandos para solucioná-las:
 
 ```shell
 
@@ -23,7 +23,7 @@ sudo chmod 777 /dev/input/event*
 
 ```
 
-### EEG datasets:
+### Datasets Públicos de EEG:
 BCI Competition III: http://bbci.de/competition/iii/index.html
 
 BCI Competition IV: http://bbci.de/competition/iv/index.html
