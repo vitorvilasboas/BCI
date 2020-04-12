@@ -77,7 +77,7 @@ from scipy.io import loadmat
 """
 
 # mne.set_log_level('WARNING','DEBUG')
-path = '/mnt/dados/eeg_data/IV2b/'
+path = '/mnt/dados/eeg_data/IV2b/' ## >>> SET HERE THE DATA SET PATH
 fs = 250
 
 info = {'fs': 250, 'class_ids': [1, 2], 'trial_tcue': 3.0,

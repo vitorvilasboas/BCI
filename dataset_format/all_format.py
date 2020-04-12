@@ -13,8 +13,9 @@ ds = {'name':'LEE54', 'subjects':range(1,55), 'n_channels':62, 'prefix':'subj'}
 # ds = {'name':'TWL', 'subjects':['TL', 'WL'], 'n_channels':8, 'prefix':''}
 # ds = {'name':'CL', 'subjects':['CL'], 'n_channels':16, 'prefix':''}
 
-path = '/mnt/dados/eeg_data/'
-file_type = 'omi' # omi or npy
+path = '/mnt/dados/eeg_data/' ## >>> SET HERE THE DATA SET PATH
+
+file_type = 'npy' # omi or npy
 
 if file_type == 'npy': ### Create NPY file
     for subj in ds['subjects']: create_npy(subj, ds['name'], path, ds['n_channels']) # create

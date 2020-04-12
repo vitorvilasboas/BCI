@@ -56,7 +56,7 @@ import numpy as np
 from scipy.io import loadmat, savemat
 from datetime import datetime
 
-path = '/mnt/dados/eeg_data/IV2a/'
+path = '/mnt/dados/eeg_data/IV2a/' ## >>> SET HERE THE DATA SET PATH
 fs = 250
 
 for suj in range(1,10):    

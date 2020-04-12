@@ -23,7 +23,7 @@ from datetime import datetime
     9=783 cue unknown/undefined (used for BCI competition) 
 """
 
-path = '/mnt/dados/eeg_data/III3a/'
+path = '/mnt/dados/eeg_data/III3a/' ## >>> SET HERE THE DATA SET PATH
 
 mne.set_log_level('WARNING','DEBUG')
 # raw = mne.io.read_raw_gdf(path + '/gdf/K3.gdf')

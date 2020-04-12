@@ -25,7 +25,7 @@ from scipy.io import loadmat
      fs = 1000 Hz
 """
 
-path = '/mnt/dados/eeg_data/Lee19/'
+path = '/mnt/dados/eeg_data/Lee19/' ## >>> SET HERE THE DATA SET PATH
 fs = 1000
 downsampling = True
 

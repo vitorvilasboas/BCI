@@ -15,7 +15,7 @@ import pickle
     Start trial= 0; Start cue=0; Start MI= 0; End MI=3.5; End trial(break)= 5.25~5.75
 """
 
-path = '/mnt/dados/eeg_data/III4a/'
+path = '/mnt/dados/eeg_data/III4a/' ## >>> SET HERE THE DATA SET PATH
 
 for suj in ['aa','al','av','aw','ay']:
     mat = loadmat(path + 'mat/' + suj + '.mat')
