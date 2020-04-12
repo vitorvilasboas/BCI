@@ -4,6 +4,7 @@
 Created on Sun Mar 22 08:24:12 2020
 @author: vboas
 """
+import warnings
 import mne
 import math
 import itertools
@@ -14,6 +15,8 @@ from scipy.fftpack import fft
 from scipy.io import loadmat
 from scipy.signal import lfilter, butter, iirfilter, filtfilt
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 def extractEpochs(data, events, smin, smax, class_ids):
     events_list = events[:, 1] # get class labels column
@@ -40,9 +43,10 @@ def extractEpochs(data, events, smin, smax, class_ids):
     return epochs, labels
 
 def labeling(path, suj):   
+    #mne.set_log_level(50, 50)
     raw = mne.io.read_raw_gdf(path + '/A0'+str(suj)+'T.gdf').load_data()
     dt = raw.get_data()[:22] # [channels x samples]
-    et_raw = raw.find_edf_events()
+    et_raw = mne.events_from_annotations(raw) # raw.find_edf_events()
     et = np.delete(et_raw[0], 1, axis=1) # remove MNE zero columns
     et = np.delete(et,np.where(et[:,1]==1), axis=0) # remove rejected trial
     et = np.delete(et,np.where(et[:,1]==3), axis=0) # remove eye movements/unknown
@@ -60,7 +64,7 @@ def labeling(path, suj):
     raw = mne.io.read_raw_gdf(path + '/A0'+str(suj)+'E.gdf').load_data()
     trues = np.ravel(loadmat(path + '/true_labels/A0'+str(suj)+'E.mat' )['classlabel'])
     dv = raw.get_data()[:22] # [channels x samples]
-    ev_raw = raw.find_edf_events()
+    ev_raw = mne.events_from_annotations(raw) #raw.find_edf_events()
     ev = np.delete(ev_raw[0], 1, axis=1) # remove MNE zero columns
     ev = np.delete(ev,np.where(ev[:,1]==1), axis=0) # remove rejected trial
     ev = np.delete(ev,np.where(ev[:,1]==3), axis=0) # remove eye movements/unknown
@@ -175,4 +179,4 @@ clf = LDA()
 clf.fit(XT_CSP, tT)
 scores_labels = clf.predict(XV_CSP)
 acc = np.mean(scores_labels == tV)
-print('\n Acc:', acc, '\n')
+print('\nAccuracy:', round(acc,4))
