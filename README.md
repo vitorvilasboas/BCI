@@ -29,7 +29,7 @@ sudo chmod 777 /dev/input/event*
 * IDE Spyder (Disponível via Anaconda)
 * IDE PyCharm: https://www.jetbrains.com/pycharm/promo/anaconda/
 
-### Datasets Públicos de EEG: ###
+### Dados Públicos (EEG): ###
 * BCI Competition III: http://bbci.de/competition/iii/index.html
 * BCI Competition IV: http://bbci.de/competition/iv/index.html
 * LEE et al., 2019: http://gigadb.org/dataset/view/id/100542
