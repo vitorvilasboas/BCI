@@ -48,8 +48,8 @@ subject = 1
 channels = None
 class_ids = [1, 2]
 
-d_train, e_train, i_train = labeling(path=path, ds=dataset, session='T', subj=subject, channels=channels)
-d_test, e_test, i_test = labeling(path=path, ds=dataset, session='E', subj=subject, channels=channels)
+d_train, e_train, i_train = labeling(path=path, ds=dataset, session='T', subj=subject, channels=channels, save=False)
+d_test, e_test, i_test = labeling(path=path, ds=dataset, session='E', subj=subject, channels=channels, save=False)
 
 #%% Segmentation
 # Fs = 250 if dataset in ['IV2a', 'IV2b', 'III3a', 'Lee19'] else 100
