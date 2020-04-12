@@ -5,7 +5,7 @@
 * .\linux_dataset_format\ &emsp; >> Scripts para compatibilizar o formato dos arquivos dos conjuntos de dados públicos de EEG
 
 ### Demo: 
-- https://www.youtube.com/watch?v=5l7inGVSwsc&list=PLnBWXhrTR44Tfd_fE-lSsUCVP8Rp-DOMU
+- https://youtu.be/5l7inGVSwsc
 
 ### Pré-Requisitos (Linux): ###
 
