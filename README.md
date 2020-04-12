@@ -23,7 +23,7 @@ sudo chmod 777 /dev/input/event*
 
 ```
 
-## Public datasets:
+### EEG datasets:
 BCI Competition III: http://bbci.de/competition/iii/index.html
 
 BCI Competition IV: http://bbci.de/competition/iv/index.html
