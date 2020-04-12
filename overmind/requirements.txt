@@ -1,0 +1,11 @@
+hyperopt
+mne
+scikit-learn
+scipy
+pygame
+pyautogui
+pyOpenBCI
+###serial
+numpy
+kivy
+matplotlib
