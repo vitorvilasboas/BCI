@@ -4,6 +4,7 @@ overmind/userdata/
 overmind/.idea/
 overmind/build/
 overmind/dist/
+overmind/test/
 overmind/overmind.egg-info
 overmind/requirements_new.txt
 overmind/requirements_pip.txt
