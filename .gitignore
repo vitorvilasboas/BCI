@@ -1,3 +1,7 @@
 # Ignora arquivos desnecessários
 overmind/userdata/
 *.pyc
+.idea/
+build/
+dist/
+overmind.egg-info
