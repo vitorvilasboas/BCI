@@ -83,7 +83,7 @@ for suj in range(1,10):
     raw = mne.io.read_raw_gdf(path + 'gdf/A0' + str(suj) + 'E.gdf').load_data()
     trues = np.ravel(loadmat(path + 'gdf/true_labels/A0' + str(suj) + 'E.mat')['classlabel'])
     dv = raw.get_data()[:22] # [channels x samples]
-    ev_raw = raw.find_edf_events()
+    ev_raw = mne.events_from_annotations(raw)  # raw.find_edf_events()
     ev = np.delete(ev_raw[0], 1, axis=1) # remove MNE zero columns
     ev = np.delete(ev,np.where(ev[:,1] == 1), axis=0) # remove rejected trial
     ev = np.delete(ev,np.where(ev[:,1] == 3), axis=0) # remove eye movements/unknown
@@ -116,4 +116,4 @@ for suj in range(1,10):
     #%% save agregate file
     np.save(path_out + 'A0' + str(suj), [data,events,info], allow_pickle=True)
     # pickle.dump([data,events,info], open(path_out + ' A0' + str(suj) + '.pkl', 'wb'))
-    # savemat(path_out + 'A0' + str(suj) + '.mat', mdict = {'data':data,'events':events,'info':info})
+    # savemat(path_out + 'A0' + str(suj) + '.mat', mdict={'data':data,'events':events,'info':info})

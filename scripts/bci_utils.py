@@ -234,17 +234,17 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
         d = raw.get_data()[:60] # [channels x samples]
         if not channels is None: d = d[channels]
         e_raw = mne.events_from_annotations(raw) #raw.find_edf_events()
-        e = np.delete(e_raw[0],1,axis=1) # elimina coluna de zeros
+        e = np.delete(e_raw[0], 1,axis=1) # elimina coluna de zeros
         truelabels = np.ravel(pd.read_csv(path + 'true_labels/trues_' + subj + '.csv'))
         cond = False
         for i in [1, 2, 3]: cond += (e[:,1] == i)
         idx = np.where(cond)[0]
         e = np.delete(e, idx, axis=0)
-        e[:,1] = np.where(e[:,1]==4, 0, e[:,1]) # Labeling Start trial t=0
-        idx = np.where(e[:,1]!=0)
+        e[:,1] = np.where(e[:,1] == 4, 0, e[:,1]) # Labeling Start trial t=0
+        idx = np.where(e[:,1] != 0)
         e[idx,1] = truelabels  
         for i in range(0, len(e)):
-            if e[i,1]==0: e[i,1] = (e[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
+            if e[i,1] == 0: e[i,1] = (e[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
         i = {'fs':250, 'class_ids':[1,2,3,4], 'trial_tcue':3.0, 'trial_tpause':7.0, 
              'trial_mi_time':4.0, 'trials_per_class':90 if subj == 'K3' else 60, 'eeg_channels':d.shape[0], 
              'ch_labels':raw.ch_names,
@@ -375,8 +375,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
              'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
         out = subj
         
-    if save: 
-        path = '/mnt/dados/'
+    if save:
         np.save(path + out, [d, e, i], allow_pickle=True) # pickle.dump([d, e, i], open(path + subj + '.pkl', 'wb'))
     return d, e, i
 
