@@ -1,11 +1,12 @@
 # Ignora arquivos desnecessários
 *__pycache__*
-overmind/userdata/
+*.idea*
 *.pyc
-overmind/.idea/
+.idea/
+overmind/userdata/
+overmind/test/
 overmind/build/
 overmind/dist/
-overmind/test/
 overmind/overmind.egg-info
 overmind/requirements_new.txt
 overmind/requirements_pip.txt
