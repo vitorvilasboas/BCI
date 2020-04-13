@@ -7,10 +7,10 @@ from time import time
 from hyperopt import base, fmin, tpe, hp
 from bci_utils import BCI
 
-ds = 'III3a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TWL
+ds = 'IV2a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TWL
 
 auto_setup = True
-n_iter = 2000
+n_iter = 100
 crossval = False
 overlap = True
 nfolds = 10
