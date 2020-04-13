@@ -1,4 +1,5 @@
 # Ignora arquivos desnecessários
+*__pycache__*
 overmind/userdata/
 *.pyc
 overmind/.idea/
