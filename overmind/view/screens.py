@@ -2100,17 +2100,17 @@ class GalaxyPlay(threading.Thread):
         self.instruc2 = pygame.font.Font('freesansbold.ttf', 32)
         self.ready = pygame.font.Font('freesansbold.ttf', 32)
         self.go = pygame.font.Font('freesansbold.ttf', 32)
-        self.inst = pygame.image.load("tests/galaxy_game/instruc2.png")
-        self.spacet = pygame.mixer.music.load('tests/galaxy_game/spacet.ogg')
+        self.inst = pygame.image.load("galaxy_game/instruc2.png")
+        self.spacet = pygame.mixer.music.load('galaxy_game/spacet.ogg')
         # pygame.mixer.music.play()
         self.startim = pygame.font.Font('freesansbold.ttf', 32)
 
         # nave
-        self.nave = pygame.image.load("tests/galaxy_game/nave.png")
+        self.nave = pygame.image.load("galaxy_game/nave.png")
         self.x = 346  # largura
         self.y = 480  # altura
-        self.move = pygame.mixer.Sound('tests/galaxy_game/woosh.ogg')
-        self.ded = pygame.mixer.Sound('tests/galaxy_game/ded.ogg')
+        self.move = pygame.mixer.Sound('galaxy_game/woosh.ogg')
+        self.ded = pygame.mixer.Sound('galaxy_game/ded.ogg')
 
         # colisãoscore
         self.colisoes = 0
@@ -2132,12 +2132,12 @@ class GalaxyPlay(threading.Thread):
         self.texty = 200
 
         # asteroid
-        self.asteroidim = pygame.image.load("tests/galaxy_game/asteroid3.png")
+        self.asteroidim = pygame.image.load("galaxy_game/asteroid3.png")
         ##self.asteroidx = random.randint(0,5)
         ##self.asteroidy = random.randint(-150,-130)
         self.asteroidx = random.choice([0, 350])
         self.asteroidy = -330 # -130
-        self.astemusic = pygame.mixer.Sound('tests/galaxy_game/asteroid.ogg')
+        self.astemusic = pygame.mixer.Sound('galaxy_game/asteroid.ogg')
 
         # blit() - adiciona na superficie da tela
 
@@ -2151,7 +2151,7 @@ class GalaxyPlay(threading.Thread):
         self.define_pygame()
         self.tela = pygame.display.set_mode((800, 600))
         self.clock = pygame.time.Clock()
-        self.space = pygame.image.load("tests/galaxy_game/space2.png")
+        self.space = pygame.image.load("galaxy_game/space2.png")
         pygame.display.set_caption('teste')
 
         # pygame.display.update()
@@ -2192,7 +2192,7 @@ class GalaxyPlay(threading.Thread):
                 # break
 
             if self.game_over == False and self.play == True:
-                self.nave = pygame.image.load("tests/galaxy_game/nave.png")
+                self.nave = pygame.image.load("galaxy_game/nave.png")
                 self.timev += 1
                 self.timev2 = math.trunc(self.timev / self.fps)
                 # print(self.timev, self.timev2)
@@ -2227,7 +2227,7 @@ class GalaxyPlay(threading.Thread):
                 self.distancey = math.pow(self.y - self.asteroidy, 1)
 
                 if self.distancey <= 330 and -9 <= self.distancex <= 389:
-                    self.nave = pygame.image.load("tests/galaxy_game/explosion.png")
+                    self.nave = pygame.image.load("galaxy_game/explosion.png")
                     self.x = self.asteroidx + 230
 
                 if self.colisoes == 5: # self.timev2 == 132:
