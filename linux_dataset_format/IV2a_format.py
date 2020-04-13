@@ -3,11 +3,10 @@
 Created on Sat Mar 14 09:44:10 2020
 @author: Vitor Vilas-Boas
 """
-
 """ 72 trials per classe * 2 sessions
     T = startTrial=0; cue=2; startMI=3.25; endMI=6; endTrial=7.5-8.5
-"""
-""" Dataset description MNE (Linux) (by vboas): more info in http://bbci.de/competition/iv/desc_2a.pdf
+    
+    Dataset description MNE (Linux) (by vboas): more info in http://bbci.de/competition/iv/desc_2a.pdf
     Meta-info (Training data _T):
      	1=1023 (rejected trial)
      	2=768 (start trial)
@@ -27,8 +26,8 @@ Created on Sat Mar 14 09:44:10 2020
      	5=277 (Eye closed)
      	6=276 (Eye open)
      	7=32766 (Start a new run)
-"""
-""" Dataset description MNE (MAC & Windows) (by vboas): more info in http://bbci.de/competition/iv/desc_2a.pdf
+    
+    Dataset description MNE (MAC & Windows) (by vboas): more info in http://bbci.de/competition/iv/desc_2a.pdf
     Meta-info (Training data _T):
      	1=1023 (rejected trial)
      	2=1072 (Unknown/ Eye Moviments) 
@@ -50,62 +49,67 @@ Created on Sat Mar 14 09:44:10 2020
      	7=783 (Cue unknown/undefined)
 """
 
+import os
 import mne
 import pickle
+import warnings
 import numpy as np
 from scipy.io import loadmat, savemat
 from datetime import datetime
 
-path = '/mnt/dados/eeg_data/IV2a/' ## >>> SET HERE THE DATA SET PATH
-fs = 250
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+mne.set_log_level(50, 50)
+
+path = '/mnt/dados/eeg_data/IV2a/' ## >>> ENTER THE PATH TO THE DATASET HERE
 
 for suj in range(1,10):    
-    raw = mne.io.read_raw_gdf(path + 'gdf/A0'+str(suj)+'T.gdf').load_data()
+    raw = mne.io.read_raw_gdf(path + 'gdf/A0' + str(suj) + 'T.gdf').load_data()
     dt = raw.get_data()[:22] # [channels x samples]
-    chnames = raw.ch_names
-    et_raw = raw.find_edf_events()
+    et_raw = mne.events_from_annotations(raw)  # raw.find_edf_events()
     et = np.delete(et_raw[0], 1, axis=1) # remove MNE zero columns
-    et = np.delete(et,np.where(et[:,1]==1), axis=0) # remove rejected trial
-    et = np.delete(et,np.where(et[:,1]==3), axis=0) # remove eye movements/unknown
-    et = np.delete(et,np.where(et[:,1]==8), axis=0) # remove eyes closed
-    et = np.delete(et,np.where(et[:,1]==9), axis=0) # remove eyes open 
-    et = np.delete(et,np.where(et[:,1]==10), axis=0) # remove start of a new run/segment
-    et[:,1] = np.where(et[:,1]==2, 0, et[:,1]) # start trial t=0
-    et[:,1] = np.where(et[:,1]==4, 1, et[:,1]) # LH 
-    et[:,1] = np.where(et[:,1]==5, 2, et[:,1]) # RH 
-    et[:,1] = np.where(et[:,1]==6, 3, et[:,1]) # Foot
-    et[:,1] = np.where(et[:,1]==7, 4, et[:,1]) # Tongue
+    et = np.delete(et,np.where(et[:,1] == 1), axis=0) # remove rejected trial
+    et = np.delete(et,np.where(et[:,1] == 3), axis=0) # remove eye movements/unknown
+    et = np.delete(et,np.where(et[:,1] == 8), axis=0) # remove eyes closed
+    et = np.delete(et,np.where(et[:,1] == 9), axis=0) # remove eyes open
+    et = np.delete(et,np.where(et[:,1] == 10), axis=0) # remove start of a new run/segment
+    et[:,1] = np.where(et[:,1] == 2, 0, et[:,1]) # start trial t=0
+    et[:,1] = np.where(et[:,1] == 4, 1, et[:,1]) # LH
+    et[:,1] = np.where(et[:,1] == 5, 2, et[:,1]) # RH
+    et[:,1] = np.where(et[:,1] == 6, 3, et[:,1]) # Foot
+    et[:,1] = np.where(et[:,1] == 7, 4, et[:,1]) # Tongue
     for i in range(0, len(et)):
-        if et[i,1]==0: et[i,1] = (et[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
+        if et[i,1] == 0: et[i,1] = (et[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
              
-    raw = mne.io.read_raw_gdf(path + 'gdf/A0'+str(suj)+'E.gdf').load_data()
-    trues = np.ravel(loadmat(path + 'gdf/true_labels/A0'+str(suj)+'E.mat' )['classlabel'])
+    raw = mne.io.read_raw_gdf(path + 'gdf/A0' + str(suj) + 'E.gdf').load_data()
+    trues = np.ravel(loadmat(path + 'gdf/true_labels/A0' + str(suj) + 'E.mat')['classlabel'])
     dv = raw.get_data()[:22] # [channels x samples]
     ev_raw = raw.find_edf_events()
     ev = np.delete(ev_raw[0], 1, axis=1) # remove MNE zero columns
-    ev = np.delete(ev,np.where(ev[:,1]==1), axis=0) # remove rejected trial
-    ev = np.delete(ev,np.where(ev[:,1]==3), axis=0) # remove eye movements/unknown
-    ev = np.delete(ev,np.where(ev[:,1]==5), axis=0) # remove eyes closed
-    ev = np.delete(ev,np.where(ev[:,1]==6), axis=0) # remove eyes open
-    ev = np.delete(ev,np.where(ev[:,1]==7), axis=0) # remove start of a new run/segment
-    ev[:,1] = np.where(ev[:,1]==2, 0, ev[:,1]) # start trial t=0
-    ev[np.where(ev[:,1]==4),1] = trues # change unknown value labels(4) to value in [1,2,3,4]
+    ev = np.delete(ev,np.where(ev[:,1] == 1), axis=0) # remove rejected trial
+    ev = np.delete(ev,np.where(ev[:,1] == 3), axis=0) # remove eye movements/unknown
+    ev = np.delete(ev,np.where(ev[:,1] == 5), axis=0) # remove eyes closed
+    ev = np.delete(ev,np.where(ev[:,1] == 6), axis=0) # remove eyes open
+    ev = np.delete(ev,np.where(ev[:,1] == 7), axis=0) # remove start of a new run/segment
+    ev[:,1] = np.where(ev[:,1] == 2, 0, ev[:,1]) # start trial t=0
+    ev[np.where(ev[:,1] == 4),1] = trues # change unknown value labels(4) to value in [1,2,3,4]
     for i in range(0, len(ev)):
-        if ev[i,1]==0: ev[i,1] = (ev[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
+        if ev[i,1] == 0: ev[i,1] = (ev[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
     
-    info = {'fs':fs, 'class_ids':[1,2,3,4], 'trial_tcue':2.0, 'trial_tpause':6.0, 'trial_mi_time':4.0, 
-            'trials_per_class':72, 'eeg_channels':22, 'ch_labels':chnames,
+    info = {'fs':250, 'class_ids':[1,2,3,4], 'trial_tcue':2.0, 'trial_tpause':6.0, 'trial_mi_time':4.0,
+            'trials_per_class':72, 'eeg_channels':dt.shape[0], 'ch_labels':raw.ch_names,
             'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
-    
-    np.save(path+'npy/A0'+str(suj)+'T',[dt,et,info], allow_pickle=True)     
-    np.save(path+'npy/A0'+str(suj)+'E',[dv,ev,info], allow_pickle=True) 
+
+    path_out = path + '/npy/'
+    if not os.path.isdir(path_out): os.makedirs(path_out)
+
+    np.save(path_out + 'A0' + str(suj) + 'T', [dt,et,info], allow_pickle=True)
+    np.save(path_out + 'A0' + str(suj) + 'E', [dv,ev,info], allow_pickle=True)
     
     ev1 = np.copy(ev)
     ev1[:,0] += len(dt.T) # ev pos + last dt pos (et is continued by ev)
     events = np.r_[et, ev1]
     data = np.c_[dt, dv]
     info['trials_per_class'] = 144
-    np.save(path+'npy/A0'+str(suj),[data,events,info], allow_pickle=True) 
-    # with open(path+'pkl/A0'+str(suj)+'.pkl', 'wb') as h: pickle.dump([data,events,info], h)
-    # savemat(path+'mat/A0'+str(suj)+'.mat', mdict={'data':data,'events':events,'info':info})
-    
+    np.save(path_out + 'A0' + str(suj), [data,events,info], allow_pickle=True)
+    # pickle.dump([data,events,info], open(path_out + ' A0' + str(suj) + '.pkl', 'wb'))
+    # savemat(path_out + 'A0' + str(suj) + '.mat', mdict = {'data':data,'events':events,'info':info})
