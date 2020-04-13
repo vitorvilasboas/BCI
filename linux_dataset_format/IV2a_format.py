@@ -102,14 +102,18 @@ for suj in range(1,10):
     path_out = path + '/npy/'
     if not os.path.isdir(path_out): os.makedirs(path_out)
 
+    #%% save session files
     np.save(path_out + 'A0' + str(suj) + 'T', [dt,et,info], allow_pickle=True)
     np.save(path_out + 'A0' + str(suj) + 'E', [dv,ev,info], allow_pickle=True)
-    
+
+    #%% prepare agregate file
     ev1 = np.copy(ev)
     ev1[:,0] += len(dt.T) # ev pos + last dt pos (et is continued by ev)
     events = np.r_[et, ev1]
     data = np.c_[dt, dv]
     info['trials_per_class'] = 144
+
+    #%% save agregate file
     np.save(path_out + 'A0' + str(suj), [data,events,info], allow_pickle=True)
     # pickle.dump([data,events,info], open(path_out + ' A0' + str(suj) + '.pkl', 'wb'))
     # savemat(path_out + 'A0' + str(suj) + '.mat', mdict = {'data':data,'events':events,'info':info})
