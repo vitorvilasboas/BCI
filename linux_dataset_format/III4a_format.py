@@ -28,7 +28,7 @@ for suj in ['aa','al','av','aw','ay']:
     true_mat = loadmat(path + 'true_labels_' + suj + '.mat')
     true_y = np.ravel(true_mat['true_y']) # RH=1 Foot=2
     true_y = np.where(true_y == 2, 3, true_y) # RH=1 Foot=3
-    events = np.c_[pos, true_y]
+    e = np.c_[pos, true_y]
     # d = corrigeNaN(d)
     # d = np.asarray([ np.nan_to_num(j) for j in d ])
     # d = np.asarray([ np.ravel(pd.DataFrame(j).fillna(pd.DataFrame(j).mean())) for j in d ])

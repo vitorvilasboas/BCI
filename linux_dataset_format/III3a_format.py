@@ -57,7 +57,7 @@ for suj in ['K3','K6','L1']:
             'trials_per_class': 90 if suj == 'K3' else 60, 'eeg_channels':d.shape[0], 'ch_labels': raw.ch_names,
             'datetime': datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
 
-    path_out = path + '/npy/'
+    path_out = path + '../npy/'
     if not os.path.isdir(path_out): os.makedirs(path_out)
 
     #%% save npy file
