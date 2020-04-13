@@ -375,8 +375,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
              'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
         out = subj
         
-    if save:
-        np.save(path + out, [d, e, i], allow_pickle=True) # pickle.dump([d, e, i], open(path + subj + '.pkl', 'wb'))
+    if save: np.save(path + out, [d, e, i], allow_pickle=True) # pickle.dump([d, e, i], open(path + subj + '.pkl', 'wb'))
     return d, e, i
 
 

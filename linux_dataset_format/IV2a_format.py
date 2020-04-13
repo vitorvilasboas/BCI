@@ -60,10 +60,10 @@ from datetime import datetime
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 mne.set_log_level(50, 50)
 
-path = '/mnt/dados/eeg_data/IV2a/' ## >>> ENTER THE PATH TO THE DATASET HERE
+path = '/mnt/dados/eeg_data/IV2a/gdf/' ## >>> ENTER THE PATH TO THE DATASET HERE
 
 for suj in range(1,10):    
-    raw = mne.io.read_raw_gdf(path + 'gdf/A0' + str(suj) + 'T.gdf').load_data()
+    raw = mne.io.read_raw_gdf(path + 'A0' + str(suj) + 'T.gdf').load_data()
     dt = raw.get_data()[:22] # [channels x samples]
     et_raw = mne.events_from_annotations(raw)  # raw.find_edf_events()
     et = np.delete(et_raw[0], 1, axis=1) # remove MNE zero columns
@@ -80,8 +80,8 @@ for suj in range(1,10):
     for i in range(0, len(et)):
         if et[i,1] == 0: et[i,1] = (et[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
              
-    raw = mne.io.read_raw_gdf(path + 'gdf/A0' + str(suj) + 'E.gdf').load_data()
-    trues = np.ravel(loadmat(path + 'gdf/true_labels/A0' + str(suj) + 'E.mat')['classlabel'])
+    raw = mne.io.read_raw_gdf(path + 'A0' + str(suj) + 'E.gdf').load_data()
+    trues = np.ravel(loadmat(path + 'true_labels/A0' + str(suj) + 'E.mat')['classlabel'])
     dv = raw.get_data()[:22] # [channels x samples]
     ev_raw = mne.events_from_annotations(raw)  # raw.find_edf_events()
     ev = np.delete(ev_raw[0], 1, axis=1) # remove MNE zero columns
@@ -102,7 +102,7 @@ for suj in range(1,10):
     path_out = path + '/npy/'
     if not os.path.isdir(path_out): os.makedirs(path_out)
 
-    #%% save session files
+    #%% save npy session files
     np.save(path_out + 'A0' + str(suj) + 'T', [dt,et,info], allow_pickle=True)
     np.save(path_out + 'A0' + str(suj) + 'E', [dv,ev,info], allow_pickle=True)
 
@@ -113,7 +113,7 @@ for suj in range(1,10):
     data = np.c_[dt, dv]
     info['trials_per_class'] = 144
 
-    #%% save agregate file
+    #%% save npy agregate file
     np.save(path_out + 'A0' + str(suj), [data,events,info], allow_pickle=True)
     # pickle.dump([data,events,info], open(path_out + ' A0' + str(suj) + '.pkl', 'wb'))
     # savemat(path_out + 'A0' + str(suj) + '.mat', mdict={'data':data,'events':events,'info':info})

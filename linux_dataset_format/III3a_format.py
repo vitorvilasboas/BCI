@@ -30,35 +30,36 @@ from datetime import datetime
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 mne.set_log_level(50, 50)
 
-path = '/mnt/dados/eeg_data/III3a/' ## >>> ENTER THE PATH TO THE DATASET HERE
+path = '/mnt/dados/eeg_data/III3a/gdf/' ## >>> ENTER THE PATH TO THE DATASET HERE
 
 for suj in ['K3','K6','L1']:
-    raw = mne.io.read_raw_gdf(path + 'gdf/' + suj + '.gdf').load_data()
-    data = raw.get_data()[:60] # [channels x samples]
-    # data = corrigeNaN(data)
-    events_raw = mne.events_from_annotations(raw) # raw.find_edf_events()
-    ev = np.delete(events_raw[0], 1, axis=1) # elimina coluna de zeros
-    truelabels = np.ravel(pd.read_csv(path + 'gdf/true_labels/trues_' + suj + '.csv'))
+    raw = mne.io.read_raw_gdf(path + suj + '.gdf').load_data()
+    d = raw.get_data()[:60] # [channels x samples]
+    # d = corrigeNaN(d)
+    e_raw = mne.events_from_annotations(raw) # raw.find_edf_events()
+    e = np.delete(e_raw[0], 1, axis=1) # elimina coluna de zeros
+    truelabels = np.ravel(pd.read_csv(path + 'true_labels/trues_' + suj + '.csv'))
        
     cond = False
-    for i in [1, 2, 3]: cond += (ev[:,1] == i)
+    for i in [1, 2, 3]: cond += (e[:,1] == i)
     idx = np.where(cond)[0]
-    ev = np.delete(ev, idx, axis=0)
+    e = np.delete(e, idx, axis=0)
     
-    ev[:,1] = np.where(ev[:,1]==4, 0, ev[:,1]) # Labeling Start trial t=0
+    e[:,1] = np.where(e[:,1] == 4, 0, e[:,1]) # Labeling Start trial t=0
     
-    idx = np.where(ev[:,1]!=0)
-    ev[idx,1] = truelabels  
+    idx = np.where(e[:,1] != 0)
+    e[idx,1] = truelabels
     
-    for i in range(0, len(ev)):
-        if ev[i,1]==0: ev[i,1] = (ev[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
+    for i in range(0, len(e)):
+        if e[i,1] == 0: e[i,1] = (e[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
     
-    info = {'fs':250, 'class_ids': [1, 2, 3, 4], 'trial_tcue': 3.0, 'trial_tpause': 7.0, 'trial_mi_time': 4.0,
-            'trials_per_class': 90 if suj == 'K3' else 60, 'eeg_channels':60, 'ch_labels': raw.ch_names,
+    i = {'fs':250, 'class_ids': [1, 2, 3, 4], 'trial_tcue': 3.0, 'trial_tpause': 7.0, 'trial_mi_time': 4.0,
+            'trials_per_class': 90 if suj == 'K3' else 60, 'eeg_channels':d.shape[0], 'ch_labels': raw.ch_names,
             'datetime': datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
 
     path_out = path + '/npy/'
     if not os.path.isdir(path_out): os.makedirs(path_out)
 
-    # with open(path + '/omi/' + suj + '.omi', 'wb') as handle: pickle.dump([data, ev, info], handle)
-    np.save(path + 'npy/' + suj, [data, ev, info], allow_pickle=True)
+    #%% save npy file
+    np.save(path_out + suj, [d, e, i], allow_pickle=True)
+    # pickle.dump([data, ev, info], open(path_out + suj + '.pkl', 'wb'))
