@@ -19,7 +19,7 @@ import numpy as np
 from datetime import datetime
 from scipy.io import loadmat
 
-path = '/mnt/dados/eeg_data/III4a/mat/' ## >>> SET HERE THE DATA SET PATH
+path = '/mnt/dados/eeg_data/III4a/mat/' ## >>> ENTER THE PATH TO THE DATASET HERE
 
 for suj in ['aa','al','av','aw','ay']:
     mat = loadmat(path + suj + '.mat')
