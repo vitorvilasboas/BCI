@@ -99,7 +99,7 @@ for suj in range(1,10):
             'trials_per_class':72, 'eeg_channels':dt.shape[0], 'ch_labels':raw.ch_names,
             'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
 
-    path_out = path + '/npy/'
+    path_out = path + 'npy/'
     if not os.path.isdir(path_out): os.makedirs(path_out)
 
     #%% save npy session files

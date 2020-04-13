@@ -37,7 +37,7 @@ for suj in ['aa','al','av','aw','ay']:
          'trials_per_class':140, 'eeg_channels':d.shape[0], 'ch_labels':mat['nfo']['clab'],
          'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
 
-    path_out = path + '../npy/'
+    path_out = path + 'npy/'
     if not os.path.isdir(path_out): os.makedirs(path_out)
 
     #%% save npy file
