@@ -43,13 +43,15 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
            ch_cortex=[7,32,8,9,33,10,34,12,35,13,36,14,37,17,38,18,39,19,40,20] 
 '''
 dataset = 'IV2a' #{'IV2a','IV2b','III3a','III4a','Lee19'}      
-path = '/mnt/dados/eeg_data/IV2a/gdf/' 
+path = '/mnt/dados/eeg_data/IV2a/gdf/'
 subject = 1
 channels = None
 class_ids = [1, 2]
 
-d_train, e_train, i_train = labeling(path=path, ds=dataset, session='T', subj=subject, channels=channels, save=False)
-d_test, e_test, i_test = labeling(path=path, ds=dataset, session='E', subj=subject, channels=channels, save=False)
+d_train, e_train, i_train = labeling(path=path, ds=dataset, session='T' , subj=subject, channels=channels, save=False)
+
+if not dataset in ['III3a','III4a']: 
+    d_test, e_test, i_test = labeling(path=path, ds=dataset, session='E', subj=subject, channels=channels, save=False)
 
 #%% Segmentation
 # Fs = 250 if dataset in ['IV2a', 'IV2b', 'III3a', 'Lee19'] else 100
@@ -57,7 +59,16 @@ Fs = i_train['fs']
 
 smin, smax = math.floor(0.5 * Fs), math.floor(2.5 * Fs)
 epochsT, labelsT = extractEpochs(d_train, e_train, smin, smax, class_ids)
-epochsV, labelsV = extractEpochs(d_test, e_test, smin, smax, class_ids)
+
+if not dataset in ['III3a','III4a']: 
+    epochsV, labelsV = extractEpochs(d_test, e_test, smin, smax, class_ids)
+else: 
+    epochs, labels = np.copy(epochsT), np.copy(labelsT)
+    test_size = int(len(epochs) * 0.5)
+    train_size = int(len(epochs) - test_size)
+    train_size = train_size if (train_size % 2 == 0) else train_size - 1 # garantir balanço entre as classes (amostragem estratificada)
+    epochsT, labelsT = epochs[:train_size], labels[:train_size] 
+    epochsV, labelsV = epochs[train_size:], labels[train_size:]
 
 ZT = [epochsT[np.where(labelsT==i)] for i in class_ids]
 ZT = np.r_[ZT[0],ZT[1]]

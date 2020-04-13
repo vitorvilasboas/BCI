@@ -22,18 +22,18 @@ if ds=='Lee19':
     lee_session = 1
     lee_option = ('_s' + str(lee_session) + '_cortex') if one_session and only_cortex else '_cortex' if only_cortex else ''
 
-path_res = './asetup_results/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl'))
-path_fig = './asetup_results/Figures/' + ds #+ '_sess' + str(lee_session)
+path_res = './results/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl'))
+path_fig = './figures/' + ds #+ '_sess' + str(lee_session)
 
 R = pd.read_pickle(path_res)  
 print(ds, R['acc'].mean(), R['acc'].median(), R['acc'].std(), R['acc'].max(), R['acc'].min())
 
-# Smil = pd.read_pickle('./asetup_results/old/BKP_1000iter/RES_' + ds + ('_1000.pkl' if ds!='Lee19' else (lee_option+'_1000.pkl')))
+# Smil = pd.read_pickle('./results/old/BKP_1000iter/RES_' + ds + ('_1000.pkl' if ds!='Lee19' else (lee_option+'_1000.pkl')))
 # print(ds, Smil['acc'].mean(), Smil['acc'].median(), Smil['acc'].std(), Smil['acc'].max(), Smil['acc'].min())
 
-# Sold = pd.read_pickle('./asetup_results/old/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl')))
+# Sold = pd.read_pickle('./results/old/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl')))
 # print(ds, Sold['acc'].mean(), Sold['acc'].median(), Sold['acc'].std(), Sold['acc'].max(), Sold['acc'].min(), '\n')
-# S.to_csv('./asetup_results/RES_' + ds + '.csv') 
+# S.to_csv('./results/RES_' + ds + '.csv') 
 
 #%%
 #print(S[S['classes'] == '1 2'][['subj','acc']])
@@ -136,13 +136,13 @@ n, bins, _ = plt.hist(R['sb_iir'], bins = 10)
 plt.title('Frequência das acurácias obtidas para cada sujeito e par de classes no conjunto BCI Competition IV 2a com auto-setup ')
 plt.xlabel('Acurácia')
 plt.xlabel('Frequência')
-# plt.savefig('/home/vboas/cloud/auto_setup_results/fig/hist_accs_IV2a.pdf', format='pdf', dpi=300, transparent=True, bbox_inches='tight')
+plt.savefig(path_fig + '_hist_accs_IV2a.pdf', format='pdf', dpi=300, transparent=True, bbox_inches='tight')
 
 #%%
 idx_max = []    
 for class_ids in classes:
     for suj in subjects:    
-        path_to_trials = './asetup_results/' + ds + ((lee_option + '/') if ds=='Lee19' else '/') + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
+        path_to_trials = './results/' + ds + ((lee_option + '/') if ds=='Lee19' else '/') + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
         trials = pickle.load(open(path_to_trials, 'rb'))
         all_loss = [ trials.trials[i]['result']['loss'] * (-1) for i in range(len(trials.trials)) ]
         idx_max.append(np.where(all_loss == np.asarray(all_loss).max())[0][0])
@@ -174,7 +174,7 @@ plt.savefig(path_fig + '_bars_clf_events.png', format='png', dpi=300, transparen
 #%%
 class_ids = [1, 2]
 suj = 1
-trials = pickle.load(open('./asetup_results/' + ds + '/' + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl', 'rb'))
+trials = pickle.load(open('./results/' + ds + '/' + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl', 'rb'))
 # main_plot_history(trials)
 # main_plot_histogram(trials)
 main_plot_vars(trials, do_show=False)

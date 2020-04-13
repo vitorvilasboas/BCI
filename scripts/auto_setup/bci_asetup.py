@@ -163,7 +163,7 @@ for suj in subjects:
                 )
               
             bci = BCI(data, events, class_ids, overlap, fs, crossval, nfolds, test_perc)
-            path_to_trials = '/home/vboas/cloud/devto/overmind/tests/as_results/' + ds + ((lee_option + '/') if ds=='Lee19' else '/') + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1])+ ('_cv' if crossval else '') + '.pkl'
+            path_to_trials = './results/' + ds + ((lee_option + '/') if ds=='Lee19' else '/') + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1])+ ('_cv' if crossval else '') + '.pkl'
             
             trials = base.Trials()
             try:

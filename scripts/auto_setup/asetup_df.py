@@ -38,7 +38,7 @@ df = pd.DataFrame(columns=header)
 
 for class_ids in classes:
     for suj, i in zip(subjects, range(len(subjects))):
-        path_to_trials = './asetup_results/' + ds + ((lee_option + '/') if ds=='Lee19' else '/') + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
+        path_to_trials = './results/' + ds + ((lee_option + '/') if ds=='Lee19' else '/') + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
         trials = pickle.load(open(path_to_trials, 'rb'))
         # print(path_to_trials)
         
@@ -166,4 +166,4 @@ for class_ids in classes:
         df.loc[len(df)] = [suj, class_ids[0], class_ids[1], tmin, tmax, fl, fh, ncsp, nbands, clf_type, clf_details, acc, acc_cla_dft, acc_cla_iir, acc_sb_dft, acc_sb_iir]
         
 
-pd.to_pickle(df, './asetup_results/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl')))
+pd.to_pickle(df, './results/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl')))

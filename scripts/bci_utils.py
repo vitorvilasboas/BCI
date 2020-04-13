@@ -77,7 +77,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
              	6=768 (start trial)
              	7=783 (Cue unknown/undefined)
         """
-        # mne.set_log_level(50, 50)
+        mne.set_log_level(50, 50)
         raw = mne.io.read_raw_gdf(path + 'A0' + str(subj) + session + '.gdf').load_data()
         d = raw.get_data()[:22] # [channels x samples]
         if not channels is None: d = d[channels]
@@ -107,6 +107,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
              'trial_mi_time':4.0, 'trials_per_class':72, 'eeg_channels':d.shape[0], 
              'ch_labels':raw.ch_names,
              'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
+        out = 'A0' + str(subj) + session
     
     elif ds == 'IV2b':
         """ 9 subjects | 2 classes (LH, RH) | 3 channels | Fs 250Hz
@@ -177,7 +178,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
             		10=32766 (Start a new run)
             		11=1078 (Vertical eye movement)
         """
-        # mne.set_log_level(50, 50)
+        mne.set_log_level(50, 50)
         raw = mne.io.read_raw_gdf(path + 'B0' + str(subj) + session + '.gdf').load_data()
         d = raw.get_data()[:3] # [channels x samples]
         if not channels is None: d = d[channels]
@@ -209,6 +210,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
              'trial_mi_time':4.0, 'trials_per_class':30, 'eeg_channels':d.shape[0], 
              'ch_labels':{'EEG1':'C3', 'EEG2':'Cz', 'EEG3':'C4'},
              'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
+        out = 'B0' + str(subj) + session
         
     elif ds == 'III3a': 
         """ 3 sujeitos (K3, K6, L1) | 4 classes | 60 canais | Fs 250Hz
@@ -227,7 +229,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
             8=772 class4, Tongue - cue onset (BCI experiment)
             9=783 cue unknown/undefined (used for BCI competition) 
         """
-        # mne.set_log_level(50, 50)
+        mne.set_log_level(50, 50)
         raw = mne.io.read_raw_gdf(path + subj + '.gdf').load_data()
         d = raw.get_data()[:60] # [channels x samples]
         if not channels is None: d = d[channels]
@@ -247,6 +249,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
              'trial_mi_time':4.0, 'trials_per_class':90 if subj == 'K3' else 60, 'eeg_channels':d.shape[0], 
              'ch_labels':raw.ch_names,
              'datetime': datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
+        out = subj
     
     elif ds == 'III4a':
         """ 5 subjects | 2 classes (RH, FooT)
@@ -270,6 +273,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
              'trial_mi_time':4.0, 'trials_per_class':140, 'eeg_channels':d.shape[0], 
              'ch_labels': mat['nfo']['clab'],
              'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
+        out = subj
     
     elif ds == 'Lee19':
         """  'EEG_MI_train' and 'EEG_MI_test': training and test data
@@ -288,7 +292,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
              fs = 1000 Hz
         """
         subj_in = str(subj) if subj>=10 else ('0' + str(subj))
-        S = loadmat(path + 'sess0' + str(session) + '_subj' + subj_in + '_EEG_MI.mat')
+        S = loadmat(path + 'session'+ str(session) +'/sess0' + str(session) + '_subj' + subj_in + '_EEG_MI.mat')
         T = S['EEG_MI_train']
         V = S['EEG_MI_test']
         dataT = T['x'][0,0].T
@@ -318,6 +322,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
                                'FTT9h','TTP7h','TP7','TPP9h','FT10','FTT10h','TPP8h','TP8','TPP10h','F9','F10','AF7',
                                'AF3','AF4','AF8','PO3','PO4']),
              'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
+        out = 'sess0' + str(session) + '_subj' + subj_in + '_EEG_MI'
 
     elif ds == 'TWL':
         """ 2 subjects (TL, WL) | 2 classes (lh, rh) | Fs 250Hz
@@ -335,7 +340,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
             5=769 class1, Left hand - cue onset (BCI experiment)
             6=770 class2, Right hand - cue onset (BCI experiment)
         """
-        # mne.set_log_level(50, 50)
+        mne.set_log_level(50, 50)
         raw = mne.io.read_raw_gdf(path + subj + '_' + session + '.gdf').load_data()
         d = raw.get_data()[:8] # [channels x samples]
         if not channels is None: d = d[channels]
@@ -351,6 +356,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
              'trial_mi_time':5.0, 'trials_per_class':20, 'eeg_channels':d.shape[0],
              'ch_labels':{'EEG1':'Cz', 'EEG2':'Cpz', 'EEG3':'C1', 'EEG4':'C3', 'EEG5':'CP3', 'EEG6':'C2', 'EEG7':'C4', 'EEG8':'CP4'},
              'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
+        out = subj
                
     elif ds == 'CL':
         """ 1 subject (CL) | 3 classes (lh, rh, foot) | 16 channels | Fs 125Hz
@@ -367,9 +373,13 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
              'trial_mi_time':7.0, 'trials_per_class':50, 'eeg_channels':d.shape[0], 
              'ch_labels':None,
              'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
+        out = subj
         
-    if save: np.save(path + subj, [d, e, i], allow_pickle=True) # pickle.dump([d, e, i], open(path + subj + '.pkl', 'wb'))
+    if save: 
+        path = '/mnt/dados/'
+        np.save(path + out, [d, e, i], allow_pickle=True) # pickle.dump([d, e, i], open(path + subj + '.pkl', 'wb'))
     return d, e, i
+
 
 def extractEpochs(data, events, smin, smax, class_ids):
     events_list = events[:, 1] # get class labels column
