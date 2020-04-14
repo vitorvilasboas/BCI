@@ -27,7 +27,6 @@ subj = 'CL'
 for session in ['LF', 'LR']: #
     d = np.load(path + subj + '_' + session + '_data.npy').T
     e = np.load(path + subj + '_' + session + '_events.npy').astype(int)
-    # d = corrigeNaN(d)
     if session=='LF': e[:,1] = np.where(e[:,1] == 2, 3, e[:,1]) # LH=1, FooT=3
     
     for i in range(0, len(e)):

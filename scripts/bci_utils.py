@@ -218,7 +218,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
             K6,L1->(240 trials (60 por classe)) - 2 sessões 
             startTrial=0; beep/cross=2; startCue=3; startMI=4; endMI=7; endTrial(break)=10    
             
-            Dataset description/Meta-info MNE (Linux) (by vboas):
+            Dataset description/Meta-info MNE (Linux):
             1=Beep (accustic stimulus, BCI experiment)
             2=Cross on screen (BCI experiment)
             3=Rejection of whole trial
@@ -259,7 +259,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
                 av : train=84  test=196
                 aw : train=56  test=224
                 ay : train=28  test=252
-            Start trial= 0; Start cue=0; Start MI= 0; End MI=3.5; End trial(break)= 5.25~5.75
+            Start trial=0; Start cue=0; Start MI=0; End MI=3.5; End trial(break)=5.25~5.75
         """
         mat = loadmat(path + subj + '.mat')
         d = mat['cnt'].T # 0.1 * mat['cnt'].T # convert to uV
