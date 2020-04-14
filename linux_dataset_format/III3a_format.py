@@ -32,6 +32,9 @@ mne.set_log_level(50, 50)
 
 path = '/mnt/dados/eeg_data/III3a/gdf/' ## >>> ENTER THE PATH TO THE DATASET HERE
 
+path_out = path + 'npy/'
+if not os.path.isdir(path_out): os.makedirs(path_out)
+
 for suj in ['K3','K6','L1']:
     raw = mne.io.read_raw_gdf(path + suj + '.gdf').load_data()
     d = raw.get_data()[:60] # [channels x samples]
@@ -56,9 +59,6 @@ for suj in ['K3','K6','L1']:
     i = {'fs':250, 'class_ids': [1, 2, 3, 4], 'trial_tcue': 3.0, 'trial_tpause': 7.0, 'trial_mi_time': 4.0,
             'trials_per_class': 90 if suj == 'K3' else 60, 'eeg_channels':d.shape[0], 'ch_labels': raw.ch_names,
             'datetime': datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
-
-    path_out = path + 'npy/'
-    if not os.path.isdir(path_out): os.makedirs(path_out)
 
     #%% save npy file
     np.save(path_out + suj, [d, e, i], allow_pickle=True)

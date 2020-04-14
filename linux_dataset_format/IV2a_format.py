@@ -62,6 +62,9 @@ mne.set_log_level(50, 50)
 
 path = '/mnt/dados/eeg_data/IV2a/gdf/' ## >>> ENTER THE PATH TO THE DATASET HERE
 
+path_out = path + 'npy/'
+if not os.path.isdir(path_out): os.makedirs(path_out)
+
 for suj in range(1,10):    
     raw = mne.io.read_raw_gdf(path + 'A0' + str(suj) + 'T.gdf').load_data()
     dt = raw.get_data()[:22] # [channels x samples]
@@ -99,14 +102,11 @@ for suj in range(1,10):
             'trials_per_class':72, 'eeg_channels':dt.shape[0], 'ch_labels':raw.ch_names,
             'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
 
-    path_out = path + 'npy/'
-    if not os.path.isdir(path_out): os.makedirs(path_out)
-
     #%% save npy session files
     np.save(path_out + 'A0' + str(suj) + 'T', [dt,et,info], allow_pickle=True)
     np.save(path_out + 'A0' + str(suj) + 'E', [dv,ev,info], allow_pickle=True)
 
-    #%% prepare agregate file
+    #%% prepare agregate file (single npy file with all sessions)
     ev1 = np.copy(ev)
     ev1[:,0] += len(dt.T) # ev pos + last dt pos (et is continued by ev)
     events = np.r_[et, ev1]

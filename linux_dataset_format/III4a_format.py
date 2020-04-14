@@ -21,6 +21,9 @@ from scipy.io import loadmat
 
 path = '/mnt/dados/eeg_data/III4a/mat/' ## >>> ENTER THE PATH TO THE DATASET HERE
 
+path_out = path + 'npy/'
+if not os.path.isdir(path_out): os.makedirs(path_out)
+
 for suj in ['aa','al','av','aw','ay']:
     mat = loadmat(path + suj + '.mat')
     d = mat['cnt'].T # 0.1 * mat['cnt'].T # convert to uV
@@ -37,9 +40,6 @@ for suj in ['aa','al','av','aw','ay']:
          'trials_per_class':140, 'eeg_channels':d.shape[0], 'ch_labels':mat['nfo']['clab'],
          'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
 
-    path_out = path + 'npy/'
-    if not os.path.isdir(path_out): os.makedirs(path_out)
-
     #%% save npy file
     np.save(path_out + suj, [d, e, i], allow_pickle=True)
-    # pickle.dump([data, events, info], open(path_out + suj + '.omi', 'wb'))
+    # pickle.dump([data, events, info], open(path_out + suj + '.pkl', 'wb'))
