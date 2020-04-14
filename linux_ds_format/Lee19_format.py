@@ -33,7 +33,7 @@ cortex_only = False
 path_out = path + 'npy/'
 if not os.path.isdir(path_out): os.makedirs(path_out)
 
-for suj in range(1, 5):
+for suj in range(1, 54):
     Fs = 1000
     suj_in = str(suj) if suj >= 10 else ('0' + str(suj))
     S1 = loadmat(path + 'session1/sess01_subj' + suj_in + '_EEG_MI.mat') ## >>> ENTER THE SESSION 1 PATH
