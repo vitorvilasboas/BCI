@@ -2,7 +2,7 @@
 -------------------------------------------------------------------------
 * ./overmind/ &emsp;&emsp;&emsp; >> Overmind: a MI-based BCI Platform
 * ./scrips/ &emsp;&emsp;&emsp;&emsp;&nbsp; >> Scripts de laboratório (independentes da plataforma Overmind)
-* ./linux_ds_format/ >> Scripts para compatibilizar o formato dos arquivos dos conjuntos de dados públicos de EEG
+* ./linux_ds_format/ >> Scripts para normalização de dados públicos de EEG (Formato para Overmind)
 
 ### Demo: 
 - https://www.youtube.com/watch?v=5l7inGVSwsc&list=PLnBWXhrTR44Tfd_fE-lSsUCVP8Rp-DOMU
@@ -40,4 +40,4 @@ sudo chmod 777 /dev/input/event*
 * BCI Competition IV: http://bbci.de/competition/iv/index.html
 * LEE et al., 2019: http://gigadb.org/dataset/view/id/100542
 
-* Datasets III3a, III4a, IV2a, IV2b em formato .npy: 
+* Dados formatados (Formato Overmind): https://iftoedubr-my.sharepoint.com/:u:/g/personal/vitorvilasboas_ifto_edu_br/EUNu9fhzsUBJudJuNybEX38B2-xhEln8z0SZjUau0XI3ag?e=FtWXp1
