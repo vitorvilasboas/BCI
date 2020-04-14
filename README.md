@@ -1,8 +1,8 @@
 # BCI projects #
 -------------------------------------------------------------------------
 * ./overmind/ &emsp;&emsp;&emsp; >> Overmind: a MI-based BCI Platform
-* ./scrips/ &emsp;&emsp;&emsp;&emsp;&nbsp; >> Scripts de laboratório (independentes da plataforma Overmind)
-* ./linux_ds_format/ >> Scripts para normalização de dados públicos de EEG (Formato para Overmind)
+* ./dsformat/ &emsp; >> Scripts para normalização de dados públicos de EEG (Formato para Overmind)
+* ./auto_setup >> Scripts para configuração automática de hiperparâmetros em sistemas BCI-MI
 
 ### Demo: 
 - https://www.youtube.com/watch?v=5l7inGVSwsc&list=PLnBWXhrTR44Tfd_fE-lSsUCVP8Rp-DOMU
