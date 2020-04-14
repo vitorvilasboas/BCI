@@ -28,7 +28,7 @@ for suj in ['aa','al','av','aw','ay']:
     mat = loadmat(path + suj + '.mat')
     d = mat['cnt'].T # 0.1 * mat['cnt'].T # convert to uV
     pos = mat['mrk'][0][0][0][0]
-    true_mat = loadmat(path + 'true_labels_' + suj + '.mat')
+    true_mat = loadmat(path + 'true_labels/' + suj + '.mat')
     true_y = np.ravel(true_mat['true_y']) # RH=1 Foot=2
     true_y = np.where(true_y == 2, 3, true_y) # RH=1 Foot=3
     e = np.c_[pos, true_y]

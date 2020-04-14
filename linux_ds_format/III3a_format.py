@@ -41,7 +41,7 @@ for suj in ['K3','K6','L1']:
     # d = corrigeNaN(d)
     e_raw = mne.events_from_annotations(raw) # raw.find_edf_events()
     e = np.delete(e_raw[0], 1, axis=1) # elimina coluna de zeros
-    truelabels = np.ravel(pd.read_csv(path + 'true_label_' + suj + '.csv'))
+    truelabels = np.ravel(pd.read_csv(path + 'true_labels/' + suj + '.csv'))
        
     cond = False
     for i in [1, 2, 3]: cond += (e[:,1] == i)
