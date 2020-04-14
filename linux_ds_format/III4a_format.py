@@ -19,7 +19,7 @@ import numpy as np
 from datetime import datetime
 from scipy.io import loadmat
 
-path = '/mnt/dados/eeg_data/III4a/mat/' ## >>> ENTER THE PATH TO THE DATASET HERE
+path = '/mnt/dados/eeg_data/III4a/' ## >>> ENTER THE PATH TO THE DATASET HERE
 
 path_out = path + 'npy/'
 if not os.path.isdir(path_out): os.makedirs(path_out)

@@ -60,7 +60,7 @@ from datetime import datetime
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 mne.set_log_level(50, 50)
 
-path = '/mnt/dados/eeg_data/IV2a/gdf/' ## >>> ENTER THE PATH TO THE DATASET HERE
+path = '/mnt/dados/eeg_data/IV2a/' ## >>> ENTER THE PATH TO THE DATASET HERE
 
 path_out = path + 'npy/'
 if not os.path.isdir(path_out): os.makedirs(path_out)
