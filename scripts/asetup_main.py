@@ -1,22 +1,25 @@
 # -*- coding: utf-8 -*-
 # @author: Vitor Vilas Boas
-# import matplotlib.pyplot as plt
+import os
 import pickle
 import numpy as np
 from time import time
 from hyperopt import base, fmin, tpe, hp
-from bci_utils import BCI
+from .. scripts.bci_utils import BCI
+# import matplotlib.pyplot as plt
 
 ds = 'IV2a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TWL
 
 auto_setup = True
-n_iter = 100
+n_iter = 10
+
 crossval = False
-overlap = True
 nfolds = 10
 test_perc = 0.1 if crossval else 0.5 
-path = '/mnt/dados/eeg_data/' + ds + '/npy/'  ## >>> PUT HERE THE DATA SET PATH
 
+overlap = True
+
+path = '/mnt/dados/eeg_data/' + ds + '/npy/'  ## >>> PUT HERE THE DATA SET PATH
 
 if ds == 'III3a':
     subjects = ['K3','K6','L1'] # 
@@ -27,7 +30,6 @@ if ds == 'III3a':
     trials_per_class = 90 if subjects == ['K3'] else 60 # K3=90, K6=60, L1=60
     fs = 250.0
 
-
 elif ds == 'III4a':
     subjects = ['aa','al','av','aw','ay']
     classes = [[1, 3]]
@@ -36,8 +38,7 @@ elif ds == 'III4a':
     Tcue, Tpause, mi_time = 0, 4, 4
     trials_per_class = 140
     fs = 100.0
-
-    
+  
 elif ds == 'IV2a':        
     subjects = range(1,10) 
     classes = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]] 
@@ -47,7 +48,6 @@ elif ds == 'IV2a':
     trials_per_class = 144
     path += 'A0'
     fs = 250.0
-
 
 elif ds == 'IV2b': 
     subjects = range(1,10)
@@ -59,23 +59,21 @@ elif ds == 'IV2b':
     path += 'B0'
     fs = 250.0
 
-
 elif ds == 'Lee19':
-    only_cortex = True # True if only cortex channels is used
+    cortex_only = True # True if only cortex channels is used
     one_session = True # True if only session is used
     lee_session = 1
     
-    lee_option = ('_s' + str(lee_session) + '_cortex') if one_session and only_cortex else '_cortex' if only_cortex else ''    
+    lee_option = ('_s' + str(lee_session) + '_cortex') if one_session and cortex_only else '_cortex' if cortex_only else ''    
     subjects = range(1, 55) 
     classes = [[1, 2]]
     Tcue, Tpause, mi_time  = 3, 7, 4
     trials_per_class = 100 if one_session else 200
-    n_eeg_channels = 20 if only_cortex else 62
+    n_eeg_channels = 20 if cortex_only else 62
     max_ncomp = n_eeg_channels
     fs = 250.0
     path += 'S'
-    
-    
+       
 elif ds == 'CL':
     subjects = ['CL_LR', 'CL_LF']
     classes = [[1, 2]]
@@ -84,7 +82,6 @@ elif ds == 'CL':
     Tcue, Tpause, mi_time = 2, 9, 7
     trials_per_class = 50 if subjects == ['CL_LR'] else 24 # LR=50, LF=24
     fs = 125.0
-
     
 elif ds == 'TWL':
     subjects = ['TL', 'WL'] 
@@ -96,6 +93,9 @@ elif ds == 'TWL':
     fs = 250.0
 
 
+path_out = './trials/' + ds + ((lee_option + '/') if ds=='Lee19' else '/')
+if not os.path.isdir(path_out): os.makedirs(path_out)
+
 for suj in subjects:
     
     if ds=='Lee19' and one_session: path_to_data = path + str(suj) + '_sess' + str(lee_session) + '.npy' # '.omi' 
@@ -103,7 +103,7 @@ for suj in subjects:
     
     data, events, info = np.load(path_to_data, allow_pickle=True) # pickle.load(open(path_to_data, 'rb'))
     
-    if ds=='Lee19' and only_cortex:
+    if ds=='Lee19' and cortex_only:
         cortex = [7, 32, 8, 9, 33, 10, 34, 12, 35, 13, 36, 14, 37, 17, 38, 18, 39, 19, 40, 20]
         data = data[cortex]   
         info['eeg_channels'] = len(cortex)
@@ -163,7 +163,7 @@ for suj in subjects:
                 )
               
             bci = BCI(data, events, class_ids, overlap, fs, crossval, nfolds, test_perc)
-            path_to_trials = './results/' + ds + ((lee_option + '/') if ds=='Lee19' else '/') + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1])+ ('_cv' if crossval else '') + '.pkl'
+            path_to_trials = path_out  + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1])+ ('_cv' if crossval else '') + '.pkl'
             
             trials = base.Trials()
             try:
