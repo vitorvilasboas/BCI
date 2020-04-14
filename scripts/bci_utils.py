@@ -352,11 +352,13 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
         e[:,1] = np.where(e[:,1]==3, 0, e[:,1])
         e[:,1] = np.where(e[:,1]==5, 1, e[:,1]) # altera label lh de 5 para 1
         e[:,1] = np.where(e[:,1]==6, 2, e[:,1]) # altera label rh de 6 para 2
+        for i in range(0, len(e)):
+            if e[i,1]==0: e[i,1] = (e[i+1,1]+10) # labeling start trial [11,12] according cue [1,2]
         i = {'fs':250, 'class_ids':[1,2], 'trial_tcue':3.0, 'trial_tpause':8.0, 
              'trial_mi_time':5.0, 'trials_per_class':40, 'eeg_channels':d.shape[0],
              'ch_labels':{'EEG1':'Cz', 'EEG2':'Cpz', 'EEG3':'C1', 'EEG4':'C3', 'EEG5':'CP3', 'EEG6':'C2', 'EEG7':'C4', 'EEG8':'CP4'},
              'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
-        out = subj
+        out = subj + '_' + session
                
     elif ds == 'CL':
         """ 1 subject (CL) | 3 classes (lh, rh, foot) | 16 channels | Fs 125Hz
@@ -364,16 +366,16 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
             lh-ft -> 48 trials (24 per class) 3*16 - 1 session
             Start trial=0; Beep=1; Wait=2; Start cue=2; Start MI=3; End MI=9; End trial(break)=14
         """
-        Fs = 125
-        d = np.load(path + 'orig_' + subj + '_LF_data.npy').T
+        d = np.load(path + subj + '_' + session + '_data.npy').T
         if not channels is None: d = d[channels]
-        e = np.load(path + 'orig_' + subj + '_LF_events.npy').astype(int)
-        e[:,1] = np.where(e[:,1] == 2, 3, e[:,1]) # LH=1, FooT=3
-        i = {'fs':125, 'class_ids':[1, 2], 'trial_tcue':2.0, 'trial_tpause':9.0, 
-             'trial_mi_time':7.0, 'trials_per_class':50, 'eeg_channels':d.shape[0], 
-             'ch_labels':None,
-             'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
-        out = subj
+        e = np.load(path + subj + '_' + session + '_events.npy').astype(int)
+        if session=='LF': e[:,1] = np.where(e[:,1] == 2, 3, e[:,1]) # LH=1, FooT=3
+        for i in range(0, len(e)):
+            if e[i,1]==0: e[i,1] = (e[i+1,1]+10) # labeling start trial [11,12] according cue [1,2]   
+        i = {'fs': 125, 'class_ids': [1, 2] if session=='LR' else [1, 3], 'trial_tcue': 2.0, 'trial_tpause': 9.0,
+             'trial_mi_time': 7.0, 'trials_per_class': 50 if session=='LR' else 24, 'eeg_channels': d.shape[0],
+             'ch_labels': None, 'datetime': datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
+        out = subj + '_' + session
         
     if save: np.save(path + out, [d, e, i], allow_pickle=True) # pickle.dump([d, e, i], open(path + subj + '.pkl', 'wb'))
     return d, e, i
