@@ -40,4 +40,5 @@ sudo chmod 777 /dev/input/event*
 * BCI Competition IV: http://bbci.de/competition/iv/index.html
 * LEE et al., 2019: http://gigadb.org/dataset/view/id/100542
 
-* Dados formatados (Formato Overmind): https://iftoedubr-my.sharepoint.com/:u:/g/personal/vitorvilasboas_ifto_edu_br/EUNu9fhzsUBJudJuNybEX38B2-xhEln8z0SZjUau0XI3ag?e=FtWXp1
+** Dados formatados (Formato Overmind): 
+https://iftoedubr-my.sharepoint.com/:u:/g/personal/vitorvilasboas_ifto_edu_br/EUNu9fhzsUBJudJuNybEX38B2-xhEln8z0SZjUau0XI3ag?e=FtWXp1
