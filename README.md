@@ -40,4 +40,4 @@ sudo chmod 777 /dev/input/event*
 * BCI Competition IV: http://bbci.de/competition/iv/index.html
 * LEE et al., 2019: http://gigadb.org/dataset/view/id/100542
 
-* Dados formatados (Formato Overmind): < href="https://iftoedubr-my.sharepoint.com/:u:/g/personal/vitorvilasboas_ifto_edu_br/EUNu9fhzsUBJudJuNybEX38B2-xhEln8z0SZjUau0XI3ag?e=FtWXp1">teste</a>
+* Dados III3a, III4a, IV2a e IV2b já normalizados (formato Overmind) podem ser baixados <a href="https://iftoedubr-my.sharepoint.com/:u:/g/personal/vitorvilasboas_ifto_edu_br/EUNu9fhzsUBJudJuNybEX38B2-xhEln8z0SZjUau0XI3ag?e=FtWXp1">aqui</a>.
