@@ -139,7 +139,7 @@ for suj in range(1,10):
         EV[i][:,0] += soma
     all_data = np.c_[DT[0],DT[1],DT[2],DT[3],DT[4]]
     all_events = np.r_[EV[0],EV[1],EV[2],EV[3],EV[4]]
-    info['trials_per_class'] = 360
+    info['trials_per_class'] = 300
 
     # %% save npy agregate file
     np.save(path_out + 'B0' + str(suj), [all_data, all_events, info], allow_pickle=True)

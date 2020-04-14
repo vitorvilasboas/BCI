@@ -207,7 +207,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
         for i in range(0, len(e)):
             if e[i,1]==0: e[i,1] = (e[i+1,1]+10) # labeling start trial [11,12] according cue [1,2]
         i = {'fs':250, 'class_ids':[1, 2], 'trial_tcue':3.0, 'trial_tpause':7.0, 
-             'trial_mi_time':4.0, 'trials_per_class':30, 'eeg_channels':d.shape[0], 
+             'trial_mi_time':4.0, 'trials_per_class':60, 'eeg_channels':d.shape[0],
              'ch_labels':{'EEG1':'C3', 'EEG2':'Cz', 'EEG3':'C4'},
              'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
         out = 'B0' + str(subj) + session
@@ -315,7 +315,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
         if not channels is None: d = d[channels]
         e[:, 1] = np.where(e[:, 1]==2, 1, 2) # troca class_ids 1=LH, 2=RH 
         i = {'fs':Fs, 'class_ids':[1, 2], 'trial_tcue':3.0, 'trial_tpause':7.0, 
-             'trial_mi_time':4.0, 'trials_per_class':50, 'eeg_channels':d.shape[0], 
+             'trial_mi_time':4.0, 'trials_per_class':100, 'eeg_channels':d.shape[0],
              'ch_labels':list(['Fp1','Fp2','F7','F3','Fz','F4','F8','FC5','FC1','FC2','FC6','T7','C3','Cz','C4',
                                'T8','TP9','CP5','CP1','CP2','CP6','TP10','P7','P3','Pz','P4','P8','PO9','O1','Oz',
                                'O2','PO10','FC3','FC4','C5','C1','C2','C6','CP3','CPz','CP4','P1','P2','POz','FT9',
@@ -353,7 +353,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
         e[:,1] = np.where(e[:,1]==5, 1, e[:,1]) # altera label lh de 5 para 1
         e[:,1] = np.where(e[:,1]==6, 2, e[:,1]) # altera label rh de 6 para 2
         i = {'fs':250, 'class_ids':[1,2], 'trial_tcue':3.0, 'trial_tpause':8.0, 
-             'trial_mi_time':5.0, 'trials_per_class':20, 'eeg_channels':d.shape[0],
+             'trial_mi_time':5.0, 'trials_per_class':40, 'eeg_channels':d.shape[0],
              'ch_labels':{'EEG1':'Cz', 'EEG2':'Cpz', 'EEG3':'C1', 'EEG4':'C3', 'EEG5':'CP3', 'EEG6':'C2', 'EEG7':'C4', 'EEG8':'CP4'},
              'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
         out = subj
