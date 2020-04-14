@@ -31,6 +31,7 @@ sudo chmod 777 /dev/input/event*
 
 ### Ferramentas Recomendadas: ###
 
+* Sistema Operacional Linux (derivados Debian)
 * Plataforma Anaconda: https://www.anaconda.com/distribution/
 * IDE Spyder (Disponível via Anaconda)
 * IDE PyCharm: https://www.jetbrains.com/pycharm/promo/anaconda/
