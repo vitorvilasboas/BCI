@@ -235,7 +235,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
         if not channels is None: d = d[channels]
         e_raw = mne.events_from_annotations(raw) #raw.find_edf_events()
         e = np.delete(e_raw[0], 1,axis=1) # elimina coluna de zeros
-        truelabels = np.ravel(pd.read_csv(path + 'true_label_' + subj + '.csv'))
+        truelabels = np.ravel(pd.read_csv(path + 'true_labels/' + subj + '.csv'))
         cond = False
         for i in [1, 2, 3]: cond += (e[:,1] == i)
         idx = np.where(cond)[0]
@@ -265,7 +265,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
         d = mat['cnt'].T # 0.1 * mat['cnt'].T # convert to uV
         if not channels is None: d = d[channels]
         pos = mat['mrk'][0][0][0][0]
-        true_mat = loadmat(path + 'true_labels_' + subj + '.mat')
+        true_mat = loadmat(path + 'true_labels/' + subj + '.mat')
         true_y = np.ravel(true_mat['true_y']) # RH=1 Foot=2
         true_y = np.where(true_y == 2, 3, true_y) # RH=1 Foot=3
         e = np.c_[pos, true_y]
