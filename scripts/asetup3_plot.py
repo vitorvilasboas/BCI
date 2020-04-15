@@ -22,18 +22,20 @@ if ds=='Lee19':
     lee_session = 1
     lee_option = ('_s' + str(lee_session) + '_cortex') if one_session and only_cortex else '_cortex' if only_cortex else ''
 
-path_res = './results/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl'))
-path_fig = './figures/' + ds #+ '_sess' + str(lee_session)
+path_to_results = './asetup_results/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl'))
 
-R = pd.read_pickle(path_res)  
+path_to_figure = './asetup_figures/' # + ds + '_sess' + str(lee_session)
+if not os.path.isdir(path_to_figure): os.makedirs(path_to_figure)
+
+R = pd.read_pickle(path_to_results)  
 print(ds, R['acc'].mean(), R['acc'].median(), R['acc'].std(), R['acc'].max(), R['acc'].min())
 
-# Smil = pd.read_pickle('./results/old/BKP_1000iter/RES_' + ds + ('_1000.pkl' if ds!='Lee19' else (lee_option+'_1000.pkl')))
+# Smil = pd.read_pickle('./asetup_results/old/BKP_1000iter/RES_' + ds + ('_1000.pkl' if ds!='Lee19' else (lee_option+'_1000.pkl')))
 # print(ds, Smil['acc'].mean(), Smil['acc'].median(), Smil['acc'].std(), Smil['acc'].max(), Smil['acc'].min())
 
-# Sold = pd.read_pickle('./results/old/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl')))
+# Sold = pd.read_pickle('./asetup_results/old/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl')))
 # print(ds, Sold['acc'].mean(), Sold['acc'].median(), Sold['acc'].std(), Sold['acc'].max(), Sold['acc'].min(), '\n')
-# S.to_csv('./results/RES_' + ds + '.csv') 
+# S.to_csv('./asetup_results/RES_' + ds + '.csv') 
 
 #%%
 #print(S[S['classes'] == '1 2'][['subj','acc']])
@@ -75,7 +77,7 @@ plt.xlabel('Acurácia SBCSP (setup fixo)', fontsize=12)
 plt.ylabel('Acurácia Auto Setup', fontsize=12)
 plt.legend(loc='lower right', fontsize=12)
 # plt.grid(True, axis='y')
-plt.savefig(path_fig + '_scatter_as_vs_sbcsp_iir.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
+plt.savefig(path_to_figure + ds + '_scatter_as_vs_sbcsp_iir.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
 
 
 #%%
@@ -110,7 +112,7 @@ plt.ylabel('Acurácia (%)', size=14)
 plt.yticks(np.arange(0.7, 1.01, step=0.05))
 plt.ylim((0.68,1.02))
 plt.xlim((0,10))
-plt.savefig(path_fig + '_boxplot_subj_acc_pairs.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
+plt.savefig(path_to_figure + ds + '_boxplot_subj_acc_pairs.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
     
 
 #%%
@@ -128,7 +130,7 @@ plt.xticks([1,2,3],['Auto Setup','CSP-LDA','SBCSP'])
 plt.ylabel('Acurácia (%)', size=14)
 plt.yticks(np.arange(0.50, 1.01, step=0.05))
 plt.ylim((0.48,1.02))
-plt.savefig(path_fig + '_boxplot_all_approaches.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
+plt.savefig(path_to_figure + ds + '_boxplot_all_approaches.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
     
 #%%
 plt.figure(figsize=(10,7))
@@ -136,13 +138,13 @@ n, bins, _ = plt.hist(R['sb_iir'], bins = 10)
 plt.title('Frequência das acurácias obtidas para cada sujeito e par de classes no conjunto BCI Competition IV 2a com auto-setup ')
 plt.xlabel('Acurácia')
 plt.xlabel('Frequência')
-plt.savefig(path_fig + '_hist_accs_IV2a.pdf', format='pdf', dpi=300, transparent=True, bbox_inches='tight')
+plt.savefig(path_to_figure + ds + '_hist_accs_IV2a.pdf', format='pdf', dpi=300, transparent=True, bbox_inches='tight')
 
 #%%
 idx_max = []    
 for class_ids in classes:
     for suj in subjects:    
-        path_to_trials = './results/' + ds + ((lee_option + '/') if ds=='Lee19' else '/') + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
+        path_to_trials = './asetup_trials/' + ds + ((lee_option + '/') if ds=='Lee19' else '/') + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
         trials = pickle.load(open(path_to_trials, 'rb'))
         all_loss = [ trials.trials[i]['result']['loss'] * (-1) for i in range(len(trials.trials)) ]
         idx_max.append(np.where(all_loss == np.asarray(all_loss).max())[0][0])
@@ -157,7 +159,7 @@ plt.xlim((-20,2020))
 plt.ylim((0,15.5))
 plt.xlabel('Iteração da Máxima Acurácia')
 plt.ylabel('Frequência')
-plt.savefig(path_fig + '_hist_iter_max_acc.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
+plt.savefig(path_to_figure + ds + '_hist_iter_max_acc.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
 
 #%%
 classifiers = np.unique(R['clf'])
@@ -169,12 +171,12 @@ plt.ylim(0,(np.asarray(y).max()+2))
 plt.yticks(np.arange((np.asarray(y).max()+4), step=4))
 plt.xlabel('Modelo de Classificação')
 plt.ylabel('N. ocorrências auto setup')
-plt.savefig(path_fig + '_bars_clf_events.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
+plt.savefig(path_to_figure + ds + '_bars_clf_events.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
 
 #%%
 class_ids = [1, 2]
 suj = 1
-trials = pickle.load(open('./results/' + ds + '/' + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl', 'rb'))
+trials = pickle.load(open('./asetup_trials/' + ds + '/' + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl', 'rb'))
 # main_plot_history(trials)
 # main_plot_histogram(trials)
 main_plot_vars(trials, do_show=False)

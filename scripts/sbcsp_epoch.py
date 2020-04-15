@@ -50,7 +50,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
            ch_cortex=[7,32,8,9,33,10,34,12,35,13,36,14,37,17,38,18,39,19,40,20] 
 '''
 dataset = 'IV2a' #{'IV2a','IV2b','III3a','III4a','Lee19'}      
-path = '/mnt/dados/eeg_data/IV2a/' 
+path = '/mnt/dados/eeg_data/IV2a/'   ## >>> ENTER THE PATH TO THE DATASET HERE
 subject = 1
 channels = None
 class_ids = [1, 2]

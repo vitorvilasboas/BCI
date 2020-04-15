@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
 """ @author: Vitor Vilas-Boas """
+import os
 import pickle
 import numpy as np
 import pandas as pd
 from time import time
 from bci_utils import BCI 
 
-ds = 'III3a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TW
+ds = 'IV2a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TW
 path = '/mnt/dados/eeg_data/' + ds + '/npy/' + ('S' if ds=='Lee19' else 'A0' if ds=='IV2a' else 'B0' if ds=='IV2b' else '')
-## >>> PUT HERE THE DATA SET PATH
-
+## >>> ENTER THE PATH TO THE DATASET HERE
 
 fs = 250 if ds=='Lee19' else 100 if ds=='III4a' else 125 if ds=='CL' else 250
 subjects = range(1,55) if ds=='Lee19' else ['aa','al','av','aw','ay'] if ds=='III4a' else ['K3','K6','L1'] if ds=='III4a' else range(1,10)
 classes = [[1,3]] if ds=='III4a' else [[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]] if ds in ['IV2a','III3a'] else [[1,2]]
 
 if ds=='Lee19':
-    only_cortex = True
+    cortex_only = True
     one_session = True
     lee_session = 2
-    lee_option = ('_s' + str(lee_session) + '_cortex') if one_session and only_cortex else '_cortex' if only_cortex else ''
+    lee_option = ('_s' + str(lee_session) + '_cortex') if one_session and cortex_only else '_cortex' if cortex_only else ''
 
 overlap = True
 crossval = False
@@ -36,9 +36,12 @@ test_perc = 0.1 if crossval else 0.5
 header = ['subj', 'A', 'B', 'tmin', 'tmax', 'fl', 'fh', 'ncsp', 'nbands', 'clf', 'clf_details', 'acc', 'cla_dft', 'cla_iir', 'sb_dft', 'sb_iir']
 df = pd.DataFrame(columns=header)
 
+path_to_results = './asetup_results/'
+if not os.path.isdir(path_to_results): os.makedirs(path_to_results)
+
 for class_ids in classes:
     for suj, i in zip(subjects, range(len(subjects))):
-        path_to_trials = './results/' + ds + ((lee_option + '/') if ds=='Lee19' else '/') + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
+        path_to_trials = './asetup_trials/' + ds + ((lee_option + '/') if ds=='Lee19' else '/') + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
         trials = pickle.load(open(path_to_trials, 'rb'))
         # print(path_to_trials)
         
@@ -100,7 +103,7 @@ for class_ids in classes:
         
         data, events, info = np.load(path_to_data, allow_pickle=True) # pickle.load(open(path_to_data, 'rb'))
         
-        if ds=='Lee19' and only_cortex:
+        if ds=='Lee19' and cortex_only:
             cortex = [7, 32, 8, 9, 33, 10, 34, 12, 35, 13, 36, 14, 37, 17, 38, 18, 39, 19, 40, 20]
             data = data[cortex]   
             info['eeg_channels'] = len(cortex)
@@ -166,4 +169,4 @@ for class_ids in classes:
         df.loc[len(df)] = [suj, class_ids[0], class_ids[1], tmin, tmax, fl, fh, ncsp, nbands, clf_type, clf_details, acc, acc_cla_dft, acc_cla_iir, acc_sb_dft, acc_sb_iir]
         
 
-pd.to_pickle(df, './results/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl')))
+pd.to_pickle(df, path_to_results + '/RES_' + ds + ('.pkl' if ds!='Lee19' else (lee_option+'.pkl')))

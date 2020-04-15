@@ -5,7 +5,7 @@ import pickle
 import numpy as np
 from time import time
 from hyperopt import base, fmin, tpe, hp
-from .. scripts.bci_utils import BCI
+from bci_utils import BCI
 # import matplotlib.pyplot as plt
 
 ds = 'IV2a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TWL
@@ -19,7 +19,7 @@ test_perc = 0.1 if crossval else 0.5
 
 overlap = True
 
-path = '/mnt/dados/eeg_data/' + ds + '/npy/'  ## >>> PUT HERE THE DATA SET PATH
+path = '/mnt/dados/eeg_data/' + ds + '/npy/'   ## >>> ENTER THE PATH TO THE DATASET HERE
 
 if ds == 'III3a':
     subjects = ['K3','K6','L1'] # 
@@ -93,7 +93,7 @@ elif ds == 'TWL':
     fs = 250.0
 
 
-path_out = './trials/' + ds + ((lee_option + '/') if ds=='Lee19' else '/')
+path_out = './asetup_trials/' + ds + ((lee_option + '/') if ds=='Lee19' else '/')
 if not os.path.isdir(path_out): os.makedirs(path_out)
 
 for suj in subjects:
