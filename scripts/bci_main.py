@@ -15,29 +15,30 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit, StratifiedKFold
 from bci_utils import extractEpochs, nanCleaner, Filter, CSP
-from sklearn.metrics import cohen_kappa_score 
+from sklearn.metrics import cohen_kappa_score
+from bci_utils import BCI
 
 
-ds = 'III4a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TW
+ds = 'IV2a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TW
 
-## >>> PUT HERE THE DATA SET PATH
+## >>> ENTER THE PATH TO THE DATASET HERE
 path = '/mnt/dados/eeg_data/' + ds + '/npy/' + ('S' if ds=='Lee19' else 'A0' if ds=='IV2a' else 'B0' if ds=='IV2b' else '') 
 fs = 250 if ds=='Lee19' else 100 if ds=='III4a' else 125 if ds=='CL' else 250
 subjects = range(1,55) if ds=='Lee19' else ['aa','al','av','aw','ay'] if ds=='III4a' else ['K3','K6','L1'] if ds=='III4a' else range(1,10)
 class_ids = [1, 3] if ds=='III4a' else [1, 2]
 
 if ds=='Lee19':
-    only_cortex = True
+    cortex_only = True
     one_session = True
     lee_session = 1
-    lee_option = ('_s' + str(lee_session) + '_cortex') if one_session and only_cortex else '_cortex' if only_cortex else ''
+    lee_option = ('_s' + str(lee_session) + '_cortex') if one_session and cortex_only else '_cortex' if cortex_only else ''
 
 crossval = False
 overlap = True
 nfolds = 10
 test_perc = 0.1 if crossval else 0.5
 
-suj = 'aa'
+suj = 2
 
 f_low, f_high, ncomp, tmin, tmax = 12, 42, 8, 0, 4. 
             
@@ -55,21 +56,32 @@ filtering = {'design':'DFT'}
 # filtering = {'design':'IIR', 'iir_order':5}
 # filtering = {'design':'FIR', 'fir_order':5}
 
-###################################################
+################################################### 
+
 
 if ds=='Lee19' and one_session: path_to_data = path + str(suj) + '_sess' + str(lee_session) + '.npy' # '.omi' 
 else: path_to_data = path + str(suj) + '.npy'
 
 data, events, info = np.load(path_to_data, allow_pickle=True) # pickle.load(open(path_to_data, 'rb'))
 
-if ds=='Lee19' and only_cortex:
+if ds=='Lee19' and cortex_only:
     cortex = [7, 32, 8, 9, 33, 10, 34, 12, 35, 13, 36, 14, 37, 17, 38, 18, 39, 19, 40, 20]
     data = data[cortex]   
     info['eeg_channels'] = len(cortex)
     info['ch_labels'] = ['FC5', 'FC3', 'FC1', 'FC2', 'FC4', 'FC6', 'C5', 'C3', 'C1', 'Cz', 'C2', 'C4', 'C6', 'CP5', 'CP3', 'CP1', 'CPz', 'CP2', 'CP4', 'CP6']
-
 # print(data.shape, events.shape)
 
+
+#%% USE bci_utils PROCESSING
+# bci = BCI(data, events, class_ids, overlap, fs, crossval, nfolds, test_perc, f_low, f_high, tmin, tmax, ncomp, approach, filtering, clf)
+# st = time()
+# bci.evaluate()
+# cost = time() - st
+# print(suj, class_ids, str(round(bci.acc*100,2))+'%', str(round(bci.kappa,3)), str(round(cost, 2))+'s')
+# if crossval: print(bci.cross_scores)
+
+
+#%% USE LOCAL PROCESSING
 smin = math.floor(tmin * fs)
 smax = math.floor(tmax * fs)
 buffer_len = smax - smin
