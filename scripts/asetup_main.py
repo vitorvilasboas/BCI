@@ -9,9 +9,9 @@ from hyperopt import base, fmin, tpe, hp
 from bci_utils import BCI
 # import matplotlib.pyplot as plt
 
-ds = 'III4a' # III3a, III4a, IV2a, IV2b, Lee19, LINCE
+ds = 'Lee19' # III3a, III4a, IV2a, IV2b, Lee19, LINCE
 auto_setup = True
-n_iter = 10
+n_iter = 100
 crossval = False
 nfolds = 10
 test_perc = 0.1 if crossval else 0.5 
@@ -52,9 +52,9 @@ elif ds == 'Lee19':
 header = ['subj', 'A', 'B', 'tmin', 'tmax', 'fl', 'fh', 'ncsp', 'nbands', 'clf', 'clf_details', 'acc', 'cla_dft', 'cla_iir', 'sb_dft', 'sb_iir']
 df = pd.DataFrame(columns=header)
 
-# subjects = ['K3'] # uncomment to run one subject only
+subjects = [1, 2, 3, 4, 5, 10] # uncomment to run one subject only
 for suj in subjects:
-    path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + '' + str(suj) + '.npy' #> ENTER THE PATH TO DATASET HERE 
+    path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + '' + 'S' + str(suj) + 'sess2' + '.npy' #> ENTER THE PATH TO DATASET HERE  
     data, events, info = np.load(path_to_data, allow_pickle=True) # pickle.load(open(path_to_data, 'rb'))
     
     if ds=='Lee19' and cortex_only:
@@ -287,6 +287,6 @@ for suj in subjects:
       
 # path_to_results = './asetup_results/'
 # if not os.path.isdir(path_to_results): os.makedirs(path_to_results)
-pd.to_pickle(df, path_to_trials + 'results_' + ds + '.pkl')
+if auto_setup: pd.to_pickle(df, path_to_trials + 'results_' + ds + '.pkl')
 
 # del globals()['events'] del globals()['data'] del globals()['best'] del globals()['trials'] del globals()['space']

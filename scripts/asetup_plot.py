@@ -41,7 +41,7 @@ elif ds == 'Lee19':
 path_to_figure = './asetup_figures/'
 if not os.path.isdir(path_to_figure): os.makedirs(path_to_figure)
 
-R = pd.read_pickle('./asetup_trials/results_' + ds)  
+R = pd.read_pickle('./asetup_trials/' + ds + '/results_' + ds + '.pkl')  
 print(ds, R['acc'].mean(), R['acc'].median(), R['acc'].std(), R['acc'].max(), R['acc'].min())
 
 #%%

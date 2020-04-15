@@ -587,7 +587,7 @@ class BCI():
         self.epochs = nanCleaner(self.epochs)
         # self.epochs = np.asarray([ nanCleaner(ep) for ep in self.epochs ])
         
-        # self.epochs, self.labels = self.epochs[:int(len(self.epochs)/2)], self.labels[:int(len(self.labels)/2)] # Lee19 sessão 1
+        # self.epochs, self.labels = self.epochs[:int(len(self.epochs)/2)], self.labels[:int(len(self.labels)/2)] # Lee19 somente sessão 1
         # self.epochs, self.labels = self.epochs[int(len(self.epochs)/2):], self.labels[int(len(self.labels)/2):] # Lee19 somente sessão 2
         
         self.filt = Filter(self.f_low, self.f_high, self.buffer_len, self.fs, self.filt_info)
