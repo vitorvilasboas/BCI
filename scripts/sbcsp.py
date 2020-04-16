@@ -49,6 +49,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
            channels=[:62] 
            ch_cortex=[7,32,8,9,33,10,34,12,35,13,36,14,37,17,38,18,39,19,40,20] 
 '''
+
 dataset = 'IV2a' #{'IV2a','IV2b','III3a','III4a','Lee19'}      
 path = '/mnt/dados/eeg_data/IV2a/' ## >>> ENTER THE PATH TO THE DATASET HERE
 subject = 1
@@ -195,16 +196,15 @@ for i in range(nbands):
     lda.fit(XT_CSP[i], tT)
     SCORE_T[:, i] = np.ravel(lda.transform(XT_CSP[i]))  # classificações de cada época nas N sub bandas - auto validação
     SCORE_V[:, i] = np.ravel(lda.transform(XV_CSP[i]))
-    
+# O LDA transforma os dados de treino e validação em cada sub-banda onde o resultado contínuo do LDA é mantido para construir um vetor de características de dimensão (n_bands)    
        
 #%% Bayesian Meta-Classifier
 SCORE_T0 = SCORE_T[tT == class_ids[0], :]
-SCORE_T1 = SCORE_T[tT == class_ids[1], :]
-p0 = norm(np.mean(SCORE_T0, axis=0), np.std(SCORE_T0, axis=0))
-p1 = norm(np.mean(SCORE_T1, axis=0), np.std(SCORE_T1, axis=0))
-META_SCORE_T = np.log(p0.pdf(SCORE_T) / p1.pdf(SCORE_T))
-META_SCORE_V = np.log(p0.pdf(SCORE_V) / p1.pdf(SCORE_V))
-
+SCORE_T1 = SCORE_T[tT == class_ids[1], :] # separa os scores de cada sub-banda referentes a classe A e B
+p0 = norm(np.mean(SCORE_T0, axis=0), np.std(SCORE_T0, axis=0)) # projeta uma distribuição normal/gaussiana a partir das médias (m0,m1) e dp (std0,std1) dos scores LDA em cada sub-banda ... 
+p1 = norm(np.mean(SCORE_T1, axis=0), np.std(SCORE_T1, axis=0)) # entre todas as épocas de cada classe. p0 é uma espécie de filtro bayesiano favorável à classe A e p1 à classe B
+META_SCORE_T = np.log(p0.pdf(SCORE_T) / p1.pdf(SCORE_T)) # scores aplicados nas funções de densidade de probabilidade de cada classe e calculada a razão entre elas.
+META_SCORE_V = np.log(p0.pdf(SCORE_V) / p1.pdf(SCORE_V)) # META_SCORE_T > 0 indica que uma época é melhor representada pela função p0. META_SCORE_T < 0 a melhor representação é por p1.
     
 #%% Final classification   
 clf_final = SVC(kernel='linear', C=10 **(-4), probability=True)
