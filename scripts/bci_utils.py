@@ -557,7 +557,6 @@ class BCI():
             # print(self.clf['min_split'])
             # if self.clf['min_split'] == 1.0: self.clf['min_split'] += 1
             # max_depth = self.clf['max_depth'] if self.clf['max_depth'] is None else int(self.clf['max_depth']['max_depth_int'])
-            
             self.clf_final = DecisionTreeClassifier(criterion=self.clf['crit'], random_state=0,
                                                     max_depth=None, # max_depth=max_depth,
                                                     min_samples_split=2 # min_samples_split=self.clf['min_split'], #math.ceil(self.clf['min_split']),

@@ -14,7 +14,6 @@ from scipy.linalg import eigh
 from scipy.fftpack import fft
 from bci_utils import labeling, extractEpochs
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import cohen_kappa_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -49,6 +48,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
            channels=[:62] 
            ch_cortex=[7,32,8,9,33,10,34,12,35,13,36,14,37,17,38,18,39,19,40,20] 
 '''
+
 dataset = 'IV2a' #{'IV2a','IV2b','III3a','III4a','Lee19'}      
 path = '/mnt/dados/eeg_data/IV2a/'   ## >>> ENTER THE PATH TO THE DATASET HERE
 subject = 1

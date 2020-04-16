@@ -49,7 +49,7 @@ elif ds == 'Lee19':
 header = ['subj', 'A', 'B', 'tmin', 'tmax', 'fl', 'fh', 'ncsp', 'nbands', 'clf', 'clf_details', 'acc', 'cla_dft', 'cla_iir', 'sb_dft', 'sb_iir']
 df = pd.DataFrame(columns=header)
 
-subjects = [1, 2, 3, 4, 5, 10] # uncomment to run one subject only
+# subjects = [1] # uncomment to run one subject only
 for suj in subjects:
     path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + '' + 'S' + str(suj) + 'sess2' + '.npy' #> ENTER THE PATH TO DATASET HERE  
     data, events, info = np.load(path_to_data, allow_pickle=True) # pickle.load(open(path_to_data, 'rb'))
