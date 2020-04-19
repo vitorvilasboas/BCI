@@ -164,6 +164,10 @@ class CSP():
         for i in range(int(e / 2)):
             S0 += np.dot(X0[i, :, :], X0[i, :, :].T)  # covA X0[epoca]
             S1 += np.dot(X1[i, :, :], X1[i, :, :].T)  # covB X1[epoca]
+        #     S0 += np.dot(X0[i, :, :], X0[i, :, :].T) / X0[i].shape[-1]  # sum((Xa * Xa.T)/q)
+        #     S1 += np.dot(X1[i, :, :], X1[i, :, :].T) / X1[i].shape[-1]  # sum((Xb * Xb.T)/q)
+        # S0 /= len(X0)
+        # S1 /= len(X1)
         [D, W] = lg.eigh(S0, S0 + S1)
         ind = np.empty(c, dtype=int)
         ind[0::2] = np.arange(c - 1, c // 2 - 1, -1)

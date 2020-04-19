@@ -457,8 +457,8 @@ class Filter:
         else:
             if is_epoch:
                 data_out = fft(data_in)
-                REAL = np.real(data_out)[:, self.bmin:self.bmax].T
-                IMAG = np.imag(data_out)[:, self.bmin:self.bmax].T
+                REAL = np.real(data_out).T # [:, self.bmin:self.bmax].T
+                IMAG = np.imag(data_out).T # [:, self.bmin:self.bmax].T
                 data_out = np.transpose(list(itertools.chain.from_iterable(zip(IMAG, REAL))))
             else:
                 data_out = fft(data_in)
@@ -486,6 +486,10 @@ class CSP():
             # S1 = np.add(S1, np.dot(Xb[epoca,:,:], Xb[epoca,:,:].T), out=S1, casting="unsafe")
             S0 += np.dot(Xa[epoca,:,:], Xa[epoca,:,:].T) #covA Xa[epoca]
             S1 += np.dot(Xb[epoca,:,:], Xb[epoca,:,:].T) #covB Xb[epoca]
+        #     S0 += np.dot(X0[i, :, :], X0[i, :, :].T) / X0[i].shape[-1]  # sum((Xa * Xa.T)/q)
+        #     S1 += np.dot(X1[i, :, :], X1[i, :, :].T) / X1[i].shape[-1]  # sum((Xb * Xb.T)/q)
+        # S0 /= len(X0)
+        # S1 /= len(X1)
         [D, W] = eigh(S0, S0 + S1)
         ind = np.empty(c, dtype=int)
         ind[0::2] = np.arange(c - 1, c // 2 - 1, -1) 
