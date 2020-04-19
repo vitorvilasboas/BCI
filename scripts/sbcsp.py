@@ -90,7 +90,7 @@ tV = np.r_[class_ids[0]*np.ones(int(len(ZV)/2)), class_ids[1]*np.ones(int(len(ZV
 
 #%% Sub-band definitions
 f_low, f_high = 0, 40
-DFT = 1 # 0=IIR, 1=DFT
+DFT = 0 # 0=IIR, 1=DFT
 nbands = 9    
 
 n_bins = f_high - f_low
@@ -102,7 +102,7 @@ sub_bands = []
 for i in range(nbands):
     fl_sb = round(i * step + f_low)
     fh_sb = round(i * step + size + f_low)
-    if fl_sb == 0: fl_sb = 0.001
+    # if fl_sb == 0: fl_sb = 0.001
     if fh_sb <= f_high: sub_bands.append([fl_sb, fh_sb]) 
     # se ultrapassar o limite superior da banda total, desconsidera a última sub-banda
     # ... para casos em que a razão entre a banda total e n_bands não é exata 
@@ -134,7 +134,6 @@ if DFT:
     for i in range(nbands):
         bmin = round(sub_bands[i][0] * dft_size_band)
         bmax = round(sub_bands[i][1] * dft_size_band)
-        # print(bmin, bmax)
         XT.append(XT_FFT[:, :, bmin:bmax])
         XV.append(XV_FFT[:, :, bmin:bmax])
     
@@ -145,6 +144,7 @@ else: # IIR Filtering
     for i in range(nbands):
         low = sub_bands[i][0] / nyq
         high = sub_bands[i][1] / nyq
+        if low == 0: low = 0.001
         if high >= 1: high = 0.99
         b, a = butter(5, [low, high], btype='bandpass')
         # b, a = iirfilter(5, [low,high], btype='band')

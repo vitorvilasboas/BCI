@@ -101,7 +101,7 @@ sub_bands = []
 for i in range(nbands):
     fl_sb = i * step + f_low
     fh_sb = i * step + size + f_low
-    if fl_sb == 0: fl_sb = 0.001
+    # if fl_sb == 0: fl_sb = 0.001
     if fh_sb <= f_high: sub_bands.append([fl_sb, fh_sb]) 
     # se ultrapassar o limite superior da banda total, desconsidera a última sub-banda
     # ... para casos em que a razão entre a banda total e n_bands não é exata 
@@ -126,12 +126,10 @@ if DFT:
     XT = []
     bins = []
     for i in range(nbands):
-        bmin_ = sub_bands[i][0] * size_freq
-        bmax_ = sub_bands[i][1] * size_freq
-        bmin, bmax = int(bmin_), int(bmax_)
+        bmin = round(sub_bands[i][0] * size_freq)
+        bmax = round(sub_bands[i][1] * size_freq)
         bins.append([bmin, bmax])
         XT.append(ZTF[:, :, bmin:bmax])
-    # print(bins)
 
 else: # IIR Filtering
     nyq = 0.5 * Fs
@@ -139,6 +137,7 @@ else: # IIR Filtering
     for i in range(nbands):
         low = sub_bands[i][0] / nyq
         high = sub_bands[i][1] / nyq
+        if low == 0: low = 0.001
         if high >= 1: high = 0.99
         b, a = butter(5, [low, high], btype='bandpass')
         # b, a = iirfilter(5, [low,high], btype='band')
@@ -209,58 +208,60 @@ clf_final.fit(META_SCORE_T, tT)
 #%% ################# EVALUATE UNIQUE EPOCH
 ############################################################
 
-# for ep in range(1):
-idx = 100 #int(np.random.choice(epochsV.shape[0], 1)) # escolhe uma época de teste
-Z, t = epochsV[idx], labelsV[idx]
-
-#%%  Filtering
-if DFT:
-    ZF = fft(Z)[:,:m]
-    REAL, IMAG = np.real(ZF).T, np.imag(ZF).T
-    ZF = np.transpose(list(itertools.chain.from_iterable(zip(IMAG, REAL))))
+for ep in range(1):
+    idx = int(np.random.choice(epochsV.shape[0], 1)) # escolhe uma época de teste
+    Z, t = epochsV[idx], labelsV[idx]
     
-    X = []
-    for i in range(nbands):
-        bmin_ = sub_bands[i][0] * size_freq # round(2/rf), rf=Fs/q 
-        bmax_ = sub_bands[i][1] * size_freq
-        bmin, bmax = round(bmin_), round(bmax_)
-        # print(bmin_, bmin, bmax_, bmax)
-        X.append(ZF[:, bmin:bmax])
-    
-
-else: # IIR Filtering
-    nyq = 0.5 * Fs
-    X = []
-    for i in range(nbands):
-        low = sub_bands[i][0] / nyq
-        high = sub_bands[i][1] / nyq
-        if high >= 1: high = 0.99
-        b, a = butter(5, [low, high], btype='bandpass')
-        # b, a = iirfilter(5, [low,high], btype='band')
-        # X.append(lfilter(b, a, Z)) 
-        X.append(filtfilt(b, a, Z))
-    
-#%% CSP
-features = []
-for i in range(nbands):
-    Y = np.dot(csp_filters[i], X[i])
-    f = np.log(np.mean(Y**2, axis=1)) # Feature extraction
-    features.append(f)
-    
-# xcsp0 = csp_filters[0] 
-# x0 = X[0]
-# xy0 = np.dot(xcsp0, x0)  
-# xf0_a = xy0**2
-# xf0_b = np.mean(xf0_a, axis=1)
-# xf0 = np.log(xf0_b)
+    #%%  Filtering
+    if DFT:
+        ZF = fft(Z)[:,:m]
+        REAL, IMAG = np.real(ZF).T, np.imag(ZF).T
+        ZF = np.transpose(list(itertools.chain.from_iterable(zip(IMAG, REAL))))
         
-#%% LDA
-lda_scores = np.asarray([ np.ravel(lda_list[i].transform(features[i].reshape(1,-1))) for i in range(nbands) ]).T  
-     
-#%% Bayesian Meta-classifier
-meta_score = np.log(p0.pdf(lda_scores) / p1.pdf(lda_scores))
-
-#%% Final classification
-y_label = clf_final.predict(meta_score.reshape(1, -1))
-y_prob = clf_final.predict_proba(meta_score.reshape(1, -1))
-print(f'Epoch idx: {idx}\nTrue target (t): {t}\nPredicted target (y): {y_label}\nLikely: {y_label==t}\nClasses Prob: {y_prob}')
+        X = []
+        for i in range(nbands):
+            bmin_ = sub_bands[i][0] * size_freq # round(2/rf), rf=Fs/q 
+            bmax_ = sub_bands[i][1] * size_freq
+            bmin, bmax = round(bmin_), round(bmax_)
+            # print(bmin_, bmin, bmax_, bmax)
+            X.append(ZF[:, bmin:bmax])
+        
+    
+    else: # IIR Filtering
+        nyq = 0.5 * Fs
+        X = []
+        for i in range(nbands):
+            low = sub_bands[i][0] / nyq
+            high = sub_bands[i][1] / nyq
+            if low == 0: low = 0.001
+            if high >= 1: high = 0.99
+            b, a = butter(5, [low, high], btype='bandpass')
+            # b, a = iirfilter(5, [low,high], btype='band')
+            # X.append(lfilter(b, a, Z)) 
+            X.append(filtfilt(b, a, Z))
+        
+    #%% CSP
+    features = []
+    for i in range(nbands):
+        Y = np.dot(csp_filters[i], X[i])
+        f = np.log(np.mean(Y**2, axis=1)) # Feature extraction
+        features.append(f)
+        
+    # xcsp0 = csp_filters[0] 
+    # x0 = X[0]
+    # xy0 = np.dot(xcsp0, x0)  
+    # xf0_a = xy0**2
+    # xf0_b = np.mean(xf0_a, axis=1)
+    # xf0 = np.log(xf0_b)
+            
+    #%% LDA
+    lda_scores = np.asarray([ np.ravel(lda_list[i].transform(features[i].reshape(1,-1))) for i in range(nbands) ]).T  
+         
+    #%% Bayesian Meta-classifier
+    meta_score = np.log(p0.pdf(lda_scores) / p1.pdf(lda_scores))
+    
+    #%% Final classification
+    y_label = clf_final.predict(meta_score.reshape(1, -1))
+    y_prob = clf_final.predict_proba(meta_score.reshape(1, -1))
+    print(f'Epoch idx: {idx}\nTrue target (t): {t}\nPredicted target (y): {y_label}\nLikely: {y_label==t}\nClasses Prob: {y_prob}')
+    

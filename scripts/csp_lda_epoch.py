@@ -100,6 +100,7 @@ else: # IIR Filtering
     nyq = 0.5 * Fs
     low = f_low / nyq
     high = f_high / nyq
+    if low == 0: low = 0.001
     if high >= 1: high = 0.99
     b, a = butter(5, [low, high], btype='bandpass')
     # b, a = iirfilter(5, [low,high], btype='band')
