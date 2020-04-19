@@ -181,15 +181,16 @@ class CSP():
 class Filter:
     def __init__(self, fl, fh, buffer_len, srate, forder=None, filt_type='IIR', band_type='bandpass'):
         self.ftype = filt_type
-        if fl == 0: fl = 0.001
         self.nyq = 0.5 * srate
+        self.res_freq = (srate / buffer_len)
+        # if fl == 0: fl = 0.001
         low = fl / self.nyq
         high = fh / self.nyq
-        self.res_freq = (srate / buffer_len)
+        if low == 0: low = 0.001
         if high >= 1: high = 0.99
 
         if self.ftype == 'IIR':
-            # self.b, self.a = sp.iirfilter(forder, [low, high], btype=band_type)
+            # self.b, self.a = sp.iirfilter(forder, [low, high], btype='band')
             self.b, self.a = sp.butter(forder, [low, high], btype=band_type)
         elif self.ftype == 'FIR':
             self.b = sp.firwin(forder, [low, high], window='hamming', pass_zero=False)
@@ -200,7 +201,7 @@ class Filter:
 
     def apply_filter(self, data_in, is_epoch=False):
         if self.ftype != 'DFT':
-            data_out = sp.filtfilt(self.b, self.a, data_in)
+            # data_out = sp.filtfilt(self.b, self.a, data_in)
             data_out = sp.lfilter(self.b, self.a, data_in)
         else:
             if is_epoch:
@@ -208,7 +209,6 @@ class Filter:
                 REAL = np.real(data_out).T #[:, self.bmin:self.bmax].T
                 IMAG = np.imag(data_out).T #[:, self.bmin:self.bmax].T
                 data_out = np.transpose(list(itertools.chain.from_iterable(zip(IMAG, REAL))))
-                # print(data_out.shape)
             else:
                 data_out = fft(data_in)
                 REAL = np.transpose(np.real(data_out), (2, 0, 1))

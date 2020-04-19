@@ -429,13 +429,14 @@ def corrigeNaN(data):
 class Filter:
     def __init__(self, fl, fh, buffer_len, srate, filt_info, forder=None, band_type='bandpass'):
         self.ftype = filt_info['design']
-        if fl == 0: fl = 0.001
         self.nyq = 0.5 * srate
+        self.res_freq = (srate / buffer_len)
+        # if fl == 0: fl = 0.001
         low = fl / self.nyq
         high = fh / self.nyq
-        self.res_freq = (srate / buffer_len)
+        if low == 0: low = 0.001
         if high >= 1: high = 0.99
-
+        
         if self.ftype == 'IIR':
             self.forder = filt_info['iir_order']
             # self.b, self.a = iirfilter(self.forder, [low, high], btype='band')
