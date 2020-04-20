@@ -17,7 +17,7 @@ from datetime import datetime
 from scipy.fftpack import fft
 from scipy.linalg import eigh
 from sklearn.pipeline import Pipeline
-from scipy.signal import lfilter, butter, filtfilt, firwin, iirfilter, decimate
+from scipy.signal import lfilter, butter, filtfilt, firwin, iirfilter, decimate, welch
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
