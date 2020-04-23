@@ -500,6 +500,7 @@ class CSP():
     def transform(self, X):        
         XT = np.asarray([np.dot(self.filters_, epoch) for epoch in X])
         XVAR = np.log(np.mean(XT ** 2, axis=2)) # Xcsp
+        # XVAR = np.log(np.var(XT, axis=2))
         return XVAR
 
 

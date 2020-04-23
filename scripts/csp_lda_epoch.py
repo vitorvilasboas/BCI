@@ -135,6 +135,7 @@ YT = np.asarray([np.dot(Wf, ep) for ep in XT])
 
 #%% Feature extraction
 XT_CSP = np.log(np.mean(YT ** 2, axis=2))
+# XT_CSP = np.log(np.var(YT, axis=2))
 
 #%% LDA Classifier
 clf = LDA()
@@ -171,6 +172,7 @@ for ep in range(1):
     #%% CSP
     Y = np.dot(Wf, X)
     features = np.log(np.mean(Y**2, axis=1))
+    # features = np.log(np.var(Y, axis=1))
     
     #%% LDA Classifier
     y_label = clf.predict(features.reshape(1, -1))

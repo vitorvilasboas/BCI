@@ -153,8 +153,9 @@ YV = np.asarray([np.dot(Wf, ep) for ep in XV])
 #%% Feature extraction
 XT_CSP = np.log(np.mean(YT ** 2, axis=2))
 XV_CSP = np.log(np.mean(YV ** 2, axis=2))
+# XT_CSP = np.log(np.var(YT, axis=2))
+# XV_CSP = np.log(np.var(YV, axis=2))
 # XV_CSPi = np.log(np.mean(YV[0] ** 2, axis=1))
-
 
 #%% LDA Classifier
 clf = LDA()

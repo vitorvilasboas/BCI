@@ -186,6 +186,8 @@ for i in range(nbands):
     YV = np.asarray([ np.dot(csp_filters[i], ep) for ep in XV[i] ])
     XT_CSP.append( np.log( np.mean( YT ** 2, axis=2 ) ) ) # Feature extraction
     XV_CSP.append( np.log( np.mean( YV ** 2, axis=2 ) ) ) # Feature extraction
+    # XT_CSP.append( np.log( np.var( YT, axis=2 ) ) )
+    # XV_CSP.append( np.log( np.var( YV, axis=2 ) ) )
     
 
 #%% LDA

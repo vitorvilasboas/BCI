@@ -175,6 +175,7 @@ XT_CSP, XV_CSP = [], []
 for i in range(nbands):
     YT = np.asarray([ np.dot(csp_filters[i], ep) for ep in XT[i] ])
     XT_CSP.append( np.log( np.mean( YT ** 2, axis=2 ) ) ) # Feature extraction
+    # XT_CSP.append( np.log( np.var( YT, axis=2 ) ) )
     
 
 #%% LDA
@@ -245,6 +246,7 @@ for ep in range(1):
     for i in range(nbands):
         Y = np.dot(csp_filters[i], X[i])
         f = np.log(np.mean(Y**2, axis=1)) # Feature extraction
+        # f = np.log(np.var(Y, axis=1))
         features.append(f)
         
     # xcsp0 = csp_filters[0] 
