@@ -484,12 +484,12 @@ class CSP():
         for epoca in range(int(e/2)):
             # S0 = np.add(S0, np.dot(Xa[epoca,:,:], Xa[epoca,:,:].T), out=S0, casting="unsafe")
             # S1 = np.add(S1, np.dot(Xb[epoca,:,:], Xb[epoca,:,:].T), out=S1, casting="unsafe")
-            S0 += np.dot(Xa[epoca,:,:], Xa[epoca,:,:].T) #covA Xa[epoca]
-            S1 += np.dot(Xb[epoca,:,:], Xb[epoca,:,:].T) #covB Xb[epoca]
-        #     S0 += np.dot(X0[i, :, :], X0[i, :, :].T) / X0[i].shape[-1]  # sum((Xa * Xa.T)/q)
-        #     S1 += np.dot(X1[i, :, :], X1[i, :, :].T) / X1[i].shape[-1]  # sum((Xb * Xb.T)/q)
-        # S0 /= len(X0)
-        # S1 /= len(X1)
+            # S0 += np.dot(Xa[epoca,:,:], Xa[epoca,:,:].T) #covA Xa[epoca]
+            # S1 += np.dot(Xb[epoca,:,:], Xb[epoca,:,:].T) #covB Xb[epoca]
+            S0 += np.dot(Xa[epoca, :, :], Xa[epoca, :, :].T) / Xa[epoca].shape[-1]  # sum((Xa * Xa.T)/q)
+            S1 += np.dot(Xb[epoca, :, :], Xb[epoca, :, :].T) / Xb[epoca].shape[-1]  # sum((Xb * Xb.T)/q)
+        S0 /= len(Xa)
+        S1 /= len(Xb)
         [D, W] = eigh(S0, S0 + S1)
         ind = np.empty(c, dtype=int)
         ind[0::2] = np.arange(c - 1, c // 2 - 1, -1) 
@@ -526,7 +526,7 @@ class BCI():
         self.acc = None
         self.kappa = None
         
-        
+    
     def objective(self, args):
         # print(args)
         self.f_low, self.f_high, self.tmin, self.tmax, self.ncomp, self.ap, self.filt_info, self.clf = args

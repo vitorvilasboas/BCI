@@ -9,9 +9,9 @@ from hyperopt import base, fmin, tpe, hp
 from bci_utils import BCI
 # import matplotlib.pyplot as plt
 
-ds = 'Lee19' # III3a, III4a, IV2a, IV2b, Lee19, LINCE
+ds = 'IV2a' # III3a, III4a, IV2a, IV2b, Lee19, LINCE
 auto_setup = True
-n_iter = 100
+n_iter = 1
 crossval = False
 nfolds = 10
 test_perc = 0.1 if crossval else 0.5 
@@ -51,7 +51,8 @@ df = pd.DataFrame(columns=header)
 
 # subjects = [1] # uncomment to run one subject only
 for suj in subjects:
-    path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + '' + 'S' + str(suj) + 'sess2' + '.npy' #> ENTER THE PATH TO DATASET HERE  
+    # path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + '' + 'S' + str(suj) + 'sess2' + '.npy' #> ENTER THE PATH TO DATASET HERE (Lee19 default)
+    path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + '' + 'A0' + str(suj)  + '.npy' #> ENTER THE PATH TO DATASET HERE  
     data, events, info = np.load(path_to_data, allow_pickle=True) # pickle.load(open(path_to_data, 'rb'))
     
     if ds=='Lee19' and cortex_only:
@@ -160,26 +161,34 @@ for suj in subjects:
                   
         clf_type, clf_details = '', ''
         lda_solver = knn_metric = knn_neig = svm_kernel = svm_clog = mlp_n_hidden = mlp_n_neurons = mlp_eta = mlp_af = mlp_solver = dtree_crit = None
-    
+        
+        
         if best['clf'][0] == 0: 
             clf_type += 'Bayes'
+            clf = {'model': clf_type}
         
         elif best['clf'][0] == 1: 
             clf_type += 'LDA'
             lda_solver = 'svd' if best['lda_solver'][0] == 0 else 'lsqr' if best['lda_solver'][0] == 1 else 'eigen'
             clf_details += "solver={}".format(lda_solver)
+            
+            clf = {'model': clf_type, 'lda_solver': lda_solver}
         
         elif best['clf'][0] == 2: 
             clf_type += 'KNN'
             knn_metric = 'euclidean' if best['metric'][0] == 0 else 'manhattan' if best['metric'][0] == 1 else 'minkowski' if best['metric'][0] == 2 else 'chebyshev'
             knn_neig = int(best['neig'][0])
             clf_details += 'neig={}, metric={}'.format(knn_neig, knn_metric)
+            
+            clf = {'model': clf_type, 'metric': knn_metric, 'neig': knn_neig, }
                
         elif best['clf'][0] == 3: 
             clf_type += 'SVM'
             svm_kernel = 'linear' if best['kernel'][0]==0 else 'poly' if best['kernel'][0]==1 else 'sigmoid' if best['kernel'][0]==2  else 'rbf'
             svm_clog = int(best['C'][0])
             clf_details += 'k={}, C=10**({})'.format(svm_kernel, svm_clog)
+            
+            clf = {'model': clf_type, 'kernel': {'kf': svm_kernel}, 'C': svm_clog}
         
         elif best['clf'][0] == 4:
             clf_type += 'MLP'
@@ -189,15 +198,19 @@ for suj in subjects:
             mlp_n_neurons = int(best['n_neurons'][0])
             mlp_eta = best['eta'][0]
             clf_details += '({}, {}), af={}, eta={}, solver={}'.format(mlp_n_neurons, mlp_n_hidden, mlp_af, mlp_eta, mlp_solver)
+            
+            clf = {'model': clf_type, 'eta': mlp_eta, 'activ': {'af': mlp_af}, 'n_neurons': mlp_n_neurons, 'n_hidden': mlp_n_hidden, 'mlp_solver': mlp_solver}
         
         elif best['clf'][0] == 5:
             clf_type += 'DTree'
             dtree_crit = 'gini' if best['crit'][0]==0 else 'entropy'
             clf_details += 'criterion={}'.format(dtree_crit)
+            
+            clf = {'model': clf_type, 'crit' : dtree_crit}
         
         ### Compute kappa, cost and confirm acc
-        clf = {'model': clf_type, 'lda_solver': lda_solver, 'metric': knn_metric, 'neig': knn_neig, 'kernel': {'kf': svm_kernel}, 'C': svm_clog, 'crit' : dtree_crit, 
-               'eta': mlp_eta, 'activ': {'af': mlp_af}, 'n_neurons': mlp_n_neurons, 'n_hidden': mlp_n_hidden, 'mlp_solver': mlp_solver}
+        # clf = {'model': clf_type, 'lda_solver': lda_solver, 'metric': knn_metric, 'neig': knn_neig, 'kernel': {'kf': svm_kernel}, 'C': svm_clog, 'crit' : dtree_crit, 
+               # 'eta': mlp_eta, 'activ': {'af': mlp_af}, 'n_neurons': mlp_n_neurons, 'n_hidden': mlp_n_hidden, 'mlp_solver': mlp_solver}
         filtering = {'design':filt_type} if filt_type=='DFT' else {'design':filt_type, 'iir_order':filt_order} if filt_type=='IIR' else {'design':filt_type, 'fir_order':filt_order}
         approach = {'option': ap, 'nbands': nbands}
         # print(path_data + str(suj) + '.npy', fl, fh, tmin, tmax, ncsp, approach, filtering, clf)
@@ -247,7 +260,7 @@ for suj in subjects:
         # df.loc[len(df)] = [suj, class_ids[0], class_ids[1], tmin, tmax, acc, acc2, kappa, cost, fl, fh, filt_type, filt_order, ncsp, approach, nbands, clf_type, clf_details,
         #                    acc_cla_dft, acc_cla_iir, acc_sb_dft, acc_sb_iir, kpa_cla_dft, kpa_cla_iir, kpa_sb_dft, kpa_sb_iir, cost_cla_dft, cost_cla_iir, cost_sb_dft, cost_sb_iir,
         #                    lda_solver , knn_metric, knn_neig, svm_kernel, svm_clog, dtree_crit, mlp_n_hidden, mlp_n_neurons, mlp_eta, mlp_af, mlp_solver]   
-        df.loc[len(df)] = [suj, class_ids[0], class_ids[1], tmin, tmax, fl, fh, ncsp, nbands, clf_type, clf_details, acc, acc_cla_dft, acc_cla_iir, acc_sb_dft, acc_sb_iir]
+        df.loc[len(df)] = [suj, class_ids[0], class_ids[1], tmin, tmax, fl, fh, ncsp, nbands, clf_type, clf, acc, acc_cla_dft, acc_cla_iir, acc_sb_dft, acc_sb_iir] #clf_details
       
 pd.to_pickle(df, path_to_trials + 'results_' + ds + '.pkl')
 # del globals()['events'] del globals()['data'] del globals()['best'] del globals()['trials'] del globals()['space']
