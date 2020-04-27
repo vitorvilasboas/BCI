@@ -15,8 +15,9 @@ import math
 import matplotlib.pyplot as plt
 from scripts.bci_utils import labeling
 
-data, events, info = labeling(path='/mnt/dados/eeg_data/IV2a/', ds='IV2a', session='T', subj=1, channels=None, save=False)
-# data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A09T.npy', allow_pickle=True)
+# data, events, info = labeling(path='/mnt/dados/eeg_data/IV2a/', ds='IV2a', 
+#                               session='T', subj=1, channels=None, save=False)
+data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A01T.npy', allow_pickle=True)
 class_ids = [1,2]
 smin = math.floor(0.5 * info['fs'])
 smax = math.floor(2.5 * info['fs'])
@@ -26,15 +27,16 @@ epochs = nanCleaner(epochs)
 
 X = [ epochs[np.where(labels == i)] for i in class_ids ]
 
-Y1 = X[0]
-Y2 = X[1]
+X1 = X[0]
+X2 = X[1]
 
-R1 = np.zeros(Y1.shape)
-R2 = np.zeros(Y2.shape)
-D = np.eye(22,22) - np.ones((22,22))/22
+e, c, s = X1.shape
+R1 = np.zeros((e, c, s))
+R2 = np.zeros((e, c, s))
+D = np.eye(c,c) - np.ones((c,c))/c
 for i in range(len(R1)):
-    R1[i,:,:] = (Y1[i,:,:].T @ D).T
-    R2[i,:,:] = (Y2[i,:,:].T @ D).T
+    R1[i,:,:] = (X1[i,:,:].T @ D).T
+    R2[i,:,:] = (X2[i,:,:].T @ D).T
 
 canal = 14
 
@@ -59,9 +61,8 @@ p2 = np.real(p2)
 m1 = np.mean(p1,0)
 m2 = np.mean(p2,0)
 
-
-# f, pa = welch(y1, fs=250, nfft=499)
-# plt.semilogy(f, np.mean(np.real(p1),0))
+# plt.semilogy(freq, np.mean(p1,0), label='LH')
+# plt.semilogy(freq, np.mean(p2,0), label='RH')
 plt.plot(freq, np.log10(m1), label='LH') 
 plt.plot(freq, np.log10(m2), label='RH')
 plt.xlim((0,40))
