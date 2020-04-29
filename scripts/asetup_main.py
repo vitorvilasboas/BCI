@@ -11,7 +11,7 @@ from bci_utils import BCI
 
 ds = 'IV2a' # III3a, III4a, IV2a, IV2b, Lee19, LINCE
 auto_setup = True
-n_iter = 1
+n_iter = 1000
 crossval = False
 nfolds = 10
 test_perc = 0.1 if crossval else 0.5 
