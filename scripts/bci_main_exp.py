@@ -169,14 +169,14 @@ if crossval:
             
             n_bins = f_high - f_low
             overlap = 0.5 if overlap else 1
-            step = n_bins / nbands
+            step = n_bins / (nbands+1)
             size = step / overlap
             
             sub_bands = []
             for i in range(nbands):
                 fl_sb = round(i * step + f_low)
                 fh_sb = round(i * step + size + f_low)
-                # if fl_sb == 0: fl_sb = 0.001
+                if fl_sb == 0: fl_sb = 0.001
                 if fh_sb <= f_high: sub_bands.append([fl_sb, fh_sb]) 
                 # se ultrapassar o limite superior da banda total, desconsidera a última sub-banda
                 # ... para casos em que a razão entre a banda total e n_bands não é exata 

@@ -431,7 +431,6 @@ class Filter:
         self.ftype = filt_info['design']
         self.nyq = 0.5 * srate
         self.res_freq = (srate / buffer_len)
-        # if fl == 0: fl = 0.001
         low = fl / self.nyq
         high = fh / self.nyq
         if low == 0: low = 0.001
@@ -534,7 +533,9 @@ class BCI():
         self.f_low, self.f_high, self.ncomp = int(self.f_low), int(self.f_high), int(self.ncomp)
         while (self.tmax-self.tmin)<1: self.tmax+=0.5 # garante janela minima de 1seg
         # self.acc, self.kappa = self.evaluate()
+        # st = time()
         self.evaluate()
+        # print(time() - st)
         return self.acc * (-1)  
     
     
@@ -707,43 +708,40 @@ class BCI():
         
     
     def sbcsp_approach(self, XT, XV, yT, yV):
-        
         nbands = int(self.ap['nbands'])
-        if nbands > (self.f_high-self.f_low): nbands = (self.f_high-self.f_low)
+        # if nbands > (self.f_high-self.f_low): nbands = (self.f_high-self.f_low)
     
-        
         n_bins = self.f_high - self.f_low
         overlap = 0.5 if self.overlap else 1
-        step = n_bins / nbands
-        size = step / overlap
+        step = n_bins / (nbands+1)
+        size = step / overlap        
         
-        sub_bands = []
+        sub_bands, bins = [], []
         for i in range(nbands):
             fl_sb = round(i * step + self.f_low)
             fh_sb = round(i * step + size + self.f_low)
-            # if fl_sb == 0: fl_sb = 0.001
-            if fh_sb <= self.f_high: sub_bands.append([fl_sb, fh_sb]) 
-            # se ultrapassar o limite superior da banda total, desconsidera a última sub-banda
-            # ... para casos em que a razão entre a banda total e n_bands não é exata 
+            # if fh_sb <= self.f_high: sub_bands.append([fl_sb, fh_sb]) # extrapola limite superior 1: descarta última sub-banda 
+            # if fh_sb > self.f_high: fh_sb = self.f_high # extrapola limite superior 2: ajusta f_high ao limite
+            sub_bands.append([fl_sb, fh_sb])
         
-        # print(sub_bands)
+        print(sub_bands)
         nbands = len(sub_bands)
         
         XTF, XVF = [], []
         if self.filt_info['design'] == 'DFT':
-            
             XT_FFT = self.filt.apply_filter(XT)
             XV_FFT = self.filt.apply_filter(XV)
             for i in range(nbands):
-                bmin = sub_bands[i][0] * self.dft_size_band
-                bmax = sub_bands[i][1] * self.dft_size_band
+                bmin = round(sub_bands[i][0] * self.dft_size_band)
+                bmax = round(sub_bands[i][1] * self.dft_size_band)
                 XTF.append(XT_FFT[:, :, bmin:bmax])
-                XVF.append(XV_FFT[:, :, bmin:bmax]) 
-                # print(bmin, bmax)
+                XVF.append(XV_FFT[:, :, bmin:bmax])
+                bins.append([bmin,bmax])
+            # print(bins)
         
         elif self.filt_info['design'] in ['IIR' or 'FIR']:
-            
             for i in range(nbands):
+                if fl_sb == 0: fl_sb = 0.001
                 filt_sb = Filter(sub_bands[i][0], sub_bands[i][1], len(XT[0,0,:]), self.fs, self.filt_info)
                 XTF.append(filt_sb.apply_filter(XT))
                 XVF.append(filt_sb.apply_filter(XV))
@@ -765,7 +763,6 @@ class BCI():
         # csp_filters_sblist = [self.chain[i]['CSP'].filters_ for i in range(nbands)]
         # lda_sblist = [self.chain[i]['LDA'] for i in range(nbands)] 
             
-
         SCORE_T0 = SCORE_T[yT == self.class_ids[0], :]
         SCORE_T1 = SCORE_T[yT == self.class_ids[1], :]
         
@@ -774,7 +771,6 @@ class BCI():
         META_SCORE_T = np.log(self.p0.pdf(SCORE_T) / self.p1.pdf(SCORE_T))
         META_SCORE_V = np.log(self.p0.pdf(SCORE_V) / self.p1.pdf(SCORE_V))
         
-
         self.clf_final.fit(META_SCORE_T, yT)
         self.scores = self.clf_final.predict(META_SCORE_V)
         
@@ -785,12 +781,9 @@ class BCI():
 
 
     def sbcsp_approach_old(self, XT, XV, yT, yV):
-        
         self.chain = Pipeline([('CSP', CSP(n_components=self.ncomp)), ('LDA', LDA()) ])
-        
         nbands = int(self.ap['nbands'])
         nbands = (self.f_high-self.f_low) if nbands >= (self.f_high-self.f_low) else nbands
-        
         if self.filt_info['design'] == 'DFT':
             XT_FFT = self.filt.apply_filter(XT)
             XV_FFT = self.filt.apply_filter(XV)
@@ -811,7 +804,6 @@ class BCI():
                 XTF = XT_FFT[:, :, bin_ini:bin_fim]
                 XVF = XV_FFT[:, :, bin_ini:bin_fim]
                 # print( round(bin_ini * (self.filt.res_freq/2) + self.f_low), round(bin_fim * (self.filt.res_freq/2) + self.f_low) ) # print bins convertidos para Hertz
-            
             else:
                 fl_sb = round(i * step + self.f_low)
                 fh_sb = round(i * step + size + self.f_low)
@@ -821,7 +813,6 @@ class BCI():
                 XTF = filt_sb.apply_filter(XT)
                 XVF = filt_sb.apply_filter(XV)
                 # print(fl_sb, fh_sb)
-                
             self.chain['CSP'].fit(XTF, yT)
             XT_CSP = self.chain['CSP'].transform(XTF)
             XV_CSP = self.chain['CSP'].transform(XVF)
@@ -830,7 +821,6 @@ class BCI():
             SCORE_V[:, i] = np.ravel(self.chain['LDA'].transform(XV_CSP))
             self.csp_filters_sblist.append(self.chain['CSP'].filters_)
             self.lda_sblist.append(self.chain['LDA'])
-            
         SCORE_T0 = SCORE_T[yT == self.class_ids[0], :]
         SCORE_T1 = SCORE_T[yT == self.class_ids[1], :]
         self.p0 = norm(np.mean(SCORE_T0, axis=0), np.std(SCORE_T0, axis=0))

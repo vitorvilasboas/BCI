@@ -95,7 +95,7 @@ nbands = 9
 
 n_bins = f_high - f_low
 overlap = 0.5 
-step = n_bins / nbands
+step = n_bins / (nbands+1)
 size = step / overlap
 
 sub_bands = []

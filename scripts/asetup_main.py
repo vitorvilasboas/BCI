@@ -92,7 +92,7 @@ for suj in subjects:
                   # 'p': hp.quniform('p', 2, 50, 1)
                   },
                 {'model':'SVM', 
-                  'C': hp.quniform('C', -8, 4, 1), 
+                  'C': hp.quniform('C', -8, 0, 1), 
                   'kernel': hp.choice('kernel', [{'kf':'linear'}, {'kf':'poly'}, {'kf':'sigmoid'}, {'kf':'rbf'}]), #'degree': hp.uniformint('degree', 2, 4)    #, 'width': hp.lognormal('width', 0, 1)
                   # 'gamma': hp.choice('gamma', ['scale', 'auto', {'gamma_float': hp.quniform('gamma_float', -9, 4, 1)}]), # hp.loguniform('gamma_float', -9, 3)  np.logspace(-9, 3, 13)),
                   },
