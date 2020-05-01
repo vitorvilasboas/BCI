@@ -165,7 +165,7 @@ if crossval:
             
             
             nbands = int(approach['nbands'])
-            if nbands > (f_high-f_low): nbands = (f_high-f_low)
+            # if nbands > (f_high-f_low): nbands = (f_high-f_low)
             
             n_bins = f_high - f_low
             overlap = 0.5 if overlap else 1
@@ -174,12 +174,11 @@ if crossval:
             
             sub_bands = []
             for i in range(nbands):
-                fl_sb = round(i * step + f_low)
-                fh_sb = round(i * step + size + f_low)
-                if fl_sb == 0: fl_sb = 0.001
-                if fh_sb <= f_high: sub_bands.append([fl_sb, fh_sb]) 
-                # se ultrapassar o limite superior da banda total, desconsidera a última sub-banda
-                # ... para casos em que a razão entre a banda total e n_bands não é exata 
+                fl_sb = i * step + f_low
+                fh_sb = i * step + size + f_low
+                # if fh_sb <= self.f_high: sub_bands.append([fl_sb, fh_sb]) # extrapola limite superior 1: descarta última sub-banda 
+                # if fh_sb > self.f_high: fh_sb = self.f_high # extrapola limite superior 2: ajusta f_high ao limite
+                sub_bands.append([fl_sb, fh_sb])
             
             nbands = len(sub_bands)
             
@@ -188,11 +187,10 @@ if crossval:
                 XT_FFT = filt.apply_filter(XT)
                 XV_FFT = filt.apply_filter(XV)
                 for i in range(nbands):
-                    bmin = sub_bands[i][0] * dft_size_band
-                    bmax = sub_bands[i][1] * dft_size_band
+                    bmin = round(sub_bands[i][0] * dft_size_band)
+                    bmax = round(sub_bands[i][1] * dft_size_band)
                     XTF.append(XT_FFT[:, :, bmin:bmax])
                     XVF.append(XV_FFT[:, :, bmin:bmax])
-                    # print(bmin, bmax)
                     
             elif filtering['design'] in ['IIR' or 'FIR']:
                 for i in range(nbands):
@@ -233,8 +231,6 @@ if crossval:
             cross_scores.append(acc_fold)
             cross_kappa.append( kappa_fold )
     
-
-       
     acc = np.mean(cross_scores)  # acurácia média (todas nfolds iterações)
     kappa = np.mean(cross_kappa) 
     
@@ -294,40 +290,34 @@ else: # not crossval
     elif approach['option'] == 'sbcsp':
         
         nbands = int(approach['nbands'])
-        if nbands > (f_high-f_low): 
-            nbands = (f_high-f_low)
-            # print(f'new nbands = {nbands}')
+        # if nbands > (f_high-f_low): nbands = (f_high-f_low)
         
         n_bins = f_high - f_low
         overlap = 0.5 if overlap else 1
-        step = n_bins / nbands
+        step = n_bins / (nbands+1)
         size = step / overlap
         
         sub_bands = []
         for i in range(nbands):
-            fl_sb = round(i * step + f_low)
-            fh_sb = round(i * step + size + f_low)
-            if fh_sb <= f_high: sub_bands.append([fl_sb, fh_sb]) 
-            # se ultrapassar o limite superior da banda total, desconsidera a última sub-banda
-            # ... para casos em que a razão entre a banda total e n_bands não é exata 
+            fl_sb = i * step + f_low
+            fh_sb = i * step + size + f_low
+            # if fh_sb <= self.f_high: sub_bands.append([fl_sb, fh_sb]) # extrapola limite superior 1: descarta última sub-banda 
+            # if fh_sb > self.f_high: fh_sb = self.f_high # extrapola limite superior 2: ajusta f_high ao limite
+            sub_bands.append([fl_sb, fh_sb])
         
         # print(sub_bands)
         nbands = len(sub_bands)
-        # print(nbands)
         
         XTF, XVF = [], []
         if filtering['design'] == 'DFT':
             XT_FFT = filt.apply_filter(XT)
             XV_FFT = filt.apply_filter(XV)
             for i in range(nbands):
-                bmin = sub_bands[i][0] * dft_size_band
-                bmax = sub_bands[i][1] * dft_size_band
+                bmin = round(sub_bands[i][0] * dft_size_band)
+                bmax = round(sub_bands[i][1] * dft_size_band)
                 XTF.append(XT_FFT[:, :, bmin:bmax])
                 XVF.append(XV_FFT[:, :, bmin:bmax])
-                # print(bmin, bmax)
-        
-        
-                
+
         elif filtering['design'] in ['IIR' or 'FIR']:
             for i in range(nbands):
                 filt_sb = Filter(sub_bands[i][0], sub_bands[i][1], len(XT[0,0,:]), fs, filtering)

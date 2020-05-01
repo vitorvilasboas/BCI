@@ -55,8 +55,8 @@ if __name__ == "__main__":
             # approach = {'option':'classic'}
             approach = {'option':'sbcsp','nbands':10}
             
-            # filtering = {'design':'DFT'}
-            filtering = {'design':'IIR', 'iir_order':5}
+            filtering = {'design':'DFT'}
+            # filtering = {'design':'IIR', 'iir_order':5}
             # filtering = {'design':'FIR', 'fir_order':5}
             
             bci = BCI(data, events, class_ids, overlap, info['fs'], crossval, nfolds, test_perc, fl, fh, tmin, tmax, ncsp, approach, filtering, clf)  
