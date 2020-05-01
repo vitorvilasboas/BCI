@@ -43,7 +43,7 @@ if __name__ == "__main__":
         data, events, info = np.load(path_to_data, allow_pickle=True) # pickle.load(open(path_to_data, 'rb'))
         # data = data[[7, 32, 8, 9, 33, 10, 34, 12, 35, 13, 36, 14, 37, 17, 38, 18, 39, 19, 40, 20]]
         for class_ids in classes:       
-            fl, fh, ncsp, tmin, tmax = 0, 50, 2, 0.5, 2.5
+            fl, fh, ncsp, tmin, tmax = 0, 40, 2, 0.5, 2.5
 
             # clf = {'model':'Bayes'}
             # clf = {'model':'LDA', 'lda_solver':'svd'} # 'lda_solver': 'svd','lsqr','eigen'
@@ -53,10 +53,10 @@ if __name__ == "__main__":
             # clf = {'model':'DTree', 'crit':'gini'} # 'crit': 'entropy' or 'gini'
             
             # approach = {'option':'classic'}
-            approach = {'option':'sbcsp','nbands':100}
+            approach = {'option':'sbcsp','nbands':10}
             
-            filtering = {'design':'DFT'}
-            # filtering = {'design':'IIR', 'iir_order':5}
+            # filtering = {'design':'DFT'}
+            filtering = {'design':'IIR', 'iir_order':5}
             # filtering = {'design':'FIR', 'fir_order':5}
             
             bci = BCI(data, events, class_ids, overlap, info['fs'], crossval, nfolds, test_perc, fl, fh, tmin, tmax, ncsp, approach, filtering, clf)  

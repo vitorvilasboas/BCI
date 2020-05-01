@@ -100,17 +100,14 @@ size = step / overlap
 
 sub_bands = []
 for i in range(nbands):
-    fl_sb = round(i * step + f_low)
-    fh_sb = round(i * step + size + f_low)
-    # if fl_sb == 0: fl_sb = 0.001
-    if fh_sb <= f_high: sub_bands.append([fl_sb, fh_sb]) 
-    # se ultrapassar o limite superior da banda total, desconsidera a última sub-banda
-    # ... para casos em que a razão entre a banda total e n_bands não é exata 
+    fl_sb = i * step + f_low
+    fh_sb = i * step + size + f_low
+    # if fh_sb <= self.f_high: sub_bands.append([fl_sb, fh_sb]) # extrapola limite superior 1: descarta última sub-banda 
+    # if fh_sb > self.f_high: fh_sb = self.f_high # extrapola limite superior 2: ajusta f_high ao limite
+    sub_bands.append([fl_sb, fh_sb])
 
 # print(sub_bands)
 nbands = len(sub_bands)
-# print(nbands)
-
 
 #%%  Filtering
 if DFT:

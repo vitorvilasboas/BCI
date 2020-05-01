@@ -718,8 +718,8 @@ class BCI():
         
         sub_bands, bins = [], []
         for i in range(nbands):
-            fl_sb = round(i * step + self.f_low)
-            fh_sb = round(i * step + size + self.f_low)
+            fl_sb = i * step + self.f_low
+            fh_sb = i * step + size + self.f_low
             # if fh_sb <= self.f_high: sub_bands.append([fl_sb, fh_sb]) # extrapola limite superior 1: descarta última sub-banda 
             # if fh_sb > self.f_high: fh_sb = self.f_high # extrapola limite superior 2: ajusta f_high ao limite
             sub_bands.append([fl_sb, fh_sb])
@@ -737,7 +737,7 @@ class BCI():
                 XTF.append(XT_FFT[:, :, bmin:bmax])
                 XVF.append(XV_FFT[:, :, bmin:bmax])
                 bins.append([bmin,bmax])
-            # print(bins)
+            print(bins)
         
         elif self.filt_info['design'] in ['IIR' or 'FIR']:
             for i in range(nbands):
@@ -827,13 +827,8 @@ class BCI():
         self.p1 = norm(np.mean(SCORE_T1, axis=0), np.std(SCORE_T1, axis=0))
         META_SCORE_T = np.log(self.p0.pdf(SCORE_T) / self.p1.pdf(SCORE_T))
         META_SCORE_V = np.log(self.p0.pdf(SCORE_V) / self.p1.pdf(SCORE_V))
-            
         self.clf_final.fit(META_SCORE_T, yT)
         self.scores = self.clf_final.predict(META_SCORE_V)
         acc = np.mean(self.scores == yV)
         kappa = cohen_kappa_score(self.scores, yV)
-
         return acc, kappa
-    
-
-    

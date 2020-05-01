@@ -101,13 +101,12 @@ sub_bands = []
 for i in range(nbands):
     fl_sb = i * step + f_low
     fh_sb = i * step + size + f_low
-    # if fl_sb == 0: fl_sb = 0.001
-    if fh_sb <= f_high: sub_bands.append([fl_sb, fh_sb]) 
-    # se ultrapassar o limite superior da banda total, desconsidera a última sub-banda
-    # ... para casos em que a razão entre a banda total e n_bands não é exata 
-
-nbands = len(sub_bands)
+    # if fh_sb <= self.f_high: sub_bands.append([fl_sb, fh_sb]) # extrapola limite superior 1: descarta última sub-banda 
+    # if fh_sb > self.f_high: fh_sb = self.f_high # extrapola limite superior 2: ajusta f_high ao limite
+    sub_bands.append([fl_sb, fh_sb])
+   
 # print(sub_bands)
+nbands = len(sub_bands)
 
 #%%  Filtering
 if DFT:
@@ -221,13 +220,10 @@ for ep in range(1):
         
         X = []
         for i in range(nbands):
-            bmin_ = sub_bands[i][0] * size_freq # round(2/rf), rf=Fs/q 
-            bmax_ = sub_bands[i][1] * size_freq
-            bmin, bmax = round(bmin_), round(bmax_)
-            # print(bmin_, bmin, bmax_, bmax)
+            bmin = round(sub_bands[i][0] * size_freq) # round(2/rf), rf=Fs/q 
+            bmax = round(sub_bands[i][1] * size_freq)
             X.append(ZF[:, bmin:bmax])
         
-    
     else: # IIR Filtering
         nyq = 0.5 * Fs
         X = []
