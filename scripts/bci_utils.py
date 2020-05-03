@@ -427,46 +427,34 @@ def corrigeNaN(data):
 
 
 class Filter:
-    def __init__(self, fl, fh, buffer_len, srate, filt_info, forder=None, band_type='bandpass'):
+    def __init__(self, fl, fh, srate, filt_info, forder=5, band_type='bandpass'):
         self.ftype = filt_info['design']
-        self.nyq = 0.5 * srate
-        self.res_freq = (srate / buffer_len)
-        low = fl / self.nyq
-        high = fh / self.nyq
-        if low == 0: low = 0.001
-        if high >= 1: high = 0.99
-        
-        if self.ftype == 'IIR':
-            self.forder = filt_info['iir_order']
-            # self.b, self.a = iirfilter(self.forder, [low, high], btype='band')
-            self.b, self.a = butter(self.forder, [low, high], btype=band_type)
-        elif self.ftype == 'FIR':
-            self.forder = filt_info['fir_order']
-            self.b = firwin(self.forder, [low, high], window='hamming', pass_zero=False)
-            self.a = [1]
-        elif self.ftype == 'DFT':
-            self.bmin = int(fl / self.res_freq)  # int(fl * (srate/self.nyq)) # int(low * srate)
-            self.bmax = int(fh / self.res_freq)  # int(fh * (srate/self.nyq)) # int(high * srate)
-
-
-    def apply_filter(self, data_in, is_epoch=False):
         if self.ftype != 'DFT':
-            # data_out = filtfilt(self.b, self.a, data_in)
-            data_out = lfilter(self.b, self.a, data_in)
+            self.nyq = 0.5 * srate
+            low = fl / self.nyq
+            high = fh / self.nyq        
+            if low == 0: low = 0.001
+            if high >= 1: high = 0.99
+            if self.ftype == 'IIR':
+                self.forder = filt_info['iir_order']
+                # self.b, self.a = iirfilter(self.forder, [low, high], btype='band')
+                self.b, self.a = butter(self.forder, [low, high], btype=band_type)
+            elif self.ftype == 'FIR':
+                self.forder = filt_info['fir_order']
+                self.b = firwin(self.forder, [low, high], window='hamming', pass_zero=False)
+                self.a = [1]
+
+    def apply_filter(self, X, is_epoch=False):
+        if self.ftype != 'DFT': XF = lfilter(self.b, self.a, X) # lfilter, filtfilt
         else:
+            XF = fft(X)
             if is_epoch:
-                data_out = fft(data_in)
-                REAL = np.real(data_out).T # [:, self.bmin:self.bmax].T
-                IMAG = np.imag(data_out).T # [:, self.bmin:self.bmax].T
-                data_out = np.transpose(list(itertools.chain.from_iterable(zip(IMAG, REAL))))
+                real, imag = np.real(XF).T, np.imag(XF).T
+                XF = np.transpose(list(itertools.chain.from_iterable(zip(imag, real))))
             else:
-                data_out = fft(data_in)
-                REAL = np.transpose(np.real(data_out), (2, 0, 1)) # old: np.transpose(np.real(data_out)[:, :, self.bmin:self.bmax], (2, 0, 1))
-                IMAG = np.transpose(np.imag(data_out), (2, 0, 1)) # old: np.transpose(np.imag(data_out)[:, :, self.bmin:self.bmax], (2, 0, 1))
-                data_out = list(itertools.chain.from_iterable(zip(IMAG, REAL)))
-                data_out = np.transpose(data_out, (1, 2, 0))
-                
-        return data_out
+                real, imag = np.transpose(np.real(XF), (2, 0, 1)), np.transpose(np.imag(XF), (2, 0, 1))
+                XF = np.transpose(list(itertools.chain.from_iterable(zip(imag, real))), (1, 2, 0)) 
+        return XF
 
 
 class CSP():
@@ -505,8 +493,8 @@ class CSP():
 
 class BCI():
     
-    def __init__(self, data, events, class_ids, overlap, fs, crossval, nfolds, test_perc,
-                 f_low=None, f_high=None, tmin=None, tmax=None, ncomp=None, ap=None, filt_info=None, clf=None):
+    def __init__(self, data=None, events=None, class_ids=[1,2], fs=250, overlap=True, crossval=False, nfolds=10, test_perc=0.5, 
+                 f_low=None, f_high=None, tmin=None, tmax=None, ncomp=None, nbands=None, ap=None, filt_info=None, clf=None):
         self.data = data
         self.events = events
         self.class_ids = class_ids
@@ -520,307 +508,176 @@ class BCI():
         self.tmin = tmin
         self.tmax = tmax
         self.ncomp = ncomp
+        self.nbands = nbands
         self.ap = ap
         self.filt_info = filt_info
         self.clf = clf
         self.acc = None
         self.kappa = None
+        self.csp_list = None
         
-    
-    def objective(self, args):
-        # print(args)
-        self.f_low, self.f_high, self.tmin, self.tmax, self.ncomp, self.ap, self.filt_info, self.clf = args
-        self.f_low, self.f_high, self.ncomp = int(self.f_low), int(self.f_high), int(self.ncomp)
-        while (self.tmax-self.tmin)<1: self.tmax+=0.5 # garante janela minima de 1seg
-        # self.acc, self.kappa = self.evaluate()
-        # st = time()
-        self.evaluate()
-        # print(time() - st)
-        return self.acc * (-1)  
-    
-    
+
     def evaluate(self):
         
         if self.clf['model'] == 'LDA': 
-            # if clf_dict['lda_solver'] == 'svd': lda_shrinkage = None
-            # else:
+            lda_shrinkage = None
+            # if not (clf_dict['lda_solver'] == 'svd'): 
             #     lda_shrinkage = self.clf['shrinkage'] if self.clf['shrinkage'] in [None,'auto'] else self.clf['shrinkage']['shrinkage_float']
-            self.clf_final = LDA(solver=self.clf['lda_solver'], shrinkage=None)
-        
-        if self.clf['model'] == 'Bayes': 
+            self.clf_final = LDA(solver=self.clf['lda_solver'], shrinkage=lda_shrinkage)
+        elif self.clf['model'] == 'Bayes': 
             self.clf_final = GaussianNB()
-        
-        if self.clf['model'] == 'SVM': 
+        elif self.clf['model'] == 'SVM': 
             # degree = self.clf['kernel']['degree'] if self.clf['kernel']['kf'] == 'poly' else 3
             # gamma = self.clf['gamma'] if self.clf['gamma'] in ['scale', 'auto'] else 10 ** (self.clf['gamma']['gamma_float'])
-            self.clf_final = SVC(kernel=self.clf['kernel']['kf'], C=10 ** (self.clf['C']), 
-                                 gamma='scale', degree=3, probability=True) # degree=3,
-        
-        if self.clf['model'] == 'KNN':   
-            self.clf_final = KNeighborsClassifier(n_neighbors=int(self.clf['neig']), 
-                                                  metric=self.clf['metric'], p=3) # p=self.clf['p'] #metric='minkowski', p=3)  # minkowski,p=2 -> distancia euclidiana padrão
-                                                  
-        if self.clf['model'] == 'DTree': 
-            # print(self.clf['min_split'])
+            self.clf_final = SVC(kernel=self.clf['kernel']['kf'], C=10**(self.clf['C']), gamma='scale', degree=3, probability=True)
+        elif self.clf['model'] == 'KNN':   
+            self.clf_final = KNeighborsClassifier(n_neighbors=int(self.clf['neig']), metric=self.clf['metric'], p=3) # p=self.clf['p']                                       
+        elif self.clf['model'] == 'DTree':
             # if self.clf['min_split'] == 1.0: self.clf['min_split'] += 1
             # max_depth = self.clf['max_depth'] if self.clf['max_depth'] is None else int(self.clf['max_depth']['max_depth_int'])
-            self.clf_final = DecisionTreeClassifier(criterion=self.clf['crit'], random_state=0,
-                                                    max_depth=None, # max_depth=max_depth,
-                                                    min_samples_split=2 # min_samples_split=self.clf['min_split'], #math.ceil(self.clf['min_split']),
-                                                    ) # None (profundidade maxima da arvore - representa a pode); ENTROPIA = medir a pureza e a impureza dos dados
-                
-        if self.clf['model'] == 'MLP':   
-            self.clf_final = MLPClassifier(verbose=False, max_iter=10000, tol=1e-4,
-                                           learning_rate_init=10**self.clf['eta'],
-                                           # alpha=10**self.clf['alpha'],
-                                           activation=self.clf['activ']['af'],
-                                           hidden_layer_sizes=(int(self.clf['n_neurons']), int(self.clf['n_hidden'])),
-                                           learning_rate='constant', # self.clf['eta_type'], 
-                                           solver=self.clf['mlp_solver'],
-                                           )
-        
-        # cortex_ch = [7, 32, 8, 9, 33, 10, 34, 12, 35, 13, 36, 14, 37, 17, 38, 18, 39, 19, 40, 20]
-        # self.data = self.data[cortex_ch]
+            # min_samples_split = self.clf['min_split'] # math.ceil(self.clf['min_split']), # profundidade maxima da arvore - representa a poda;
+            self.clf_final = DecisionTreeClassifier(criterion=self.clf['crit'], random_state=0, max_depth=None, min_samples_split=2)       
+        elif self.clf['model'] == 'MLP':   
+            self.clf_final = MLPClassifier(verbose=False, max_iter=10000, tol=1e-4, learning_rate_init=10**self.clf['eta'],
+                                           activation=self.clf['activ']['af'], learning_rate='constant', solver=self.clf['mlp_solver'],
+                                           hidden_layer_sizes=(int(self.clf['n_neurons']), int(self.clf['n_hidden']))) # alpha=10**self.clf['alpha'], self.clf['eta_type'],
         
         smin = math.floor(self.tmin * self.fs)
         smax = math.floor(self.tmax * self.fs)
-        self.buffer_len = smax - smin
-        
-        self.dft_rf = self.fs/self.buffer_len # resolução em frequência fft
-        self.dft_size_band = round(2/self.dft_rf) # 2 representa sen e cos que foram separados do componente complexo da fft intercalados
-        
+        self.res_freq = self.fs/(smax-smin) # rf=Fs/Q
+        self.dft_size = 2/self.res_freq # 2=sen/cos complexo fft
         self.epochs, self.labels = extractEpochs(self.data, self.events, smin, smax, self.class_ids)
         self.epochs = nanCleaner(self.epochs)
         # self.epochs = np.asarray([ nanCleaner(ep) for ep in self.epochs ])
+        # self.epochs, self.labels = self.epochs[:int(len(self.epochs)/2)], self.labels[:int(len(self.labels)/2)] # Lee19 session 1 only
+        # self.epochs, self.labels = self.epochs[int(len(self.epochs)/2):], self.labels[int(len(self.labels)/2):] # Lee19 session 2 only
         
-        # self.epochs, self.labels = self.epochs[:int(len(self.epochs)/2)], self.labels[:int(len(self.labels)/2)] # Lee19 somente sessão 1
-        # self.epochs, self.labels = self.epochs[int(len(self.epochs)/2):], self.labels[int(len(self.labels)/2):] # Lee19 somente sessão 2
-        
-        self.filt = Filter(self.f_low, self.f_high, self.buffer_len, self.fs, self.filt_info)
-        
-        self.csp = CSP(n_components=self.ncomp)
-            
         if self.crossval:
-            
-            self.cross_scores = []
-            self.cross_kappa = []
-            
+            self.cross_scores, self.cross_kappa = [], []
             kf = StratifiedShuffleSplit(self.nfolds, test_size=self.test_perc, random_state=42)
-            #kf = StratifiedKFold(self.nfolds, False)
-            
-            if self.ap['option'] == 'classic':
-                
-                XF = self.filt.apply_filter(self.epochs)
-        
-                if self.filt_info['design'] == 'DFT': # extrai somente os bins referentes à banda de interesse
-                    bmin = self.f_low * self.dft_size_band
-                    bmax = self.f_high * self.dft_size_band
-                    XF = XF[:, :, bmin:bmax]
-                    # print(bmin, bmax)
-                
-                # self.chain = Pipeline([('CSP', self.csp), ('SVC', self.clf_final)])
-                # self.cross_scores = cross_val_score(self.chain, XF, self.labels, cv=kf)
-                
-                for idx_treino, idx_teste in kf.split(XF, self.labels):
-                    XT, XV, yT, yV = XF[idx_treino], XF[idx_teste], self.labels[idx_treino], self.labels[idx_teste]
-                    
-                    
-                    # Option 1
-                    self.csp.fit(XT, yT)
-                    XT_CSP = self.csp.transform(XT)
-                    XV_CSP = self.csp.transform(XV) 
-                    self.clf_final.fit(XT_CSP, yT)
-                    self.scores = self.clf_final.predict(XV_CSP)
-                    # self.csp_filters = self.csp.filters_
-                    
-                    # Option 2
-                    # self.chain = Pipeline([('CSP', self.csp), ('SVC', self.clf_final)])
-                    # self.chain.fit(XT, yT)
-                    # self.scores = self.chain.predict(XV)
-                    # self.csp_filters = self.chain['CSP'].filters_
-                    
-                    acc_fold = np.mean(self.scores == yV) # or self.cross_scores.append(self.chain.score(XV, yV)) 
-                    kappa_fold = cohen_kappa_score(self.scores, yV)     
-                    self.cross_scores.append(acc_fold)
-                    self.cross_kappa.append(kappa_fold)
-                
-            
-            elif self.ap['option'] == 'sbcsp':
-                
-                for idx_treino, idx_teste in kf.split(self.epochs, self.labels):
-                    acc_fold, kappa_fold = self.sbcsp_approach(self.epochs[idx_treino], self.epochs[idx_teste], 
-                                                               self.labels[idx_treino], self.labels[idx_teste])
-                    self.cross_scores.append(acc_fold)
-                    self.cross_kappa.append(kappa_fold)
-            
-            self.acc = np.mean(self.cross_scores) 
-            self.kappa = np.mean(self.cross_kappa) 
-            
-            
-        else: # NO crossval
-            
+            # kf = StratifiedKFold(self.nfolds, False)
+            # self.chain = Pipeline([('CSP', self.csp), ('SVC', self.clf_final)])
+            # self.cross_scores = cross_val_score(self.chain, XF, self.labels, cv=kf)
+            for idx_treino, idx_teste in kf.split(self.epochs, self.labels):
+                XT, XV, yT, yV = self.epochs[idx_treino], self.epochs[idx_teste], self.labels[idx_treino], self.labels[idx_teste]
+                acc_fold, kappa_fold = self.classic_approach(XT, XV, yT, yV) if (self.ap['option'] == 'classic') else self.sbcsp_approach(XT, XV, yT, yV)     
+                self.cross_scores.append(acc_fold) # self.cross_scores.append(self.chain.score(XV, yV))
+                self.cross_kappa.append(kappa_fold)
+            self.acc, self.kappa = np.mean(self.cross_scores), np.mean(self.cross_kappa)
+        else:
             test_size = int(len(self.epochs) * self.test_perc)
             train_size = int(len(self.epochs) - test_size)
             train_size = train_size if (train_size % 2 == 0) else train_size - 1 # garantir balanço entre as classes (amostragem estratificada)
             epochsT, labelsT = self.epochs[:train_size], self.labels[:train_size] 
             epochsV, labelsV = self.epochs[train_size:], self.labels[train_size:]
-            
             XT = [ epochsT[np.where(labelsT == i)] for i in self.class_ids ] # Extrair épocas de cada classe
             XV = [ epochsV[np.where(labelsV == i)] for i in self.class_ids ]
-            
             XT = np.concatenate([XT[0],XT[1]]) # Train data classes A + B
             XV = np.concatenate([XV[0],XV[1]]) # Test data classes A + B        
             yT = np.concatenate([self.class_ids[0] * np.ones(int(len(XT)/2)), self.class_ids[1] * np.ones(int(len(XT)/2))])
             yV = np.concatenate([self.class_ids[0] * np.ones(int(len(XV)/2)), self.class_ids[1] * np.ones(int(len(XV)/2))])
-            # print(XT.shape, XV.shape)
-           
-            if self.ap['option'] == 'classic':
-                
-                XTF = self.filt.apply_filter(XT)
-                XVF = self.filt.apply_filter(XV)
-                
-                if self.filt_info['design'] == 'DFT': # extrai somente os bins referentes à banda de interesse
-                    bmin = self.f_low * self.dft_size_band
-                    bmax = self.f_high * self.dft_size_band
-                    XTF = XTF[:, :, bmin:bmax]
-                    XVF = XVF[:, :, bmin:bmax]
-                    # print(bmin, bmax)
-                
-                # Option 1
-                self.csp.fit(XTF, yT)
-                XT_CSP = self.csp.transform(XTF)
-                XV_CSP = self.csp.transform(XVF) 
-                self.clf_final.fit(XT_CSP, yT)
-                self.scores = self.clf_final.predict(XV_CSP)
-                # self.csp_filters = self.csp.filters_
-                
-                # Option 2
-                # self.chain = Pipeline([('CSP', self.csp), ('SVC', self.clf_final)])
-                # self.chain.fit(XTF, yT)           
-                # self.scores = self.chain.predict(XVF)
-                # self.csp_filters = self.chain['CSP'].filters_
-                
-                self.acc = np.mean(self.scores == yV) # or chain.score(XVF, yV)     
-                self.kappa = cohen_kappa_score(self.scores, yV)
-                
-            elif self.ap['option'] == 'sbcsp': 
-                self.acc, self.kappa = self.sbcsp_approach(XT, XV, yT, yV)
+            self.acc, self.kappa = self.classic_approach(XT, XV, yT, yV) if (self.ap['option'] == 'classic') else self.sbcsp_approach(XT, XV, yT, yV)
+                     
+    
+    def classic_approach(self, XT, XV, yT, yV):
+        self.filt = Filter(self.f_low, self.f_high, self.fs, self.filt_info)
+        XTF = self.filt.apply_filter(XT)
+        XVF = self.filt.apply_filter(XV)
+        if self.filt_info['design'] == 'DFT': # extrai somente os bins referentes à banda de interesse
+            bmin = round(self.f_low * self.dft_size)
+            bmax = round(self.f_high * self.dft_size)
+            XTF = XTF[:, :, bmin:bmax]
+            XVF = XVF[:, :, bmin:bmax]
+        
+        self.csp = CSP(n_components=int(self.ncomp))
+        
+        # # Option 1:
+        self.csp.fit(XTF, yT)
+        # self.csp_filters = self.csp.filters_
+        XT_CSP = self.csp.transform(XTF)
+        XV_CSP = self.csp.transform(XVF) 
+        self.clf_final.fit(XT_CSP, yT)
+        self.scores = self.clf_final.predict(XV_CSP)
+        
+        # # Option 2:
+        # self.chain = Pipeline([('CSP', self.csp), ('SVC', self.clf_final)])
+        # self.chain.fit(XT, yT)
+        # self.csp_filters = self.chain['CSP'].filters_
+        # self.scores = self.chain.predict(XV)
+        
+        acc = np.mean(self.scores == yV)     
+        kappa = cohen_kappa_score(self.scores, yV)
+        return acc, kappa
         
     
     def sbcsp_approach(self, XT, XV, yT, yV):
         nbands = int(self.ap['nbands'])
-        # if nbands > (self.f_high-self.f_low): nbands = (self.f_high-self.f_low)
-    
+        # if nbands > (self.f_high - self.f_low): nbands = (self.f_high - self.f_low)
         n_bins = self.f_high - self.f_low
         overlap = 0.5 if self.overlap else 1
         step = n_bins / (nbands+1)
         size = step / overlap        
         
-        sub_bands, bins = [], []
+        sub_bands, bins = [], []        
         for i in range(nbands):
             fl_sb = i * step + self.f_low
             fh_sb = i * step + size + self.f_low
             # if fh_sb <= self.f_high: sub_bands.append([fl_sb, fh_sb]) # extrapola limite superior 1: descarta última sub-banda 
             # if fh_sb > self.f_high: fh_sb = self.f_high # extrapola limite superior 2: ajusta f_high ao limite
             sub_bands.append([fl_sb, fh_sb])
-        
-        print(sub_bands)
+        # print(sub_bands)
         nbands = len(sub_bands)
         
         XTF, XVF = [], []
         if self.filt_info['design'] == 'DFT':
+            self.filt = Filter(self.f_low, self.f_high, self.fs, self.filt_info)
             XT_FFT = self.filt.apply_filter(XT)
             XV_FFT = self.filt.apply_filter(XV)
             for i in range(nbands):
-                bmin = round(sub_bands[i][0] * self.dft_size_band)
-                bmax = round(sub_bands[i][1] * self.dft_size_band)
+                bmin = round(sub_bands[i][0] * self.dft_size)
+                bmax = round(sub_bands[i][1] * self.dft_size)
                 XTF.append(XT_FFT[:, :, bmin:bmax])
                 XVF.append(XV_FFT[:, :, bmin:bmax])
                 bins.append([bmin,bmax])
-            print(bins)
-        
+            # print(bins)
         elif self.filt_info['design'] in ['IIR' or 'FIR']:
             for i in range(nbands):
                 if fl_sb == 0: fl_sb = 0.001
-                filt_sb = Filter(sub_bands[i][0], sub_bands[i][1], len(XT[0,0,:]), self.fs, self.filt_info)
-                XTF.append(filt_sb.apply_filter(XT))
-                XVF.append(filt_sb.apply_filter(XV))
+                filt = Filter(sub_bands[i][0], sub_bands[i][1], self.fs, self.filt_info)
+                XTF.append(filt.apply_filter(XT))
+                XVF.append(filt.apply_filter(XV))
         
-        self.chain = [ Pipeline([('CSP', CSP(n_components=self.ncomp)), ('LDA', LDA())]) for i in range(nbands) ]
-        
-        for i in range(nbands): self.chain[i]['CSP'].fit(XTF[i], yT)
-            
+        # # Option 1:
+        self.chain = [ Pipeline([('CSP', CSP(n_components=int(self.ncomp))), ('LDA', LDA())]) for i in range(nbands) ]
+        # self.chain = [ Pipeline([('CSP', CSP(n_components=self.csp_list[i])), ('LDA', LDA())]) for i in range(nbands) ] # uncomment to tuning ncsp
+        for i in range(nbands): self.chain[i]['CSP'].fit(XTF[i], yT)  
         XT_CSP = [ self.chain[i]['CSP'].transform(XTF[i]) for i in range(nbands) ]
         XV_CSP = [ self.chain[i]['CSP'].transform(XVF[i]) for i in range(nbands) ]
-        
         SCORE_T = np.zeros((len(XT), nbands))
         SCORE_V = np.zeros((len(XV), nbands))
-        for i in range(len(sub_bands)): 
+        for i in range(nbands): 
             self.chain[i]['LDA'].fit(XT_CSP[i], yT)
             SCORE_T[:, i] = np.ravel(self.chain[i]['LDA'].transform(XT_CSP[i]))  # classificações de cada época nas N sub bandas - auto validação
             SCORE_V[:, i] = np.ravel(self.chain[i]['LDA'].transform(XV_CSP[i]))
+        csp_filters_sblist = [ self.chain[i]['CSP'].filters_ for i in range(nbands) ]
+        lda_sblist = [ self.chain[i]['LDA'] for i in range(nbands) ] 
         
-        # csp_filters_sblist = [self.chain[i]['CSP'].filters_ for i in range(nbands)]
-        # lda_sblist = [self.chain[i]['LDA'] for i in range(nbands)] 
-            
-        SCORE_T0 = SCORE_T[yT == self.class_ids[0], :]
-        SCORE_T1 = SCORE_T[yT == self.class_ids[1], :]
+        # # Option 2:
+        # SCORE_T = np.zeros((len(XT), nbands))
+        # SCORE_V = np.zeros((len(XV), nbands))
+        # self.csp_filters_sblist = []
+        # self.lda_sblist = []
+        # for i in range(nbands):
+        #     self.chain = Pipeline([('CSP', CSP(n_components=self.ncomp)), ('LDA', LDA()) ])
+        #     self.chain['CSP'].fit(XTF, yT)
+        #     XT_CSP = self.chain['CSP'].transform(XTF)
+        #     XV_CSP = self.chain['CSP'].transform(XVF)
+        #     self.chain['LDA'].fit(XT_CSP, yT)
+        #     SCORE_T[:, i] = np.ravel(self.chain['LDA'].transform(XT_CSP))  # classificações de cada época nas N sub bandas - auto validação
+        #     SCORE_V[:, i] = np.ravel(self.chain['LDA'].transform(XV_CSP))
+        #     self.csp_filters_sblist.append(self.chain['CSP'].filters_)
+        #     self.lda_sblist.append(self.chain['LDA'])
         
-        self.p0 = norm(np.mean(SCORE_T0, axis=0), np.std(SCORE_T0, axis=0))
-        self.p1 = norm(np.mean(SCORE_T1, axis=0), np.std(SCORE_T1, axis=0))
-        META_SCORE_T = np.log(self.p0.pdf(SCORE_T) / self.p1.pdf(SCORE_T))
-        META_SCORE_V = np.log(self.p0.pdf(SCORE_V) / self.p1.pdf(SCORE_V))
-        
-        self.clf_final.fit(META_SCORE_T, yT)
-        self.scores = self.clf_final.predict(META_SCORE_V)
-        
-        acc = np.mean(self.scores == yV)
-        kappa = cohen_kappa_score(self.scores, yV)
-        
-        return acc, kappa
-
-
-    def sbcsp_approach_old(self, XT, XV, yT, yV):
-        self.chain = Pipeline([('CSP', CSP(n_components=self.ncomp)), ('LDA', LDA()) ])
-        nbands = int(self.ap['nbands'])
-        nbands = (self.f_high-self.f_low) if nbands >= (self.f_high-self.f_low) else nbands
-        if self.filt_info['design'] == 'DFT':
-            XT_FFT = self.filt.apply_filter(XT)
-            XV_FFT = self.filt.apply_filter(XV)
-            n_bins = len(XT_FFT[0, 0, :])  # ou (fh-fl) * 4 # Número total de bins de frequencia
-        else: n_bins = self.f_high - self.f_low
-        overlap = 0.5 if self.overlap else 1
-        step = n_bins / nbands # int()
-        size = step / overlap # int() 
-        SCORE_T = np.zeros((len(XT), nbands))
-        SCORE_V = np.zeros((len(XV), nbands))
-        self.csp_filters_sblist = []
-        self.lda_sblist = []
-        for i in range(nbands):
-            if self.filt_info['design'] == 'DFT':
-                bin_ini = round(i * step)
-                bin_fim = round(i * step + size)
-                if bin_fim >= n_bins: bin_fim = n_bins # - 1
-                XTF = XT_FFT[:, :, bin_ini:bin_fim]
-                XVF = XV_FFT[:, :, bin_ini:bin_fim]
-                # print( round(bin_ini * (self.filt.res_freq/2) + self.f_low), round(bin_fim * (self.filt.res_freq/2) + self.f_low) ) # print bins convertidos para Hertz
-            else:
-                fl_sb = round(i * step + self.f_low)
-                fh_sb = round(i * step + size + self.f_low)
-                if fh_sb > self.f_high: fh_sb = self.f_high
-                if fl_sb > fh_sb: fl_sb = fh_sb
-                filt_sb = Filter(fl_sb, fh_sb, len(XT[0,0,:]), self.fs, self.filt_info)
-                XTF = filt_sb.apply_filter(XT)
-                XVF = filt_sb.apply_filter(XV)
-                # print(fl_sb, fh_sb)
-            self.chain['CSP'].fit(XTF, yT)
-            XT_CSP = self.chain['CSP'].transform(XTF)
-            XV_CSP = self.chain['CSP'].transform(XVF)
-            self.chain['LDA'].fit(XT_CSP, yT)
-            SCORE_T[:, i] = np.ravel(self.chain['LDA'].transform(XT_CSP))  # classificações de cada época nas N sub bandas - auto validação
-            SCORE_V[:, i] = np.ravel(self.chain['LDA'].transform(XV_CSP))
-            self.csp_filters_sblist.append(self.chain['CSP'].filters_)
-            self.lda_sblist.append(self.chain['LDA'])
         SCORE_T0 = SCORE_T[yT == self.class_ids[0], :]
         SCORE_T1 = SCORE_T[yT == self.class_ids[1], :]
         self.p0 = norm(np.mean(SCORE_T0, axis=0), np.std(SCORE_T0, axis=0))
