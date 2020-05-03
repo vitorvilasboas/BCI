@@ -14,15 +14,14 @@ def objective(args):
     else: 
         bci.ncomp, nbands, svm_clog = args
         bci.clf = {'model':'SVM', 'kernel':{'kf':'linear'}, 'C':svm_clog}
-        bci.ap = {'option':'sbcsp', 'nbands':nbands}
-    while (bci.tmax - bci.tmin) < 1: bci.tmax += 0.5 # garante janela minima de 1seg
+        bci.ap = {'option':'sbcsp', 'nbands':int(nbands)}
     bci.evaluate()
     # print(args)
     return bci.acc * (-1)
 
 if __name__ == "__main__": 
     ds = 'IV2a' # III3a, III4a, IV2a, IV2b
-    n_iter = 10    
+    n_iter = 500  
     
     overlap = True
     crossval = False
