@@ -14,20 +14,34 @@ def objective(args):
     f_low, f_high, bci.tmin, bci.tmax, ncomp, bci.ap, bci.filt_info, bci.clf = args
     bci.f_low, bci.f_high, bci.ncomp = int(f_low), int(f_high), int(ncomp)
     while (bci.tmax-bci.tmin)<1: bci.tmax+=0.5 # garante janela minima de 1seg
-    # st = time()
     bci.evaluate()
-    # print(time() - st)
     return bci.acc * (-1)
 
 
 if __name__ == "__main__":
     ds = 'IV2a' # III3a, III4a, IV2a, IV2b, Lee19, LINCE
     n_iter = 100
+    scenario = '' # '_s1_cortex' or '_s2_cortex'
+    
+    # fl, fh, tmin, tmax = 0, 50, 0.5, 2.5  # fl,fh=None to option 3      
+    # approach = {'option':'classic'}
+    # approach = {'option':'sbcsp', 'nbands':24} # nbands=None to option 2 ou 3
+    # filtering = {'design':'DFT'}
+    # filtering = {'design':'IIR', 'iir_order': 5}
+    # clf = {'model':'LDA', 'lda_solver':'svd'} 
+    # clf = {'model':'SVM', 'kernel':{'kf':'linear'}, 'C':None}
+    
+    path_to_setup = '../as_results/sbrt20/' + ds + '' + scenario + '/' # PATH TO AUTO SETUP RESULTS AND TRIALS
+    
     crossval = False
     nfolds = 10
     test_perc = 0.1 if crossval else 0.5 
     overlap = True
+    cortex_only = True # used when ds == Lee19 - True to used only cortex channels 
     
+    if not os.path.isdir(path_to_setup): os.makedirs(path_to_setup)
+    
+    prefix, suffix = '', ''
     if ds == 'III3a':
         subjects = ['K3','K6','L1'] 
         classes = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]
@@ -38,11 +52,13 @@ if __name__ == "__main__":
     
     elif ds == 'IV2a':        
         subjects = range(1,10) 
-        classes = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]] 
+        classes = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]
+        prefix = 'A0'
     
     elif ds == 'IV2b': 
         subjects = range(1,10)
         classes = [[1, 2]]
+        prefix = 'B0'
        
     elif ds == 'LINCE':
         subjects = ['CL_LR','CL_LF','TL_S1','TL_S2','WL_S1','WL_S2']
@@ -51,26 +67,24 @@ if __name__ == "__main__":
     elif ds == 'Lee19':
         subjects = range(1, 55) 
         classes = [[1, 2]]
-        cortex_only = True # True if only cortex channels is used
+        prefix = 'S'
+      
+    # subjects = [1] # uncomment to run one subject only
+    # classes = [[1, 2]] # uncomment to run LH x RH classification only
     
-    # header = ['subj', 'A', 'B', 'tmin', 'tmax', 'acc', 'acc2', 'kappa', 'cost', 'fl', 'fh', 'f_type', 'forder', 'ncsp', 'approach', 'nbands', 'clf', 'clf details', 'acc_cla_dft', 
-    #           'acc_cla_iir', 'acc_sb_dft', 'acc_sb_iir', 'kpa_cla_dft', 'kpa_cla_iir', 'kpa_sb_dft', 'kpa_sb_iir', 'cost_cla_dft', 'cost_cla_iir', 'cost_sb_dft', 'cost_sb_iir', 
-    #           'lda_solver', 'knn_metric', 'knn_neig', 'svm_kernel', 'svm_clog', 'dtree_crit', 'mlp_n_hidden', 'mlp_n_neurons', 'mlp_eta', 'mlp_af', 'mlp_solver']
+    ###########################################################################
     
-    header = ['subj', 'A', 'B', 'tmin', 'tmax', 'fl', 'fh', 'ncsp', 'nbands', 'clf', 'clf_details', 'acc', 'cla_dft', 'cla_iir', 'sb_dft', 'sb_iir']
-    df = pd.DataFrame(columns=header)
-    
-    subjects = [1] # uncomment to run one subject only
     for suj in subjects:
-        # path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + '' + 'S' + str(suj) + 'sess2' + '.npy' #> ENTER THE PATH TO DATASET HERE (Lee19 default)
-        path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + '' + 'A0' + str(suj)  + '.npy' #> ENTER THE PATH TO DATASET HERE  
+        sname = prefix + str(suj) + suffix
+        path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + sname  + '.npy' # PATH TO DATASET  
         data, events, info = np.load(path_to_data, allow_pickle=True) # pickle.load(open(path_to_data, 'rb'))
         
+        if ds=='LINCE' and suj == 'CL_LF': classes = [[1, 3]]
         if ds=='Lee19' and cortex_only:
             cortex = [7, 32, 8, 9, 33, 10, 34, 12, 35, 13, 36, 14, 37, 17, 38, 18, 39, 19, 40, 20]
             data = data[cortex]   
             info['eeg_channels'] = len(cortex)
-            info['ch_labels'] = ['FC5', 'FC3', 'FC1', 'FC2', 'FC4', 'FC6', 'C5', 'C3', 'C1', 'Cz', 'C2', 'C4', 'C6', 'CP5', 'CP3', 'CP1', 'CPz', 'CP2', 'CP4', 'CP6']
+            info['ch_labels'] = ['FC5','FC3','FC1','FC2','FC4','FC6','C5','C3','C1','Cz','C2','C4','C6','CP5','CP3','CP1','CPz','CP2','CP4','CP6']
         
         for class_ids in classes:       
             max_knn_neig = int((info['trials_per_class'] * 2) * test_perc)
@@ -124,20 +138,16 @@ if __name__ == "__main__":
                     ])
                 )
               
-            # bci = BCI(data, events, class_ids, overlap, info['fs'], crossval, nfolds, test_perc)
             bci.data, bci.events, bci.class_ids, bci.fs = data, events, class_ids, info['fs']
             bci.overlap, bci.crossval, bci.nfolds, bci.test_perc = overlap, crossval, nfolds, test_perc
+            # bci.f_low, bci.f_high, bci.tmin, bci.tmax, bci.ap, bci.filt_info, bci.clf = fl, fh, tmin, tmax, approach, filtering, clf 
 
-            path_to_trials = './asetup_trials/' + ds + '/'
-            if not os.path.isdir(path_to_trials): os.makedirs(path_to_trials)
-            
-            path_to_trials2 = path_to_trials  + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + \
-                ('_cv' if crossval else '') + '.pkl'
+            path_to_trials = path_to_setup + sname + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
             
             trials = base.Trials()
             try:
                 print('Trying to pickle file')
-                trials = pickle.load(open(path_to_trials2, 'rb'))
+                trials = pickle.load(open(path_to_trials, 'rb'))
             except:
                 print('No trial file at specified path, creating new one')
                 trials = base.Trials()
@@ -147,19 +157,41 @@ if __name__ == "__main__":
             try:
                 print('Size of object: ' + str(len(trials)))
                 best = fmin(objective, space=space, algo=tpe.suggest, max_evals=len(trials) + n_iter, trials=trials, verbose=1)
-                # pickle.dump(trials, open(path_to_trials2, 'wb'))
+                # pickle.dump(trials, open(path_to_trials, 'wb'))
                 print(suj, class_ids, best)
             except:
                 print('Exception raised')
-                # pickle.dump(trials, open(path_to_trials2, 'wb'))
+                # pickle.dump(trials, open(path_to_trials, 'wb'))
                 print('\n', suj, class_ids, trials.best_trial['misc']['vals'])
                 raise
             
+    ###########################################################################
+    # header = ['subj', 'A', 'B', 'tmin', 'tmax', 'acc', 'acc2', 'kappa', 'cost', 'fl', 'fh', 'f_type', 'forder', 'ncsp', 'approach', 'nbands', 'clf', 'clf details', 'acc_cla_dft', 
+    #           'acc_cla_iir', 'acc_sb_dft', 'acc_sb_iir', 'kpa_cla_dft', 'kpa_cla_iir', 'kpa_sb_dft', 'kpa_sb_iir', 'cost_cla_dft', 'cost_cla_iir', 'cost_sb_dft', 'cost_sb_iir', 
+    #           'lda_solver', 'knn_metric', 'knn_neig', 'svm_kernel', 'svm_clog', 'dtree_crit', 'mlp_n_hidden', 'mlp_n_neurons', 'mlp_eta', 'mlp_af', 'mlp_solver']
+    
+    header = ['subj', 'A', 'B', 'tmin', 'tmax', 'fl', 'fh', 'ncsp', 'nbands', 'clf', 'clf_details', 'acc', 'cla_dft', 'cla_iir', 'sb_dft', 'sb_iir']
+    df = pd.DataFrame(columns=header)
+    
+    for suj in subjects:
+        sname = prefix + str(suj) + suffix
+        path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + sname  + '.npy' # PATH TO DATASET  
+        data, events, info = np.load(path_to_data, allow_pickle=True) # pickle.load(open(path_to_data, 'rb'))
+        
+        if ds=='LINCE' and suj == 'CL_LF': classes = [[1, 3]]
+        if ds=='Lee19' and cortex_only:
+            cortex = [7, 32, 8, 9, 33, 10, 34, 12, 35, 13, 36, 14, 37, 17, 38, 18, 39, 19, 40, 20]
+            data = data[cortex]   
+            info['eeg_channels'] = len(cortex)
+            info['ch_labels'] = ['FC5','FC3','FC1','FC2','FC4','FC6','C5','C3','C1','Cz','C2','C4','C6','CP5','CP3','CP1','CPz','CP2','CP4','CP6']
+        
+        for class_ids in classes:
+            path_to_trials = path_to_setup + sname + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
+            trials = pickle.load(open(path_to_trials, 'rb'))
             acc = (-1) * trials.best_trial['result']['loss']
             # print(suj, class_ids, str(round(acc*100,2))+'%')
-            
             best = trials.best_trial['misc']['vals']
-                     
+            
             fl = int(best['fl'][0])
             fh = int(best['fh'][0])                       
             ncsp = int(best['ncomp'][0])
@@ -174,7 +206,6 @@ if __name__ == "__main__":
                       
             clf_type, clf_details = '', ''
             lda_solver = knn_metric = knn_neig = svm_kernel = svm_clog = mlp_n_hidden = mlp_n_neurons = mlp_eta = mlp_af = mlp_solver = dtree_crit = None
-            
             
             if best['clf'][0] == 0: 
                 clf_type += 'Bayes'
@@ -280,5 +311,6 @@ if __name__ == "__main__":
             #                    lda_solver , knn_metric, knn_neig, svm_kernel, svm_clog, dtree_crit, mlp_n_hidden, mlp_n_neurons, mlp_eta, mlp_af, mlp_solver]   
             df.loc[len(df)] = [suj, class_ids[0], class_ids[1], tmin, tmax, fl, fh, ncsp, nbands, clf_type, clf, acc, acc_cla_dft, acc_cla_iir, acc_sb_dft, acc_sb_iir] #clf_details
           
-    # pd.to_pickle(df, path_to_trials + 'results_' + ds + '.pkl')
+    pd.to_pickle(df, path_to_setup + 'RESULTS.pkl')
+                 
     # del globals()['events'] del globals()['data'] del globals()['best'] del globals()['trials'] del globals()['space']
