@@ -4,8 +4,7 @@
 *.pyc
 .idea/
 lab/
-figures/
-asetup_trials/
+as_results/
 overmind/userdata/
 overmind/build/
 overmind/dist/
