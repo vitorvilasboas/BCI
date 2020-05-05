@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # @author: Vitor Vilas Boas
+import os
 import numpy as np
 import pandas as pd
 from time import time
@@ -8,7 +9,7 @@ from scripts.bci_utils import BCI
 
 bci = BCI()
 def objective(args):
-    # print(args)
+    print(args)
     if bci.ap['option'] == 'classic': bci.ncomp = args
     else:
         # bci.ncomp, bci.clf['C'] = args # option 1
@@ -18,14 +19,19 @@ def objective(args):
     return bci.acc * (-1)
 
 if __name__ == "__main__": 
-    ds = 'IV2a' # III3a, III4a, IV2a, IV2b
-    n_iter = 1000  
-    
+    ds = 'III4a' # III3a, III4a, IV2a, IV2b
+    scenario = 'free' # 'classic_8-30Hz' or 'sbcsp_8-30Hz_9sb' or 'sbcsp_0-50Hz_9sb' or 'sbcsp_0-50Hz_24sb' or 'free'
+    n_iter = 10 
+     
     overlap = False
     crossval = True
     nfolds = 10 
     test_perc = 0.1 if crossval else 0.5
     
+    path_to_setup = '../asetup_trials/paper_dft_sbcsp/' + ds + '_' + scenario + '/' 
+    if not os.path.isdir(path_to_setup): os.makedirs(path_to_setup)
+
+    prefix, suffix = '', ''
     if ds == 'III3a':
         subjects = ['K3','K6','L1'] 
         classes = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]  
@@ -34,16 +40,19 @@ if __name__ == "__main__":
         classes = [[1, 3]]
     elif ds == 'IV2a':        
         subjects = range(1,10) 
-        classes = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]] 
+        classes = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]
+        prefix = 'A0'
     elif ds == 'IV2b': 
         subjects = range(1,10)
         classes = [[1, 2]]
+        prefix = 'B0'
     elif ds == 'LINCE':
         subjects = ['CL_LR','CL_LF','TL_S1','TL_S2','WL_S1','WL_S2']
-        classes = [[1, 2]]
+        classes = [[1, 2]] 
     elif ds == 'Lee19':
         subjects = range(1, 55) 
         classes = [[1, 2]]
+        prefix = 'S'
         cortex_only = True # True if only cortex channels is used
     
     R = pd.DataFrame(columns=['subj', 'A', 'B', 'fl', 'fh', 'tmin', 'tmax', 'nbands', 'ncsp', 'clog', 
@@ -52,10 +61,11 @@ if __name__ == "__main__":
     # subjects = [1] # uncomment to run one subject only
     # classes = [[1, 2]] 
     for suj in subjects:
-        # path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + '' + 'S' + str(suj) + 'sess2' + '.npy' #> ENTER THE PATH TO DATASET HERE 
-        path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + '' + 'A0' + str(suj)  + '.npy' #> ENTER THE PATH TO DATASET HERE  
+        sname = prefix + str(suj) + suffix
+        path_to_data = '/mnt/dados/eeg_data/'+ds+'/npy/'+sname+'.npy' # PATH TO DATASET  
         data, events, info = np.load(path_to_data, allow_pickle=True)
         
+        if ds=='LINCE' and suj == 'CL_LF': classes = [[1, 3]]
         if ds=='Lee19' and cortex_only:
             cortex = [7,32,8,9,33,10,34,12,35,13,36,14,37,17,38,18,39,19,40,20]
             data = data[cortex]   
@@ -89,12 +99,23 @@ if __name__ == "__main__":
                     hp.uniformint('nbands', 2, 50), # option 2 ou 3
                     hp.quniform('svm_clog', -8, 0, 1)
                     )
+                
+            path_to_trials = path_to_setup + sname + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
+            
             trials = base.Trials()
             try:
-                # print('Size of object: ' + str(len(trials)))
+                # print('Trying to pickle file')
+                trials = pickle.load(open(path_to_trials, 'rb'))
+            except:
+                print('No trial file at specified path, creating new one')
+                trials = base.Trials()
+            else: print('File found')
+            
+            try:
+                print('Size of object: ' + str(len(trials)))
                 best = fmin(objective, space=space, algo=tpe.suggest, max_evals=len(trials) + n_iter, trials=trials, verbose=0)
+                pickle.dump(trials, open(path_to_trials, 'wb'))
                 # print(suj, class_ids, best)
-                # pickle.dump(trials, open(path_out, 'wb'))
             except:
                 print('Exception raised')
                 raise
@@ -122,7 +143,5 @@ if __name__ == "__main__":
             R.loc[len(R)] = [suj, class_ids[0], class_ids[1], fl, fh, tmin, tmax, approach['nbands'] if approach['option'] == 'sbcsp' else None, best['ncomp'], 
                              clf['C'] if approach['option'] == 'sbcsp' else None, acc_dft, acc_iir, np.mean(cost_dft), np.mean(cost_iir), kappa_dft, kappa_iir]
     
-    pd.to_pickle(R, '/home/vboas/Desktop/dft_sbcsp/R_' + ds + '_sbcsp_free.pkl') # option 3
-    # pd.to_pickle(R, '/home/vboas/Desktop/dft_sbcsp/R_' + ds + '_' + approach['option'] + '_' + str(fl) + '-' + str(fh) + 'Hz' 
-    #              + (('_' + str(approach['nbands']) + 'sb') if approach['option'] == 'sbcsp' else '') + '.pkl') # option 1 ou 2
+    pd.to_pickle(R, path_to_setup + 'RESULTS.pkl')
     print('Mean:', R['acc_dft'].mean(), R['acc_iir'].mean()) 
