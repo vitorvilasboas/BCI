@@ -7,9 +7,11 @@ import numpy as np
 from time import time
 from scripts.bci_utils import BCI 
 
-# III3a, III4a, IV2a, IV2b, Lee19   ||   'S1', 'A01', 'B01', 'S1sess1', 'S1sess2'
-data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A01.npy', allow_pickle=True)
-class_ids = [1, 2]
+suj = 'aa'
+class_ids = [1, 3]
+ds = 'III4a' # 'III3a', 'III4a', 'IV2a', 'IV2b', 'Lee19'
+prefix = '' # 'S', 'A0', 'B0', 'S1sess1', 'S1sess2'
+data, events, info = np.load('/mnt/dados/eeg_data/' + ds + '/npy/' + prefix + str(suj) + '.npy', allow_pickle=True)
 
 # lee19_cortex = [7, 32, 8, 9, 33, 10, 34, 12, 35, 13, 36, 14, 37, 17, 38, 18, 39, 19, 40, 20]
 # data = data[lee19_cortex]
@@ -19,7 +21,7 @@ nfolds = 10
 test_perc = 0.1 if crossval else 0.5 
 overlap = True
 
-fl, fh, ncsp, tmin, tmax = 0, 40, 8, 0.5, 2.5
+fl, fh, ncsp, tmin, tmax = 0, 40, 4, 0.5, 2.5
 
 # clf = {'model':'Bayes'}
 # clf = {'model':'LDA', 'lda_solver':'svd'} # 'lda_solver': 'svd','lsqr','eigen'

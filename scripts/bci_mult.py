@@ -5,6 +5,7 @@ Created on Wed Apr 29 22:29:45 2020
 @author: vboas
 """
 import numpy as np
+import pandas as pd
 from time import time
 from bci_utils import BCI
 
@@ -35,15 +36,16 @@ if __name__ == "__main__":
         classes = [[1, 2]]
         cortex_only = True # True if only cortex channels is used
     
-    subjects = [1] # uncomment to run one subject only
+    # subjects = [1] # uncomment to run one subject only
     # classes = [[1,2]]
+    RES = pd.DataFrame(columns=['acc','kpa','cost'])
     for suj in subjects:
         # path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + '' + 'S' + str(suj) + 'sess2' + '.npy' #> ENTER THE PATH TO DATASET HERE (Lee19 default)
         path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + '' + 'A0' + str(suj)  + '.npy' #> ENTER THE PATH TO DATASET HERE  
         data, events, info = np.load(path_to_data, allow_pickle=True) # pickle.load(open(path_to_data, 'rb'))
         # data = data[[7, 32, 8, 9, 33, 10, 34, 12, 35, 13, 36, 14, 37, 17, 38, 18, 39, 19, 40, 20]]
         for class_ids in classes:       
-            fl, fh, ncsp, tmin, tmax = 4, 40, 4, 0.5, 2.5
+            fl, fh, ncsp, tmin, tmax = 0, 50, 8, 0.5, 2.5
 
             # clf = {'model':'Bayes'}
             # clf = {'model':'LDA', 'lda_solver':'svd'} # 'lda_solver': 'svd','lsqr','eigen'
@@ -53,7 +55,7 @@ if __name__ == "__main__":
             # clf = {'model':'DTree', 'crit':'gini'} # 'crit': 'entropy' or 'gini'
             
             # approach = {'option':'classic'}
-            approach = {'option':'sbcsp','nbands':9}
+            approach = {'option':'sbcsp','nbands':10}
             
             filtering = {'design':'DFT'}
             # filtering = {'design':'IIR', 'iir_order':5}
@@ -65,5 +67,9 @@ if __name__ == "__main__":
             bci.evaluate()
             cost = time() - st
             
-            print(str(round(bci.acc*100,2))+'%', str(round(bci.kappa,3)), str(round(cost, 2))+'s')
-            if crossval: print(bci.cross_scores)
+            # print(str(round(bci.acc*100,2))+'%', str(round(bci.kappa,3)), str(round(cost, 2))+'s')
+            # if crossval: print(bci.cross_scores)
+            
+            RES.loc[len(RES)] = [bci.acc, bci.kappa, cost]
+            
+    print(RES.mean())

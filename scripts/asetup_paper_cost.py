@@ -8,23 +8,21 @@ from scripts.bci_utils import BCI
 
 bci = BCI()
 def objective(args):
-    if bci.ap['option'] == 'classic': 
-        bci.ncomp = args
-        bci.clf = {'model':'LDA', 'lda_solver':'svd'}
-    else: 
-        bci.ncomp, nbands, svm_clog = args
-        bci.clf = {'model':'SVM', 'kernel':{'kf':'linear'}, 'C':svm_clog}
-        bci.ap = {'option':'sbcsp', 'nbands':int(nbands)}
-    bci.evaluate()
     # print(args)
+    if bci.ap['option'] == 'classic': bci.ncomp = args
+    else:
+        # bci.ncomp, bci.clf['C'] = args # option 1
+        # bci.ncomp, bci.ap['nbands'], bci.clf['C'] = args # option 2
+        bci.f_low, bci.f_high, bci.ncomp, bci.ap['nbands'], bci.clf['C'] = args # option 3
+    bci.evaluate()
     return bci.acc * (-1)
 
 if __name__ == "__main__": 
     ds = 'IV2a' # III3a, III4a, IV2a, IV2b
-    n_iter = 500  
+    n_iter = 1000  
     
-    overlap = True
-    crossval = False
+    overlap = False
+    crossval = True
     nfolds = 10 
     test_perc = 0.1 if crossval else 0.5
     
@@ -48,10 +46,10 @@ if __name__ == "__main__":
         classes = [[1, 2]]
         cortex_only = True # True if only cortex channels is used
     
-    R = pd.DataFrame(columns=['subj', 'A', 'B', 'fl', 'fh', 'tmin', 'tmax', 'ncsp', 'nbands', 'clog', 
+    R = pd.DataFrame(columns=['subj', 'A', 'B', 'fl', 'fh', 'tmin', 'tmax', 'nbands', 'ncsp', 'clog', 
                               'acc_dft', 'acc_iir', 'cost_dft', 'cost_iir', 'kpa_dft', 'kpa_iir'])
 
-    subjects = [1] # uncomment to run one subject only
+    # subjects = [1] # uncomment to run one subject only
     # classes = [[1, 2]] 
     for suj in subjects:
         # path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + '' + 'S' + str(suj) + 'sess2' + '.npy' #> ENTER THE PATH TO DATASET HERE 
@@ -65,10 +63,10 @@ if __name__ == "__main__":
             info['ch_labels'] = ['FC5', 'FC3', 'FC1', 'FC2', 'FC4', 'FC6', 'C5', 'C3', 'C1', 'Cz', 'C2', 'C4', 'C6', 'CP5', 'CP3', 'CP1', 'CPz', 'CP2', 'CP4', 'CP6']
         
         for class_ids in classes:
-            fl, fh, tmin, tmax = 0, 40, 0.5, 2.5
+            fl, fh, tmin, tmax = None, None, 0.5, 2.5  # fl,fh=None to option 3
             
             # approach = {'option':'classic'}
-            approach = {'option':'sbcsp', 'nbands':None}
+            approach = {'option':'sbcsp', 'nbands':None} # nbands=None to option 2 ou 3
             
             filtering = {'design':'DFT'}
             # filtering = {'design':'IIR', 'iir_order': 5}
@@ -85,8 +83,10 @@ if __name__ == "__main__":
                 space = (hp.quniform('ncomp', 2, info['eeg_channels'], 2))
             else:
                 space = (
+                    hp.uniformint('fl', 0, 20), # option 3
+                    hp.uniformint('fh', 30, 49), # option 3
                     hp.quniform('ncomp', 2, info['eeg_channels'], 2),
-                    hp.uniformint('nbands', 2, 40), 
+                    hp.uniformint('nbands', 2, 50), # option 2 ou 3
                     hp.quniform('svm_clog', -8, 0, 1)
                     )
             trials = base.Trials()
@@ -99,11 +99,12 @@ if __name__ == "__main__":
                 print('Exception raised')
                 raise
             
+            if clf['model'] == 'SVM': clf['C'] = best['svm_clog']
+            if approach['option'] == 'sbcsp': approach['nbands'] = best['nbands'] # option 2 ou 3
+            fl, fh = best['fl'], best['fh'] # option 3
+            
             cost_dft, cost_iir = [], []
             for i in range(10):
-                if clf['model'] == 'SVM': clf['C'] = best['svm_clog']
-                if approach['option'] == 'sbcsp': approach['nbands'] = best['nbands']
-
                 bci_dft = BCI(data, events, class_ids=class_ids, fs=info['fs'], overlap=overlap, crossval=crossval, nfolds=nfolds, test_perc=test_perc, 
                               f_low=fl, f_high=fh, tmin=tmin, tmax=tmax, ncomp=best['ncomp'], ap=approach, filt_info={'design':'DFT'}, clf=clf)
                 st = time()
@@ -118,8 +119,10 @@ if __name__ == "__main__":
                 cost_iir.append(round(time()-st,4))
                 acc_iir, kappa_iir = bci_iir.acc, bci_iir.kappa
             
-            R.loc[len(R)] = [suj, class_ids[0], class_ids[1], fl, fh, tmin, tmax, best['ncomp'], best['nbands'] if approach['option'] == 'sbcsp' else 1, 
-                             best['svm_clog'] if approach['option'] == 'sbcsp' else None, acc_dft, acc_iir, np.mean(cost_dft), np.mean(cost_iir), kappa_dft, kappa_iir]
+            R.loc[len(R)] = [suj, class_ids[0], class_ids[1], fl, fh, tmin, tmax, approach['nbands'] if approach['option'] == 'sbcsp' else None, best['ncomp'], 
+                             clf['C'] if approach['option'] == 'sbcsp' else None, acc_dft, acc_iir, np.mean(cost_dft), np.mean(cost_iir), kappa_dft, kappa_iir]
     
-    pd.to_pickle(R, '/home/vboas/Desktop/dft_sbcsp/R_' + ds + '_' + approach['option'] + '_' + str(fl) + '-' + str(fh) + 'Hz.pkl')        
-    print('Mean:', R['acc_dft'].mean(), R['acc_iir'].mean())   
+    pd.to_pickle(R, '/home/vboas/Desktop/dft_sbcsp/R_' + ds + '_sbcsp_free.pkl') # option 3
+    # pd.to_pickle(R, '/home/vboas/Desktop/dft_sbcsp/R_' + ds + '_' + approach['option'] + '_' + str(fl) + '-' + str(fh) + 'Hz' 
+    #              + (('_' + str(approach['nbands']) + 'sb') if approach['option'] == 'sbcsp' else '') + '.pkl') # option 1 ou 2
+    print('Mean:', R['acc_dft'].mean(), R['acc_iir'].mean()) 

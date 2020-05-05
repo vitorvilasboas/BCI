@@ -113,7 +113,7 @@ if DFT:
     q = smax - smin
     rf = Fs/q # resolução frequência
     m = round( (f_high - f_low) / rf ) # num bins
-    size_freq = round(2/rf) # num posiçoes vetor resultante FFT equivalente cada frequencia absoluta 
+    size_freq = 2/rf # num posiçoes vetor resultante FFT equivalente cada frequencia absoluta 
     # 2 = sen e cos, componente complexo FFT separados e intercalados
     
     ZTF = fft(ZT)[:,:,:m]

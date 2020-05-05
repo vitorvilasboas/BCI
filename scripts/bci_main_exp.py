@@ -19,7 +19,7 @@ from sklearn.metrics import cohen_kappa_score
 from bci_utils import BCI
 
 
-ds = 'IV2a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TW
+ds = 'III4a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TW
 
 ## >>> ENTER THE PATH TO THE DATASET HERE
 path = '/mnt/dados/eeg_data/' + ds + '/npy/' + ('S' if ds=='Lee19' else 'A0' if ds=='IV2a' else 'B0' if ds=='IV2b' else '') 
@@ -38,19 +38,19 @@ overlap = True
 nfolds = 10
 test_perc = 0.1 if crossval else 0.5
 
-suj = 2
+suj = 'aa'
 
-f_low, f_high, ncomp, tmin, tmax = 12, 42, 8, 0, 4. 
+f_low, f_high, ncomp, tmin, tmax = 0, 40, 4, 0.5, 2.5 
             
 # clf = {'model':'Bayes'}
-clf = {'model':'LDA', 'lda_solver':'eigen'} # 'lda_solver': 'svd','lsqr','eigen'
+# clf = {'model':'LDA', 'lda_solver':'eigen'} # 'lda_solver': 'svd','lsqr','eigen'
 # clf = {'model':'KNN', 'metric':'minkowski', 'neig':58} # 'metric': 'euclidean','manhattan','minkowski','chebyshev'
-# clf = {'model':'SVM', 'kernel':{'kf':'linear'}, 'C':-4} # 'kernel': 'linear', 'poly', 'sigmoid', 'rbf'
+clf = {'model':'SVM', 'kernel':{'kf':'linear'}, 'C':-4} # 'kernel': 'linear', 'poly', 'sigmoid', 'rbf'
 # clf = {'model':'MLP', 'eta':-3, 'activ':{'af':'relu'}, 'n_neurons':200, 'n_hidden':1, 'mlp_solver':'adam'} # 'alpha':-7,  'mlp_solver':'adam', 'lbfgs', 'sgd' # 'af':'identity', 'logistic', 'tanh', 'relu'
 # clf = {'model':'DTree', 'crit':'entropy'} # 'crit': 'entropy' or 'gini'
 
 # approach = {'option':'classic'}
-approach = {'option':'sbcsp', 'nbands':14}
+approach = {'option':'sbcsp', 'nbands':9}
 
 filtering = {'design':'DFT'}
 # filtering = {'design':'IIR', 'iir_order':5}
@@ -73,7 +73,8 @@ if ds=='Lee19' and cortex_only:
 
 
 #%% USE bci_utils PROCESSING
-# bci = BCI(data, events, class_ids, overlap, fs, crossval, nfolds, test_perc, f_low, f_high, tmin, tmax, ncomp, approach, filtering, clf)
+# bci = BCI(data=data, events=events, class_ids=class_ids, fs=info['fs'], overlap=overlap, crossval=crossval, nfolds=nfolds, test_perc=test_perc,
+#           f_low=f_low, f_high=f_high, tmin=tmin, tmax=tmax, ncomp=ncomp, ap=approach, filt_info=filtering, clf=clf)
 # st = time()
 # bci.evaluate()
 # cost = time() - st
@@ -87,7 +88,7 @@ smax = math.floor(tmax * fs)
 buffer_len = smax - smin
 
 dft_rf = fs/buffer_len # resolução em frequência fft
-dft_size_band = round(2/dft_rf) # 2 representa sen e cos que foram separados do componente complexo da fft intercalados     
+dft_size_band = 2/dft_rf # 2 representa sen e cos que foram separados do componente complexo da fft intercalados     
 
 epochs, labels = extractEpochs(data, events, smin, smax, class_ids)
 epochs = nanCleaner(epochs)
@@ -97,7 +98,7 @@ epochs = nanCleaner(epochs)
     # epochs, labels = epochs[:int(len(epochs)/2)], labels[:int(len(labels)/2)] # Lee19 somente sessão 1
     # epochs, labels = epochs[int(len(epochs)/2):], labels[int(len(labels)/2):] # Lee19 somente sessão 2
 
-filt = Filter(f_low, f_high, buffer_len, fs, filtering)
+filt = Filter(f_low, f_high, fs, filtering)
 
 csp = CSP(n_components=ncomp)
 
@@ -194,7 +195,7 @@ if crossval:
                     
             elif filtering['design'] in ['IIR' or 'FIR']:
                 for i in range(nbands):
-                    filt_sb = Filter(sub_bands[i][0], sub_bands[i][1], len(XT[0,0,:]), fs, filtering)
+                    filt_sb = Filter(sub_bands[i][0], sub_bands[i][1], fs, filtering)
                     XTF.append(filt_sb.apply_filter(XT))
                     XVF.append(filt_sb.apply_filter(XV))
             
@@ -320,7 +321,7 @@ else: # not crossval
 
         elif filtering['design'] in ['IIR' or 'FIR']:
             for i in range(nbands):
-                filt_sb = Filter(sub_bands[i][0], sub_bands[i][1], len(XT[0,0,:]), fs, filtering)
+                filt_sb = Filter(sub_bands[i][0], sub_bands[i][1], fs, filtering)
                 XTF.append(filt_sb.apply_filter(XT))
                 XVF.append(filt_sb.apply_filter(XV))
         

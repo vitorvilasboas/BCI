@@ -113,7 +113,7 @@ nbands = len(sub_bands)
 if DFT:
     buffer_len = smax - smin
     dft_res_freq = Fs/buffer_len # resolução em frequência fft
-    dft_size_band = round(2/dft_res_freq) # 2 representa sen e cos que foram separados do componente complexo da fft intercalados
+    dft_size_band = 2/dft_res_freq # 2 representa sen e cos que foram separados do componente complexo da fft intercalados
     
     data_out = fft(ZT)
     REAL = np.transpose(np.real(data_out), (2, 0, 1))

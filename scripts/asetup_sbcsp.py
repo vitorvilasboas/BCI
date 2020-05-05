@@ -8,9 +8,7 @@ from scripts.bci_utils import BCI
 
 bci = BCI(None, None)
 def objective(args):
-    bci.f_low, bci.f_high, bci.tmin, bci.tmax, bci.ncomp, nbands, svm_clog = args
-    bci.clf = {'model':'SVM', 'kernel':{'kf':'linear'}, 'C':svm_clog}
-    bci.ap = {'option':'sbcsp', 'nbands':nbands}
+    bci.f_low, bci.f_high, bci.tmin, bci.tmax, bci.ncomp, bci.ap['nbands'], bci.clf['C'] = args
     while (bci.tmax - bci.tmin) < 1: bci.tmax += 0.5 # garante janela minima de 1seg
     bci.evaluate()
     print(args)
@@ -90,11 +88,11 @@ if __name__ == "__main__":
                 print('Exception raised')
                 raise
             
+            clf['C'] = best['svm_clog']
+            approach['nbands'] = best['nbands']
+            
             cost_dft, cost_iir = [], []
             for i in range(10):
-                clf['C'] = best['svm_clog']
-                approach['nbands'] = best['nbands']
-
                 bci_dft = BCI(data, events, class_ids=class_ids, fs=info['fs'], overlap=overlap, crossval=crossval, nfolds=nfolds, test_perc=test_perc, 
                               f_low=best['fl'], f_high=best['fh'], tmin=best['tmin'], tmax=best['tmax'], 
                               ncomp=best['ncomp'], ap=approach, filt_info={'design':'DFT'}, clf=clf)

@@ -544,10 +544,12 @@ class BCI():
         
         smin = math.floor(self.tmin * self.fs)
         smax = math.floor(self.tmax * self.fs)
+        # print(smax-smin)
         self.res_freq = self.fs/(smax-smin) # rf=Fs/Q
         self.dft_size = 2/self.res_freq # 2=sen/cos complexo fft
         self.epochs, self.labels = extractEpochs(self.data, self.events, smin, smax, self.class_ids)
         self.epochs = nanCleaner(self.epochs)
+        # print(self.epochs.shape)
         # self.epochs = np.asarray([ nanCleaner(ep) for ep in self.epochs ])
         # self.epochs, self.labels = self.epochs[:int(len(self.epochs)/2)], self.labels[:int(len(self.labels)/2)] # Lee19 session 1 only
         # self.epochs, self.labels = self.epochs[int(len(self.epochs)/2):], self.labels[int(len(self.labels)/2):] # Lee19 session 2 only
@@ -560,6 +562,7 @@ class BCI():
             # self.cross_scores = cross_val_score(self.chain, XF, self.labels, cv=kf)
             for idx_treino, idx_teste in kf.split(self.epochs, self.labels):
                 XT, XV, yT, yV = self.epochs[idx_treino], self.epochs[idx_teste], self.labels[idx_treino], self.labels[idx_teste]
+                # print(np.asarray(XT).shape, np.asarray(XV).shape)
                 acc_fold, kappa_fold = self.classic_approach(XT, XV, yT, yV) if (self.ap['option'] == 'classic') else self.sbcsp_approach(XT, XV, yT, yV)     
                 self.cross_scores.append(acc_fold) # self.cross_scores.append(self.chain.score(XV, yV))
                 self.cross_kappa.append(kappa_fold)
@@ -572,12 +575,12 @@ class BCI():
             epochsV, labelsV = self.epochs[train_size:], self.labels[train_size:]
             XT = [ epochsT[np.where(labelsT == i)] for i in self.class_ids ] # Extrair épocas de cada classe
             XV = [ epochsV[np.where(labelsV == i)] for i in self.class_ids ]
+            # print(np.asarray(XT).shape, np.asarray(XV).shape)
             XT = np.concatenate([XT[0],XT[1]]) # Train data classes A + B
             XV = np.concatenate([XV[0],XV[1]]) # Test data classes A + B        
             yT = np.concatenate([self.class_ids[0] * np.ones(int(len(XT)/2)), self.class_ids[1] * np.ones(int(len(XT)/2))])
             yV = np.concatenate([self.class_ids[0] * np.ones(int(len(XV)/2)), self.class_ids[1] * np.ones(int(len(XV)/2))])
             self.acc, self.kappa = self.classic_approach(XT, XV, yT, yV) if (self.ap['option'] == 'classic') else self.sbcsp_approach(XT, XV, yT, yV)
-                     
     
     def classic_approach(self, XT, XV, yT, yV):
         self.filt = Filter(self.f_low, self.f_high, self.fs, self.filt_info)
@@ -613,10 +616,16 @@ class BCI():
     def sbcsp_approach(self, XT, XV, yT, yV):
         nbands = int(self.ap['nbands'])
         # if nbands > (self.f_high - self.f_low): nbands = (self.f_high - self.f_low)
+        # print(nbands)
+        
         n_bins = self.f_high - self.f_low
-        overlap = 0.5 if self.overlap else 1
-        step = n_bins / (nbands+1)
-        size = step / overlap        
+        # overlap =  if self.overlap else 1
+        if self.overlap: 
+            step = n_bins/(nbands+1)
+            size = step/0.5 # overlap=0.5
+        else:
+            step = n_bins/nbands
+            size = step
         
         sub_bands, bins = [], []        
         for i in range(nbands):
@@ -642,7 +651,6 @@ class BCI():
             # print(bins)
         elif self.filt_info['design'] in ['IIR' or 'FIR']:
             for i in range(nbands):
-                if fl_sb == 0: fl_sb = 0.001
                 filt = Filter(sub_bands[i][0], sub_bands[i][1], self.fs, self.filt_info)
                 XTF.append(filt.apply_filter(XT))
                 XVF.append(filt.apply_filter(XV))
