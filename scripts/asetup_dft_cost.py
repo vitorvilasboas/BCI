@@ -119,7 +119,7 @@ if __name__ == "__main__":
                 # print(suj, class_ids, best)
             except:
                 print('Exception raised')
-                pickle.dump(trials, open(path_to_trials2, 'wb'))
+                pickle.dump(trials, open(path_to_trials, 'wb'))
                 raise
     
     
