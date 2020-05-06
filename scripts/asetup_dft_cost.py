@@ -13,21 +13,21 @@ def objective(args):
     print(args)
     if bci.ap['option'] == 'classic': bci.ncomp = args
     else:
-        bci.ncomp, bci.clf['C'] = args # option 1
+        # bci.ncomp, bci.clf['C'] = args # option 1
         # bci.ncomp, bci.ap['nbands'], bci.clf['C'] = args # option 2
-        # bci.f_low, bci.f_high, bci.ncomp, bci.ap['nbands'], bci.clf['C'] = args # option 3
+        bci.f_low, bci.f_high, bci.ncomp, bci.ap['nbands'], bci.clf['C'] = args # option 3
     bci.evaluate()
     return bci.acc * (-1)
 
 if __name__ == "__main__": 
     ds = 'III4a' # III3a, III4a, IV2a, IV2b, LINCE, Lee19
-    scenario = 'sbcsp_0-50Hz_24sb' # 'classic_8-30Hz' or 'sbcsp_8-30Hz_9sb' or 'sbcsp_0-50Hz_9sb' or 'sbcsp_0-50Hz_24sb' or 'sbcsp_free'
-    n_iter = 200
+    scenario = 'sbcsp_free' # 'classic_8-30Hz' or 'sbcsp_8-30Hz_9sb' or 'sbcsp_0-50Hz_9sb' or 'sbcsp_0-50Hz_24sb' or 'sbcsp_free'
+    n_iter = 500
     
-    fl, fh, tmin, tmax = 0, 50, 0.5, 2.5  # fl,fh=None to option 3
+    fl, fh, tmin, tmax = None,None, 0.5, 2.5  # fl,fh=None to option 3
             
     # approach = {'option':'classic'}
-    approach = {'option':'sbcsp', 'nbands':24} # nbands=None to option 2 ou 3
+    approach = {'option':'sbcsp', 'nbands':None} # nbands=None to option 2 ou 3
     
     filtering = {'design':'DFT'}
     # filtering = {'design':'IIR', 'iir_order': 5}
@@ -90,13 +90,13 @@ if __name__ == "__main__":
             bci.f_low, bci.f_high, bci.tmin, bci.tmax, bci.ap, bci.filt_info, bci.clf = fl, fh, tmin, tmax, approach, filtering, clf 
             
             if approach['option'] == 'classic':
-                space = (hp.quniform('ncomp', 2, info['eeg_channels'], 2))
+                space = (hp.quniform('ncomp', 2, info['eeg_channels']-58, 2))
             else:
                 space = (
-                    # hp.uniformint('fl', 0, 20), # option 3
-                    # hp.uniformint('fh', 30, 49), # option 3
+                    hp.uniformint('fl', 0, 20), # option 3
+                    hp.uniformint('fh', 30, 49), # option 3
                     hp.quniform('ncomp', 2, info['eeg_channels']-58, 2),
-                    # hp.uniformint('nbands', 2, 50), # option 2 ou 3
+                    hp.uniformint('nbands', 2, 50), # option 2 ou 3
                     hp.quniform('svm_clog', -8, 0, 1)
                     )
                 
@@ -144,8 +144,8 @@ if __name__ == "__main__":
             
             ncsp = best['ncomp'][0]
             if clf['model'] == 'SVM': clf['C'] = best['svm_clog'][0]
-            # if approach['option'] == 'sbcsp': approach['nbands'] = best['nbands'][0] # option 2 ou 3
-            # fl, fh = best['fl'][0], best['fh'][0] # option 3
+            if approach['option'] == 'sbcsp': approach['nbands'] = best['nbands'][0] # option 2 ou 3
+            fl, fh = best['fl'][0], best['fh'][0] # option 3
             
             cost_dft, cost_iir = [], []
             for i in range(10):
