@@ -21,13 +21,13 @@ def objective(args):
 
 if __name__ == "__main__": 
     ds = 'III4a' # III3a, III4a, IV2a, IV2b, LINCE, Lee19
-    scenario = 'sbcsp_0-50Hz_9sb' # 'classic_8-30Hz' or 'sbcsp_8-30Hz_9sb' or 'sbcsp_0-50Hz_9sb' or 'sbcsp_0-50Hz_24sb' or 'sbcsp_free'
-    n_iter = 10
+    scenario = 'sbcsp_8-30Hz_9sb' # 'classic_8-30Hz' or 'sbcsp_8-30Hz_9sb' or 'sbcsp_0-50Hz_9sb' or 'sbcsp_0-50Hz_24sb' or 'sbcsp_free'
+    n_iter = 200
     
-    fl, fh, tmin, tmax = 0, 50, 0.5, 2.5  # fl,fh=None to option 3
+    fl, fh, tmin, tmax = 8, 30, 0.5, 2.5  # fl,fh=None to option 3
             
     # approach = {'option':'classic'}
-    approach = {'option':'sbcsp', 'nbands':24} # nbands=None to option 2 ou 3
+    approach = {'option':'sbcsp', 'nbands':9} # nbands=None to option 2 ou 3
     
     filtering = {'design':'DFT'}
     # filtering = {'design':'IIR', 'iir_order': 5}
@@ -118,6 +118,7 @@ if __name__ == "__main__":
                 # print(suj, class_ids, best)
             except:
                 print('Exception raised')
+                pickle.dump(trials, open(path_to_trials2, 'wb'))
                 raise
     
     

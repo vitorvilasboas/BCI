@@ -19,7 +19,7 @@ def objective(args):
 
 
 if __name__ == "__main__":
-    ds = 'IV2a' # III3a, III4a, IV2a, IV2b, Lee19, LINCE
+    ds = 'IV2a' # III3a, III4a, IV2a, IV2b, LINCE, Lee19
     n_iter = 100
     scenario = '' # '_s1_cortex' or '_s2_cortex'
     
@@ -33,10 +33,10 @@ if __name__ == "__main__":
     
     path_to_setup = '../as_results/sbrt20/' + ds + '' + scenario + '/' # PATH TO AUTO SETUP RESULTS AND TRIALS
     
+    overlap = True
     crossval = False
     nfolds = 10
     test_perc = 0.1 if crossval else 0.5 
-    overlap = True
     cortex_only = True # used when ds == Lee19 - True to used only cortex channels 
     
     if not os.path.isdir(path_to_setup): os.makedirs(path_to_setup)
