@@ -8,44 +8,42 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
 
+ds = 'IV2a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TW 
+scenario = '' # '_s1_cortex' or '_s2_cortex'
+cortex_only = True # used when ds == Lee19 - True to used only cortex channels
+
+path_to_fig = '../as_results/sbrt20/' + ds + scenario + '/fig/' # PATH TO AUTO SETUP RESULTS FIGURES
+if not os.path.isdir(path_to_fig): os.makedirs(path_to_fig)
+
+R = pd.read_pickle('./as_results/sbrt20/' + ds + scenario + '/RESULTS.pkl')  
+# print(ds, R['acc'].mean(), R['acc'].median(), R['acc'].std(), R['acc'].max(), R['acc'].min())
+# print(R[R['classes'] == '1 2'][['subj','acc']])
+
 plt.rcParams.update({'font.size':12})
 cores = ['olive','dimgray','darkorange','firebrick','lime','k','peru','c','purple','m','orange','firebrick','green','gray','hotpink']
 
-ds = 'IV2a' # III3a, III4a, IV2a, IV2b, Lee19, CL, TW 
-
+prefix, suffix = '', ''
 if ds == 'III3a':
     subjects = ['K3','K6','L1'] 
-    classes = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]
-
+    classes = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]  
 elif ds == 'III4a':
     subjects = ['aa','al','av','aw','ay']
     classes = [[1, 3]]
-
 elif ds == 'IV2a':        
     subjects = range(1,10) 
-    classes = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]] 
-
+    classes = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]
+    prefix = 'A0'
 elif ds == 'IV2b': 
     subjects = range(1,10)
     classes = [[1, 2]]
-   
+    prefix = 'B0'
 elif ds == 'LINCE':
     subjects = ['CL_LR','CL_LF','TL_S1','TL_S2','WL_S1','WL_S2']
-    classes = [[1, 2]]
-
+    classes = [[1, 2]] 
 elif ds == 'Lee19':
     subjects = range(1, 55) 
     classes = [[1, 2]]
-    cortex_only = True # True if only cortex channels is used
-
-path_to_figure = './asetup_figures/'
-if not os.path.isdir(path_to_figure): os.makedirs(path_to_figure)
-
-R = pd.read_pickle('./asetup_trials/' + ds + '/results_' + ds + '.pkl')  
-print(ds, R['acc'].mean(), R['acc'].median(), R['acc'].std(), R['acc'].max(), R['acc'].min())
-
-#%%
-#print(S[S['classes'] == '1 2'][['subj','acc']])
+    prefix = 'S'
 
 #%%
 acc_ref = R['sb_iir'] # cla,sb
@@ -84,8 +82,7 @@ plt.xlabel('Acurácia SBCSP (setup fixo)', fontsize=12)
 plt.ylabel('Acurácia Auto Setup', fontsize=12)
 plt.legend(loc='lower right', fontsize=12)
 # plt.grid(True, axis='y')
-# plt.savefig(path_to_figure + ds + '_scatter_as_vs_sbcsp_iir.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
-
+# plt.savefig(path_to_fig + 'scatter_as_vs_sbcsp_iir.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
 
 #%%
 pairs = ['1 2', '1 3', '1 4', '2 3', '2 4', '2 5']
@@ -119,9 +116,8 @@ plt.ylabel('Acurácia (%)', size=14)
 plt.yticks(np.arange(0.7, 1.01, step=0.05))
 plt.ylim((0.68,1.02))
 plt.xlim((0,10))
-# plt.savefig(path_to_figure + ds + '_boxplot_subj_acc_pairs.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
+# plt.savefig(path_to_fig + 'boxplot_subj_acc_pairs.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
     
-
 #%%
 # X = S[['acc', 'cla_dft', 'cla_iir', 'sb_dft', 'sb_iir']]
 X = R[['acc', 'cla_iir', 'sb_iir']]
@@ -137,7 +133,7 @@ plt.xticks([1,2,3],['Auto Setup','CSP-LDA','SBCSP'])
 plt.ylabel('Acurácia (%)', size=14)
 plt.yticks(np.arange(0.50, 1.01, step=0.05))
 plt.ylim((0.48,1.02))
-# plt.savefig(path_to_figure + ds + '_boxplot_all_approaches.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
+# plt.savefig(path_to_fig + 'boxplot_all_approaches.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
     
 #%%
 plt.figure(figsize=(10,7))
@@ -145,7 +141,7 @@ n, bins, _ = plt.hist(R['sb_iir'], bins = 10)
 plt.title('Frequência das acurácias obtidas para cada sujeito e par de classes no conjunto BCI Competition IV 2a com auto-setup ')
 plt.xlabel('Acurácia')
 plt.xlabel('Frequência')
-# plt.savefig(path_to_figure + ds + '_hist_accs_IV2a.pdf', format='pdf', dpi=300, transparent=True, bbox_inches='tight')
+# plt.savefig(path_to_fig + 'hist_accs_IV2a.pdf', format='pdf', dpi=300, transparent=True, bbox_inches='tight')
 
 #%%
 idx_max = []    
@@ -166,7 +162,7 @@ plt.xlim((-20,2020))
 plt.ylim((0,15.5))
 plt.xlabel('Iteração da Máxima Acurácia')
 plt.ylabel('Frequência')
-# plt.savefig(path_to_figure + ds + '_hist_iter_max_acc.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
+# plt.savefig(path_to_fig + 'hist_iter_max_acc.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
 
 #%%
 classifiers = np.unique(R['clf'])
@@ -178,7 +174,7 @@ plt.ylim(0,(np.asarray(y).max()+2))
 plt.yticks(np.arange((np.asarray(y).max()+4), step=4))
 plt.xlabel('Modelo de Classificação')
 plt.ylabel('N. ocorrências auto setup')
-# plt.savefig(path_to_figure + ds + '_bars_clf_events.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
+# plt.savefig(path_to_fig + 'bars_clf_events.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
 
 #%%
 class_ids = [1, 2]
