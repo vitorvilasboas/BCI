@@ -1,22 +1,20 @@
 # -*- coding: utf-8 -*-
 import os
+import math
+import time
 import pickle
 import pyOpenBCI
 import collections
 import numpy as np
-import time
 import pandas as pd
-from datetime import datetime
 from scipy.io import loadmat
-from scipy.signal import welch
-from scripts.bci_utils import extractEpochs, nanCleaner, Filter
 from scipy.linalg import eigh
-import math
+from datetime import datetime
+from scipy.signal import welch
 import matplotlib.pyplot as plt
-from scripts.bci_utils import labeling
+from scripts.bci_utils import extractEpochs, nanCleaner, Filter, labeling
 
-# data, events, info = labeling(path='/mnt/dados/eeg_data/IV2a/', ds='IV2a', 
-#                               session='T', subj=1, channels=None, save=False)
+# data, events, info = labeling(path='/mnt/dados/eeg_data/IV2a/', ds='IV2a', session='T', subj=1, channels=None, save=False)
 data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A01T.npy', allow_pickle=True)
 class_ids = [1,2]
 smin = math.floor(0.5 * info['fs'])

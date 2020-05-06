@@ -50,6 +50,7 @@ if __name__ == "__main__":
         subjects = range(1, 55) 
         classes = [[1, 2]]
         prefix = 'S'
+        suffix = '' # 'sess1' or 'sess2'
         
     R = pd.read_pickle('./as_results/sbrt20/' + ds + scenario + '/RESULTS_1.pkl')  
     # print(ds, R['acc'].mean(), R['acc'].median(), R['acc'].std(), R['acc'].max(), R['acc'].min())

@@ -551,8 +551,6 @@ class BCI():
         self.epochs = nanCleaner(self.epochs)
         # print(self.epochs.shape)
         # self.epochs = np.asarray([ nanCleaner(ep) for ep in self.epochs ])
-        # self.epochs, self.labels = self.epochs[:int(len(self.epochs)/2)], self.labels[:int(len(self.labels)/2)] # Lee19 session 1 only
-        # self.epochs, self.labels = self.epochs[int(len(self.epochs)/2):], self.labels[int(len(self.labels)/2):] # Lee19 session 2 only
         
         if self.crossval:
             self.cross_scores, self.cross_kappa = [], []

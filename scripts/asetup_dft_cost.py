@@ -67,6 +67,7 @@ if __name__ == "__main__":
         subjects = range(1, 55) 
         classes = [[1, 2]]
         prefix = 'S'
+        suffix = '' # 'sess1' or 'sess2'
         
     # subjects = [1] # uncomment to run one subject only
     # classes = [[1, 2]] # uncomment to run LH x RH classification only
