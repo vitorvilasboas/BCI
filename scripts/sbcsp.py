@@ -21,47 +21,29 @@ from sklearn.neighbors import KNeighborsClassifier
 from scipy.signal import lfilter, butter, iirfilter, filtfilt
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 
-#%% SET DATA SET INFO
-''' Value Space::: 
-    IV2a: subjects={1,2,...,9} 
-          class_ids={1,2,3,4} 
-          sessions={'T','E'} 
-          channels=[:22]
-    
-    IV2b: subjects={1,2,...,9} 
-          class_ids={1,2}     
-          sessions={'01T','02T','03T','04E','05E'} 
-          channels=[:3]        
-    
-    III3a: subjects={'K3','K6','L1'}
-           class_ids={1,2,3,4}
-           sessions={None} 
-           channels=[:60]
-           
-    III4a: subjects={'aa','al','av','aw','ay'}; 
-           class_ids={1,3} 
-           sessions={None} 
-           channels=[:118]
-    
-    Lee19: subjects={1,2,...,54} 
-           class_ids={1,2} 
-           sessions={1,2} 
-           channels=[:62] 
-           ch_cortex=[7,32,8,9,33,10,34,12,35,13,36,14,37,17,38,18,39,19,40,20] 
+#%% DATASET AND SCENARIO INFO
+''' III3a: subjects={'K3','K6','L1'}; prefix=''; class_ids={1,2,3,4}; sessions={None}; channels=[:60]     
+    III4a: subjects={'aa','al','av','aw','ay'}; prefix=''; class_ids={1,3}; sessions={None}; channels=[:118]
+    IV2a: subjects={1,2,...,9}; prefix='A0'; class_ids={1,2,3,4} ; sessions={'T','E'} ; channels=[:22]
+    IV2b: subjects={1,2,...,9}; prefix='B0'; class_ids={1,2}; sessions={'01T','02T','03T','04E','05E'}; channels=[:3]        
+    Lee19: subjects={1,2,...,54}; prefix='S'; class_ids={1,2}; sessions={1,2}; channels=[:62]; suffix='sess'; ch_cortex=[7,32,8,9,33,10,34,12,35,13,36,14,37,17,38,18,39,19,40,20] 
 '''
 
-dataset = 'IV2a' #{'IV2a','IV2b','III3a','III4a','Lee19'}      
-path = '/mnt/dados/eeg_data/IV2a/' ## >>> ENTER THE PATH TO THE DATASET HERE
-subject = 1
-channels = None
+ds = 'IV2a' # 'IV2a','IV2b','III3a','III4a','Lee19'      
+path = '/mnt/dados/eeg_data/' + ds + '/' # PATH TO DATASET
+suj = 1
 class_ids = [1, 2]
+sessions = ['T', 'E']
+channels = None
+prefix, suffix = 'A0', ''
 
-d_train, e_train, i_train = labeling(path=path, ds=dataset, session='T', subj=subject, channels=channels, save=False)
-# d_train, e_train, i_train = np.load(path + 'npy/A0' + str(subject) + 'T.npy', allow_pickle=True)
+#%% Load data
+d_train, e_train, i_train = labeling(path=path, ds=ds, session=sessions[0], subj=suj, channels=channels, save=False)
+# d_train, e_train, i_train = np.load(path + 'npy/' + prefix + str(suj) + '' + sessions[0] + '.npy', allow_pickle=True)
 
-if not dataset in ['III3a','III4a']: 
-    d_test, e_test, i_test = labeling(path=path, ds=dataset, session='E', subj=subject, channels=channels, save=False)
-    # d_test, e_test, i_test = np.load(path + 'npy/A0' + str(subject) + 'E.npy', allow_pickle=True)
+if not ds in ['III3a','III4a']: 
+    d_test, e_test, i_test = labeling(path=path, ds=ds, session=sessions[1], subj=suj, channels=channels, save=False)
+    # d_test, e_test, i_test = np.load(path + 'npy/' + prefix + str(suj) + '' + sessions[1] + '.npy', allow_pickle=True)
 
 #%% Segmentation
 # Fs = 250 if dataset in ['IV2a', 'IV2b', 'III3a', 'Lee19'] else 100
@@ -70,7 +52,7 @@ Fs = i_train['fs']
 smin, smax = math.floor(0.5 * Fs), math.floor(2.5 * Fs)
 epochsT, labelsT = extractEpochs(d_train, e_train, smin, smax, class_ids)
 
-if not dataset in ['III3a','III4a']: 
+if not ds in ['III3a','III4a']: 
     epochsV, labelsV = extractEpochs(d_test, e_test, smin, smax, class_ids)
 else: 
     epochs, labels = np.copy(epochsT), np.copy(labelsT)
