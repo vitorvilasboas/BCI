@@ -8,23 +8,23 @@ import warnings
 import itertools
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from time import time, sleep
 from sklearn.svm import SVC
+from time import time, sleep
 from scipy.io import loadmat
 from scipy.stats import norm
 from datetime import datetime
 from scipy.fftpack import fft
 from scipy.linalg import eigh
+import matplotlib.pyplot as plt
 from sklearn.pipeline import Pipeline
-from scipy.signal import lfilter, butter, filtfilt, firwin, iirfilter, decimate, welch
 from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import cohen_kappa_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
-from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit, StratifiedKFold
-from sklearn.metrics import cohen_kappa_score 
+from scipy.signal import lfilter, butter, filtfilt, firwin, iirfilter, decimate, welch
+from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit, StratifiedKFold 
 
 np.seterr(divide='ignore', invalid='ignore')
 warnings.filterwarnings("ignore", category=DeprecationWarning)
