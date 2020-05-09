@@ -16,9 +16,9 @@ def objective(args):
 if __name__ == "__main__":
     ds = 'IV2a' # III3a, III4a, IV2a, IV2b, LINCE, Lee19
     scenario = ''
-    n_iter = 250
+    n_iter = 10
     
-    path_to_setup = './as_results/ncsp_tuning/' + ds + scenario + '/' # PATH TO AUTO SETUP RESULTS AND TRIALS
+    path_to_setup = '../as_results/ncsp_tuning/' + ds + scenario + '/' # PATH TO AUTO SETUP RESULTS AND TRIALS
                 
     overlap = True
     crossval = False
@@ -52,10 +52,10 @@ if __name__ == "__main__":
         prefix = 'S'
         suffix = '' # 'sess1' or 'sess2'
         
-    R = pd.read_pickle('./as_results/sbrt20/' + ds + scenario + '/RESULTS_1.pkl')  
+    R = pd.read_pickle('../as_results/sbrt20/' + ds + scenario + '/RESULTS.pkl')  
     # print(ds, R['acc'].mean(), R['acc'].median(), R['acc'].std(), R['acc'].max(), R['acc'].min())
     
-    # subjects = [1] # uncomment to run one subject only
+    # subjects = [8, 9] # uncomment to run one subject only
     # classes = [[1, 2]] # uncomment to run LH x RH classification only
     
     ###########################################################################
@@ -79,7 +79,8 @@ if __name__ == "__main__":
             
             if int(args['nbands'])==1:
                 df.append([suj, class_ids[0], class_ids[1], int(args['ncsp']), int(args['nbands']), args['acc'][0], args['acc'][0], 
-                           args['tmin'][0], args['tmax'][0], args['fl'][0], args['fh'][0], args['clf'][0], args['clf_details'][0]])
+                            args['tmin'][0], args['tmax'][0], args['fl'][0], args['fh'][0], args['clf'][0], args['clf_details'][0]])
+
             else:
                 desvio = 4 # desvio em torno do ncsp ótimo (deve ser par)
                 min_ncsp = (int(args['ncsp']) - desvio) if (int(args['ncsp']) - desvio) > 2 else 2
@@ -109,7 +110,7 @@ if __name__ == "__main__":
                 
                 try:
                     print('Size of object: ' + str(len(trials)))
-                    best = fmin(bci.objective, space=space, algo=tpe.suggest, max_evals=len(trials) + n_iter, trials=trials, verbose=1)
+                    best = fmin(objective, space=space, algo=tpe.suggest, max_evals=len(trials) + n_iter, trials=trials, verbose=1)
                     pickle.dump(trials, open(path_to_trials, 'wb'))
                     # print(suj, class_ids, best)
                 except:
@@ -124,7 +125,7 @@ if __name__ == "__main__":
                 best = trials.best_trial['misc']['vals']
     
                 df.append(np.r_[[suj, class_ids[0], class_ids[1], int(args['ncsp']), int(args['nbands']), args['acc'][0], acc, 
-                                 args['tmin'][0], args['tmax'][0], args['fl'][0], args['fh'][0], args['clf'][0], args['clf_details'][0]], 
+                                  args['tmin'][0], args['tmax'][0], args['fl'][0], args['fh'][0], args['clf'][0], args['clf_details'][0]], 
                                 [ int(best['csp'+str(i)][0]) for i in range(int(args['nbands']))]])
     
     header = ['subj', 'A', 'B', 'ncsp', 'nbands', 'acc', 'acc_tune', 'tmin', 'tmax', 'fl', 'fh', 'clf', 'clf_details']#, 
@@ -136,7 +137,11 @@ if __name__ == "__main__":
     
     FINAL = pd.DataFrame(df, columns=header+header_tune) 
         
-    pd.to_pickle(FINAL, path_to_trials + 'RESULTS.pkl')
+    pd.to_pickle(FINAL, path_to_setup + 'RESULTS.pkl')
     FINAL.to_csv(path_to_setup + 'RESULTS.csv', index=False)
     # del globals()['events'] del globals()['data'] del globals()['best'] del globals()['trials'] del globals()['space']
     
+    
+    # sbrt = pd.read_pickle("../as_results/sbrt20/IV2a/RESULTS.pkl")
+    # tuned = pd.read_pickle('../as_results/ncsp_tuning/IV2a/RESULTS.pkl')
+    # tuned = pd.read_pickle(path_to_setup + 'RESULTS.pkl')

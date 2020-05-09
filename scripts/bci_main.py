@@ -10,14 +10,14 @@ from time import time
 from scripts.bci_utils import BCI 
 
 if __name__ == "__main__": 
-    ds = 'IV2a' # III3a, III4a, IV2a, IV2b, LINCE, Lee19
+    ds = 'III4a' # III3a, III4a, IV2a, IV2b, LINCE, Lee19
     overlap = True
-    crossval = False
+    crossval = True
     nfolds = 10 
     test_perc = 0.1 if crossval else 0.5
     cortex_only = True # used when ds == Lee19 - True to used only cortex channels
     
-    fl, fh, ncsp, tmin, tmax = 0, 40, 4, 0.5, 2.5
+    fl, fh, ncsp, tmin, tmax = 0, 50, 2, 0.5, 2.5
     
     # clf = {'model':'Bayes'}
     # clf = {'model':'LDA', 'lda_solver':'svd'} # 'lda_solver': 'svd','lsqr','eigen'
@@ -27,10 +27,10 @@ if __name__ == "__main__":
     # clf = {'model':'DTree', 'crit':'gini'} # 'crit': 'entropy' or 'gini'
     
     # approach = {'option':'classic'}
-    approach = {'option':'sbcsp', 'nbands':9}
+    approach = {'option':'sbcsp', 'nbands':24}
     
-    filtering = {'design':'DFT'}
-    # filtering = {'design':'IIR', 'iir_order':5}
+    # filtering = {'design':'DFT'}
+    filtering = {'design':'IIR', 'iir_order':5}
     # filtering = {'design':'FIR', 'fir_order':5} 
     
     prefix, suffix = '', ''
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         prefix = 'S'
         suffix = '' # 'sess1' or 'sess2'
         
-    # subjects = [1] # uncomment to run one subject only
+    subjects = ['aa'] # uncomment to run one subject only
     # classes = [[1, 2]] # uncomment to run LH x RH classification only
     
     R = pd.DataFrame(columns=['acc','kpa','cost'])
