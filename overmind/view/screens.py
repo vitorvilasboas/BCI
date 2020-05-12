@@ -661,6 +661,7 @@ class AcqRun(Screen):
             #Clock.schedule_once(self.set_pause, self.session.acq.cue_offset + self.session.acq.cue_time + self.pause_time)
         else:
             self.stop_run()
+
     def set_start_trial(self, dt):
         self.carousel.index = 0  # original comentado
         self.sm.MarkEvents(0)
