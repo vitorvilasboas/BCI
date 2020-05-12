@@ -315,3 +315,6 @@ if __name__ == "__main__":
     pd.to_pickle(df, path_to_setup + 'RESULTS.pkl')
                  
     # del globals()['events'] del globals()['data'] del globals()['best'] del globals()['trials'] del globals()['space']
+    
+    sbrt = pd.read_pickle("../as_results/sbrt20/IV2a/RESULTS.pkl")
+    tuned = pd.read_pickle('../as_results/ncsp_tuning/IV2a/RESULTS.pkl')

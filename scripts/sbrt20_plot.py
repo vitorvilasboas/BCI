@@ -15,7 +15,7 @@ cortex_only = True # used when ds == Lee19 - True to used only cortex channels
 path_to_fig = '../as_results/sbrt20/' + ds + scenario + '/fig/' # PATH TO AUTO SETUP RESULTS FIGURES
 if not os.path.isdir(path_to_fig): os.makedirs(path_to_fig)
 
-R = pd.read_pickle('./as_results/sbrt20/' + ds + scenario + '/RESULTS.pkl')  
+R = pd.read_pickle('../as_results/sbrt20/' + ds + scenario + '/RESULTS.pkl')  
 # print(ds, R['acc'].mean(), R['acc'].median(), R['acc'].std(), R['acc'].max(), R['acc'].min())
 # print(R[R['classes'] == '1 2'][['subj','acc']])
 
@@ -83,6 +83,28 @@ plt.ylabel('Acurácia Auto Setup', fontsize=12)
 plt.legend(loc='lower right', fontsize=12)
 # plt.grid(True, axis='y')
 # plt.savefig(path_to_fig + 'scatter_as_vs_sbcsp_iir.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
+
+#%%
+acc_as = R['acc']
+plt.figure(3, facecolor='mintcream')
+plt.subplots(figsize=(10, 12), facecolor='mintcream')
+ref = ['cla_iir','sb_iir']
+for i in range(2):
+    acc_ref = R[ref[i]]
+    plt.subplot(2, 1, i+1)
+    plt.scatter(np.asarray(acc_ref).reshape(-1,1), np.asarray(acc_as).reshape(-1,1), facecolors = 'c', marker = 'o', s=50, alpha=.9, edgecolors='firebrick', zorder=3)
+    plt.scatter(round(acc_ref.mean(),2), round(acc_as.mean(),2), facecolors = 'dodgerblue', marker = 'o', s=100, alpha=1, edgecolors='darkblue', label='Acurácia Média', zorder=5)
+    plt.plot(np.linspace(0.30, 1.10, 1000), np.linspace(0.30, 1.10, 1000), color='dimgray', linewidth=1, linestyle='--', zorder=0) #linha pontilhada diagonal - limiar 
+    plt.ylim((0.38, 1.02))
+    plt.xlim((0.38, 1.02))
+    plt.xticks(np.arange(0.40, 1.02, 0.05))
+    plt.yticks(np.arange(0.40, 1.02, 0.05)) 
+    plt.plot(np.ones(1000)*round(acc_ref.mean(),2), np.linspace(0.30, round(acc_as.mean(),2), 1000), color='dimgray', linewidth=.7, linestyle=':', zorder=0) # linha pontilhada verical - acc média auto setup
+    plt.plot(np.linspace(0.30, round(acc_ref.mean(),2), 1000), np.ones(1000)*round(acc_as.mean(),2), color='dimgray', linewidth=.7, linestyle=':', zorder=0) # linha pontilhada horizontal - acc média ref
+    plt.xlabel('Acurácia' + ('CSP-LDA' if i==0 else 'SBCSP' ) + ' (setup fixo)', fontsize=12)
+    plt.ylabel('Acurácia Auto Setup', fontsize=12)
+    plt.legend(loc='lower right', fontsize=12)
+plt.savefig(path_to_fig + 'scatter_y.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
 
 #%%
 pairs = ['1 2', '1 3', '1 4', '2 3', '2 4', '2 5']
