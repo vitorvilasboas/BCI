@@ -25,8 +25,8 @@ epochs = nanCleaner(epochs)
 
 X = [ epochs[np.where(labels == i)] for i in class_ids ]
 
-X1 = X[0]
-X2 = X[1]
+X1 = X[0] # LH
+X2 = X[1] # RH
 
 e, c, s = X1.shape
 R1 = np.zeros((e, c, s))
@@ -36,7 +36,7 @@ for i in range(len(R1)):
     R1[i,:,:] = (X1[i,:,:].T @ D).T
     R2[i,:,:] = (X2[i,:,:].T @ D).T
 
-canal = 14
+canal = 17 # 13=hemisf_esquerdo(RH) ; 17=hemisf_direito(LH)
 
 # y1 =  Y1[:,canal,:]
 # y2 =  Y2[:,canal,:]
@@ -50,14 +50,14 @@ index2 = y2[np.isnan(y2)]
 y1[np.isnan(y1)] = np.zeros(index1.shape)
 y2[np.isnan(y2)] = np.zeros(index2.shape)
 
-freq, p1 = welch(y1, fs=250, nfft=499)
-_, p2 = welch(y2, fs=250, nfft=499)
+freq, p1 = welch(y1, fs=250, nfft=(y1.shape[-1]-1)) # nfft=499 para q=500
+_, p2 = welch(y2, fs=250, nfft=(y2.shape[-1]-1)) 
 
-p1 = np.real(p1)
-p2 = np.real(p2)
+p1r = np.real(p1)
+p2r = np.real(p2)
 
-m1 = np.mean(p1,0)
-m2 = np.mean(p2,0)
+m1 = np.mean(p1r,0)
+m2 = np.mean(p2r,0)
 
 # plt.semilogy(freq, np.mean(p1,0), label='LH')
 # plt.semilogy(freq, np.mean(p2,0), label='RH')

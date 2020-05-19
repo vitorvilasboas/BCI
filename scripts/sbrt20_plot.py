@@ -85,24 +85,24 @@ plt.legend(loc='lower right', fontsize=12)
 # plt.savefig(path_to_fig + 'scatter_as_vs_sbcsp_iir.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
 
 #%%
-acc_as = R['acc']
+acc_as = R['acc']*100
 plt.figure(3, facecolor='mintcream')
 plt.subplots(figsize=(10, 12), facecolor='mintcream')
 ref = ['cla_iir','sb_iir']
 for i in range(2):
-    acc_ref = R[ref[i]]
+    acc_ref = R[ref[i]]*100
     plt.subplot(2, 1, i+1)
     plt.scatter(np.asarray(acc_ref).reshape(-1,1), np.asarray(acc_as).reshape(-1,1), facecolors = 'c', marker = 'o', s=50, alpha=.9, edgecolors='firebrick', zorder=3)
-    plt.scatter(round(acc_ref.mean(),2), round(acc_as.mean(),2), facecolors = 'dodgerblue', marker = 'o', s=100, alpha=1, edgecolors='darkblue', label='Acurácia Média', zorder=5)
-    plt.plot(np.linspace(0.30, 1.10, 1000), np.linspace(0.30, 1.10, 1000), color='dimgray', linewidth=1, linestyle='--', zorder=0) #linha pontilhada diagonal - limiar 
-    plt.ylim((0.38, 1.02))
-    plt.xlim((0.38, 1.02))
-    plt.xticks(np.arange(0.40, 1.02, 0.05))
-    plt.yticks(np.arange(0.40, 1.02, 0.05)) 
-    plt.plot(np.ones(1000)*round(acc_ref.mean(),2), np.linspace(0.30, round(acc_as.mean(),2), 1000), color='dimgray', linewidth=.7, linestyle=':', zorder=0) # linha pontilhada verical - acc média auto setup
-    plt.plot(np.linspace(0.30, round(acc_ref.mean(),2), 1000), np.ones(1000)*round(acc_as.mean(),2), color='dimgray', linewidth=.7, linestyle=':', zorder=0) # linha pontilhada horizontal - acc média ref
-    plt.xlabel('Acurácia' + ('CSP-LDA' if i==0 else 'SBCSP' ) + ' (setup fixo)', fontsize=12)
-    plt.ylabel('Acurácia Auto Setup', fontsize=12)
+    plt.scatter(round(acc_ref.mean(),2), round(acc_as.mean(),2), facecolors = 'dodgerblue', marker = 'o', s=100, alpha=1, edgecolors='darkblue', label=r'Acurácia Média', zorder=5)
+    plt.plot(np.linspace(40, 110, 1000), np.linspace(40, 110, 1000), color='dimgray', linewidth=1, linestyle='--', zorder=0) #linha pontilhada diagonal - limiar 
+    plt.ylim((48, 102))
+    plt.xlim((48, 102))
+    plt.xticks(np.arange(50, 102, 5))
+    plt.yticks(np.arange(50, 102, 5)) 
+    plt.plot(np.ones(1000)*round(acc_ref.mean(),2), np.linspace(40, round(acc_as.mean(),2), 1000), color='dimgray', linewidth=.7, linestyle=':', zorder=0) # linha pontilhada verical - acc média auto setup
+    plt.plot(np.linspace(40, round(acc_ref.mean(),2), 1000), np.ones(1000)*round(acc_as.mean(),2), color='dimgray', linewidth=.7, linestyle=':', zorder=0) # linha pontilhada horizontal - acc média ref
+    plt.xlabel('Acurácia ' + ('CSP-LDA' if i==0 else 'SBCSP' ) + ' (configuração única) (%)', fontsize=12)
+    plt.ylabel('Acurácia Auto Setup (%)', fontsize=12)
     plt.legend(loc='lower right', fontsize=12)
 plt.savefig(path_to_fig + 'scatter_y.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
 
@@ -142,7 +142,7 @@ plt.xlim((0,10))
     
 #%%
 # X = S[['acc', 'cla_dft', 'cla_iir', 'sb_dft', 'sb_iir']]
-X = R[['acc', 'cla_iir', 'sb_iir']]
+X = R[['acc', 'sb_iir', 'cla_iir']]*100
 
 plt.figure(figsize=(10,5), facecolor='mintcream')
 plt.boxplot(X.T, boxprops={'color':'b'}, medianprops={'color': 'r'}, whiskerprops={'linestyle':'-.'}, 
@@ -150,12 +150,12 @@ plt.boxplot(X.T, boxprops={'color':'b'}, medianprops={'color': 'r'}, whiskerprop
 
 # plt.title('Diagrama de caixa comparativo entre a abordagem proposta e as abordagens clássica e SBCSP, da variação de performance de classificação para todos os sujeitos e todas 6 possíveis combinações binárias entre classes disponíveis no conjunto de dados BCI Competition IV 2a')
 # plt.xticks([1,2,3,4,5,6],['Auto-Setup','CSP-LDA DFT','CSP-LDA IIR','SBCSP DFT','SBCSP IIR'])
-plt.xticks([1,2,3],['Auto Setup','CSP-LDA','SBCSP'])
+plt.xticks([1,2,3],['Auto Setup','SBCSP','CSP-LDA'])
 #plt.xlabel('Sujeito', size=14)
 plt.ylabel('Acurácia (%)', size=14)
-plt.yticks(np.arange(0.50, 1.01, step=0.05))
-plt.ylim((0.48,1.02))
-# plt.savefig(path_to_fig + 'boxplot_all_approaches.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
+plt.yticks(np.arange(50, 101, step=5))
+plt.ylim((48,102))
+plt.savefig(path_to_fig + 'boxplot_approaches.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
     
 #%%
 plt.figure(figsize=(10,7))
@@ -168,8 +168,9 @@ plt.xlabel('Frequência')
 #%%
 idx_max = []    
 for class_ids in classes:
-    for suj in subjects:    
-        path_to_trials = './asetup_trials/' + ds + '/' + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
+    for suj in subjects:
+        sname = prefix + str(suj) + suffix
+        path_to_trials = '../as_results/sbrt20/' + ds + '/' + sname + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
         trials = pickle.load(open(path_to_trials, 'rb'))
         all_loss = [ trials.trials[i]['result']['loss'] * (-1) for i in range(len(trials.trials)) ]
         idx_max.append(np.where(all_loss == np.asarray(all_loss).max())[0][0])
@@ -201,7 +202,8 @@ plt.ylabel('N. ocorrências auto setup')
 #%%
 class_ids = [1, 2]
 suj = 1
-trials = pickle.load(open('./asetup_trials/' + ds + '/' + ds + '_' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl', 'rb'))
+sname = prefix + str(suj) + suffix
+trials = pickle.load(open('../as_results/sbrt20/' + ds + '/' + sname + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl', 'rb'))
 # main_plot_history(trials)
 # main_plot_histogram(trials)
 main_plot_vars(trials, do_show=False)
