@@ -51,7 +51,7 @@ y1[np.isnan(y1)] = np.zeros(index1.shape)
 y2[np.isnan(y2)] = np.zeros(index2.shape)
 
 freq, p1 = welch(y1, fs=250, nfft=(y1.shape[-1]-1)) # nfft=499 para q=500
-_, p2 = welch(y2, fs=250, nfft=(y2.shape[-1]-1)) 
+_   , p2 = welch(y2, fs=250, nfft=(y2.shape[-1]-1)) 
 
 p1r = np.real(p1)
 p2r = np.real(p2)
