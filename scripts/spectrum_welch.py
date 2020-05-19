@@ -36,13 +36,13 @@ for i in range(len(R1)):
     R1[i,:,:] = (X1[i,:,:].T @ D).T
     R2[i,:,:] = (X2[i,:,:].T @ D).T
 
-canal = 17 # 13=hemisf_esquerdo(RH) ; 17=hemisf_direito(LH)
+canal = 13 # 7,13=hemisf_esquerdo(RH) ; 11,17=hemisf_direito(LH)
 
 # y1 =  Y1[:,canal,:]
 # y2 =  Y2[:,canal,:]
 
-y1 =  R1[:,canal,:]
-y2 =  R2[:,canal,:]
+y1 = R1[:,canal,:]
+y2 = R2[:,canal,:]
 
 index1 = y1[np.isnan(y1)]
 index2 = y2[np.isnan(y2)]
