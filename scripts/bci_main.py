@@ -12,7 +12,7 @@ from scripts.bci_utils import BCI
 if __name__ == "__main__": 
     ds = 'III4a' # III3a, III4a, IV2a, IV2b, LINCE, Lee19
     overlap = True
-    crossval = True
+    crossval = False
     nfolds = 10 
     test_perc = 0.1 if crossval else 0.5
     cortex_only = True # used when ds == Lee19 - True to used only cortex channels
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     for suj in subjects:
         sname = prefix + str(suj) + suffix
         # data, events, info = labeling(path='/mnt/dados/eeg_data/+ds+'/', ds=ds, session='T', subj=suj, channels=None, save=False)
-        path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + sname + '.npy' # PATH TO DATASET
+        path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy_old/' + sname + '.npy' # PATH TO DATASET
         data, events, info = np.load(path_to_data, allow_pickle=True) # pickle.load(open(path_to_data, 'rb'))
         if ds=='LINCE' and suj == 'CL_LF': classes = [[1, 3]]
         if ds=='Lee19' and cortex_only:

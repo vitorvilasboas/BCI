@@ -26,7 +26,7 @@ if not os.path.isdir(path_out): os.makedirs(path_out)
 
 for suj in ['aa','al','av','aw','ay']:
     mat = loadmat(path + suj + '.mat')
-    d = mat['cnt'].T # 0.1 * mat['cnt'].T # convert to uV
+    d = mat['cnt'].T # (0.1 * mat['cnt'].astype(float)).T # convert to uV
     pos = mat['mrk'][0][0][0][0]
     true_mat = loadmat(path + 'true_labels/' + suj + '.mat')
     true_y = np.ravel(true_mat['true_y']) # RH=1 Foot=2

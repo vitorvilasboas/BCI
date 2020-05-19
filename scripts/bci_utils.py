@@ -262,7 +262,7 @@ def labeling(path=None, ds=None, session=None, subj=None, channels=None, save=Fa
             Start trial=0; Start cue=0; Start MI=0; End MI=3.5; End trial(break)=5.25~5.75
         """
         mat = loadmat(path + subj + '.mat')
-        d = mat['cnt'].T # 0.1 * mat['cnt'].T # convert to uV
+        d = mat['cnt'].T # (0.1 * mat['cnt'].astype(float)).T # convert to uV
         if not channels is None: d = d[channels]
         pos = mat['mrk'][0][0][0][0]
         true_mat = loadmat(path + 'true_labels/' + subj + '.mat')
