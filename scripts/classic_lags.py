@@ -24,7 +24,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 
 ds = 'IV2a' # 'IV2a','IV2b','III3a','III4a','Lee19'      
 path = '/mnt/dados/eeg_data/' + ds + '/' # PATH TO DATASET
-suj = 1
+suj = 5
 class_ids = [1, 2]
 sessions = ['T', 'E']
 channels = None
@@ -52,10 +52,9 @@ Fs = i_train['fs']
 # e_train[:, 0] = [round(e_train[i, 0]/factor) for i in range(e_train.shape[0])]
 # e_test[:, 0] = [round(e_test[i, 0]/factor) for i in range(e_test.shape[0])]
 
-
 smin, smax = math.floor(0.5 * Fs), math.floor(2.5 * Fs)
 
-L = 3
+L = 2
 ZTL, ZVL = [], []
 for l in range(0, L + 1):
     # print(smin+l, smax+l)
@@ -103,6 +102,7 @@ f_low, f_high = 8, 30
 DFT = 0 # 0=IIR, 1=DFT
 
 if DFT:
+    print(DFT)
     buffer_len = smax - smin
     dft_res_freq = Fs/buffer_len # resolução em frequência fft
     dft_size_band = round(2/dft_res_freq) # 2 representa sen e cos que foram separados do componente complexo da fft intercalados
@@ -140,7 +140,7 @@ else: # IIR Filtering
 
 
 #%% CSP
-ncomp = 8*L
+ncomp = 6
 e, c, s = XT.shape
 classes = np.unique(tT)   
 Xa = XT[classes[0] == tT,:,:]
