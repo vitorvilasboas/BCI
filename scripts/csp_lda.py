@@ -11,7 +11,7 @@ from scipy.linalg import eigh
 from scipy.fftpack import fft
 from sklearn.metrics import cohen_kappa_score
 from bci_utils import labeling, extractEpochs
-from scipy.signal import lfilter, butter, iirfilter, filtfilt
+from scipy.signal import lfilter, butter, iirfilter, filtfilt, decimate
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
            
 #%% DATASET AND SCENARIO INFO
