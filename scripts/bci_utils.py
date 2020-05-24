@@ -494,7 +494,7 @@ class CSP():
 class BCI():
     
     def __init__(self, data=None, events=None, class_ids=[1,2], fs=250, overlap=True, crossval=False, nfolds=10, test_perc=0.5, 
-                 f_low=None, f_high=None, tmin=None, tmax=None, ncomp=None, nbands=None, ap=None, filt_info=None, clf=None):
+                 f_low=None, f_high=None, tmin=None, tmax=None, ncomp=None, nbands=None, ap=None, filt_info=None, clf=None, split='common'):
         self.data = data
         self.events = events
         self.class_ids = class_ids
@@ -515,6 +515,7 @@ class BCI():
         self.acc = None
         self.kappa = None
         self.csp_list = None
+        self.split = split
         
 
     def evaluate(self):
@@ -523,25 +524,27 @@ class BCI():
             lda_shrinkage = None
             # if not (clf_dict['lda_solver'] == 'svd'): 
             #     lda_shrinkage = self.clf['shrinkage'] if self.clf['shrinkage'] in [None,'auto'] else self.clf['shrinkage']['shrinkage_float']
-            self.clf_final = LDA(solver=self.clf['lda_solver'], shrinkage=lda_shrinkage)
-        elif self.clf['model'] == 'Bayes': 
-            self.clf_final = GaussianNB()
+            # self.clf_final = LDA(solver=self.clf['lda_solver'], shrinkage=lda_shrinkage)
+            self.clf_final = LDA()
+        # elif self.clf['model'] == 'Bayes': 
+        #     self.clf_final = GaussianNB()
         elif self.clf['model'] == 'SVM': 
             # degree = self.clf['kernel']['degree'] if self.clf['kernel']['kf'] == 'poly' else 3
             # gamma = self.clf['gamma'] if self.clf['gamma'] in ['scale', 'auto'] else 10 ** (self.clf['gamma']['gamma_float'])
             self.clf_final = SVC(kernel=self.clf['kernel']['kf'], C=10**(self.clf['C']), gamma='scale', degree=3, probability=True)
         elif self.clf['model'] == 'KNN':   
             self.clf_final = KNeighborsClassifier(n_neighbors=int(self.clf['neig']), metric=self.clf['metric'], p=3) # p=self.clf['p']                                       
-        elif self.clf['model'] == 'DTree':
-            # if self.clf['min_split'] == 1.0: self.clf['min_split'] += 1
-            # max_depth = self.clf['max_depth'] if self.clf['max_depth'] is None else int(self.clf['max_depth']['max_depth_int'])
-            # min_samples_split = self.clf['min_split'] # math.ceil(self.clf['min_split']), # profundidade maxima da arvore - representa a poda;
-            self.clf_final = DecisionTreeClassifier(criterion=self.clf['crit'], random_state=0, max_depth=None, min_samples_split=2)       
-        elif self.clf['model'] == 'MLP':   
-            self.clf_final = MLPClassifier(verbose=False, max_iter=10000, tol=1e-4, learning_rate_init=10**self.clf['eta'],
-                                           activation=self.clf['activ']['af'], learning_rate='constant', solver=self.clf['mlp_solver'],
-                                           hidden_layer_sizes=(int(self.clf['n_neurons']), int(self.clf['n_hidden']))) # alpha=10**self.clf['alpha'], self.clf['eta_type'],
+        # elif self.clf['model'] == 'DTree':
+        #     # if self.clf['min_split'] == 1.0: self.clf['min_split'] += 1
+        #     # max_depth = self.clf['max_depth'] if self.clf['max_depth'] is None else int(self.clf['max_depth']['max_depth_int'])
+        #     # min_samples_split = self.clf['min_split'] # math.ceil(self.clf['min_split']), # profundidade maxima da arvore - representa a poda;
+        #     self.clf_final = DecisionTreeClassifier(criterion=self.clf['crit'], random_state=0, max_depth=None, min_samples_split=2)       
+        # elif self.clf['model'] == 'MLP':   
+        #     self.clf_final = MLPClassifier(verbose=False, max_iter=10000, tol=1e-4, learning_rate_init=10**self.clf['eta'],
+        #                                    activation=self.clf['activ']['af'], learning_rate='constant', solver=self.clf['mlp_solver'],
+        #                                    hidden_layer_sizes=(int(self.clf['n_neurons']), int(self.clf['n_hidden']))) # alpha=10**self.clf['alpha'], self.clf['eta_type'],
         
+        while (self.tmax-self.tmin)<1: self.tmax+=0.5
         smin = math.floor(self.tmin * self.fs)
         smax = math.floor(self.tmax * self.fs)
         # print(smax-smin)
@@ -571,11 +574,23 @@ class BCI():
             train_size = train_size if (train_size % 2 == 0) else train_size - 1 # garantir balanço entre as classes (amostragem estratificada)
             epochsT, labelsT = self.epochs[:train_size], self.labels[:train_size] 
             epochsV, labelsV = self.epochs[train_size:], self.labels[train_size:]
-            XT = [ epochsT[np.where(labelsT == i)] for i in self.class_ids ] # Extrair épocas de cada classe
-            XV = [ epochsV[np.where(labelsV == i)] for i in self.class_ids ]
+            ET = [ epochsT[np.where(labelsT == i)] for i in self.class_ids ] # Extrair épocas de cada classe
+            EV = [ epochsV[np.where(labelsV == i)] for i in self.class_ids ]
+            XA = np.r_[ET[0], EV[0]] # class A only
+            XB = np.r_[ET[1], EV[1]] # class B only
+                        
+            if self.split == 'common':
+                XT = np.concatenate([ET[0],ET[1]]) # Train data classes A + B
+                XV = np.concatenate([EV[0],EV[1]]) # Test data classes A + B 
+                        
+            if self.split == 'as_train':
+                XT = np.r_[XA[30:90], XB[30:90]]    # [:58]
+                XV = np.r_[XA[:30], XB[:30]]        # [58:86]
+            if self.split == 'as_test': 
+                XT = np.r_[XA[30:90], XB[30:90]]    # [:58]
+                XV = np.r_[XA[90:], XB[90:]]        # [86:]
+                  
             # print(np.asarray(XT).shape, np.asarray(XV).shape)
-            XT = np.concatenate([XT[0],XT[1]]) # Train data classes A + B
-            XV = np.concatenate([XV[0],XV[1]]) # Test data classes A + B        
             yT = np.concatenate([self.class_ids[0] * np.ones(int(len(XT)/2)), self.class_ids[1] * np.ones(int(len(XT)/2))])
             yV = np.concatenate([self.class_ids[0] * np.ones(int(len(XV)/2)), self.class_ids[1] * np.ones(int(len(XV)/2))])
             self.acc, self.kappa = self.classic_approach(XT, XV, yT, yV) if (self.ap['option'] == 'classic') else self.sbcsp_approach(XT, XV, yT, yV)
@@ -613,7 +628,7 @@ class BCI():
     
     def sbcsp_approach(self, XT, XV, yT, yV):
         nbands = int(self.ap['nbands'])
-        # if nbands > (self.f_high - self.f_low): nbands = (self.f_high - self.f_low)
+        if nbands > (self.f_high - self.f_low): nbands = (self.f_high - self.f_low)
         # print(nbands)
         
         n_bins = self.f_high - self.f_low

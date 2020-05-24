@@ -10,27 +10,28 @@ from time import time
 from scripts.bci_utils import BCI 
 
 if __name__ == "__main__": 
-    ds = 'III4a' # III3a, III4a, IV2a, IV2b, LINCE, Lee19
+    ds = 'IV2a' # III3a, III4a, IV2a, IV2b, LINCE, Lee19
+    data_split = 'common' # common, as_train, as_test
     overlap = True
     crossval = False
     nfolds = 10 
     test_perc = 0.1 if crossval else 0.5
     cortex_only = True # used when ds == Lee19 - True to used only cortex channels
     
-    fl, fh, ncsp, tmin, tmax = 0, 50, 2, 0.5, 2.5
+    fl, fh, ncsp, tmin, tmax = 8, 40, 6, 0.5, 2.5
     
-    # clf = {'model':'Bayes'}
+    clf = {'model':'Bayes'}
     # clf = {'model':'LDA', 'lda_solver':'svd'} # 'lda_solver': 'svd','lsqr','eigen'
-    # clf = {'model':'KNN', 'metric':'manhattan', 'neig':105} # 'metric': 'euclidean','manhattan','minkowski','chebyshev'
-    clf = {'model':'SVM', 'kernel':{'kf':'linear'}, 'C':-4} # 'kernel': 'linear', 'poly', 'sigmoid', 'rbf'
+    # clf = {'model':'KNN', 'metric':'euclidean', 'neig':86} # 'metric': 'euclidean','manhattan','minkowski','chebyshev'
+    # clf = {'model':'SVM', 'kernel':{'kf':'linear'}, 'C':-5} # 'kernel': 'linear', 'poly', 'sigmoid', 'rbf'
     # clf = {'model':'MLP', 'eta':-4, 'activ':{'af':'tanh'}, 'alpha':-1, 'n_neurons':465, 'n_hidden':2, 'mlp_solver':'adam'} # 'mlp_solver':'adam', 'lbfgs', 'sgd' # 'af':'identity', 'logistic', 'tanh', 'relu'
     # clf = {'model':'DTree', 'crit':'gini'} # 'crit': 'entropy' or 'gini'
     
-    # approach = {'option':'classic'}
-    approach = {'option':'sbcsp', 'nbands':24}
+    approach = {'option':'classic'}
+    # approach = {'option':'sbcsp', 'nbands':1}
     
-    # filtering = {'design':'DFT'}
-    filtering = {'design':'IIR', 'iir_order':5}
+    filtering = {'design':'DFT'}
+    # filtering = {'design':'IIR', 'iir_order':5}
     # filtering = {'design':'FIR', 'fir_order':5} 
     
     prefix, suffix = '', ''
@@ -57,22 +58,22 @@ if __name__ == "__main__":
         prefix = 'S'
         suffix = '' # 'sess1' or 'sess2'
         
-    subjects = ['aa'] # uncomment to run one subject only
-    # classes = [[1, 2]] # uncomment to run LH x RH classification only
+    subjects = [1] # uncomment to run one subject only
+    classes = [[1, 2]] # uncomment to run LH x RH classification only
     
     R = pd.DataFrame(columns=['acc','kpa','cost'])
     for suj in subjects:
         sname = prefix + str(suj) + suffix
         # data, events, info = labeling(path='/mnt/dados/eeg_data/+ds+'/', ds=ds, session='T', subj=suj, channels=None, save=False)
-        path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy_old/' + sname + '.npy' # PATH TO DATASET
+        path_to_data = '/mnt/dados/eeg_data/' + ds + '/npy/' + sname + '.npy' # PATH TO DATASET
         data, events, info = np.load(path_to_data, allow_pickle=True) # pickle.load(open(path_to_data, 'rb'))
         if ds=='LINCE' and suj == 'CL_LF': classes = [[1, 3]]
         if ds=='Lee19' and cortex_only:
             cortex = [7, 32, 8, 9, 33, 10, 34, 12, 35, 13, 36, 14, 37, 17, 38, 18, 39, 19, 40, 20]
             data = data[cortex]
         for class_ids in classes:       
-            bci = BCI(data=data, events=events, class_ids=class_ids, fs=info['fs'], overlap=overlap, crossval=crossval, nfolds=nfolds, test_perc=test_perc,
-                      f_low=fl, f_high=fh, tmin=tmin, tmax=tmax, ncomp=ncsp, ap=approach, filt_info=filtering, clf=clf)        
+            bci = BCI(data=data, events=events, class_ids=class_ids, fs=info['fs'], overlap=overlap, crossval=crossval, nfolds=nfolds, test_perc=test_perc, 
+                      split=data_split, f_low=fl, f_high=fh, tmin=tmin, tmax=tmax, ncomp=ncsp, ap=approach, filt_info=filtering, clf=clf)        
             st = time()
             bci.evaluate()
             cost = time() - st
