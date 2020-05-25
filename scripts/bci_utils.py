@@ -520,29 +520,28 @@ class BCI():
 
     def evaluate(self):
         
-        if self.clf['model'] == 'LDA': 
-            lda_shrinkage = None
+        if self.clf['model'] == 'LDA': self.clf_final = LDA()
+            # lda_shrinkage = None
             # if not (clf_dict['lda_solver'] == 'svd'): 
             #     lda_shrinkage = self.clf['shrinkage'] if self.clf['shrinkage'] in [None,'auto'] else self.clf['shrinkage']['shrinkage_float']
             # self.clf_final = LDA(solver=self.clf['lda_solver'], shrinkage=lda_shrinkage)
-            self.clf_final = LDA()
-        # elif self.clf['model'] == 'Bayes': 
-        #     self.clf_final = GaussianNB()
+        elif self.clf['model'] == 'Bayes': self.clf_final = GaussianNB()
         elif self.clf['model'] == 'SVM': 
             # degree = self.clf['kernel']['degree'] if self.clf['kernel']['kf'] == 'poly' else 3
             # gamma = self.clf['gamma'] if self.clf['gamma'] in ['scale', 'auto'] else 10 ** (self.clf['gamma']['gamma_float'])
             self.clf_final = SVC(kernel=self.clf['kernel']['kf'], C=10**(self.clf['C']), gamma='scale', degree=3, probability=True)
         elif self.clf['model'] == 'KNN':   
             self.clf_final = KNeighborsClassifier(n_neighbors=int(self.clf['neig']), metric=self.clf['metric'], p=3) # p=self.clf['p']                                       
-        # elif self.clf['model'] == 'DTree':
-        #     # if self.clf['min_split'] == 1.0: self.clf['min_split'] += 1
-        #     # max_depth = self.clf['max_depth'] if self.clf['max_depth'] is None else int(self.clf['max_depth']['max_depth_int'])
-        #     # min_samples_split = self.clf['min_split'] # math.ceil(self.clf['min_split']), # profundidade maxima da arvore - representa a poda;
-        #     self.clf_final = DecisionTreeClassifier(criterion=self.clf['crit'], random_state=0, max_depth=None, min_samples_split=2)       
-        # elif self.clf['model'] == 'MLP':   
-        #     self.clf_final = MLPClassifier(verbose=False, max_iter=10000, tol=1e-4, learning_rate_init=10**self.clf['eta'],
-        #                                    activation=self.clf['activ']['af'], learning_rate='constant', solver=self.clf['mlp_solver'],
-        #                                    hidden_layer_sizes=(int(self.clf['n_neurons']), int(self.clf['n_hidden']))) # alpha=10**self.clf['alpha'], self.clf['eta_type'],
+        elif self.clf['model'] == 'DTree':
+            # if self.clf['min_split'] == 1.0: self.clf['min_split'] += 1
+            # max_depth = self.clf['max_depth'] if self.clf['max_depth'] is None else int(self.clf['max_depth']['max_depth_int'])
+            # min_samples_split = self.clf['min_split'] # math.ceil(self.clf['min_split']), # profundidade maxima da arvore - representa a poda;
+            self.clf_final = DecisionTreeClassifier(criterion=self.clf['crit'], random_state=0, max_depth=None, min_samples_split=2)       
+        elif self.clf['model'] == 'MLP':   
+            self.clf_final = MLPClassifier(verbose=False, max_iter=10000, tol=1e-4, 
+                                           learning_rate_init=10**self.clf['eta'], activation=self.clf['activ']['af'],  
+                                           learning_rate='constant', # solver=self.clf['mlp_solver'], alpha=10**self.clf['alpha'],
+                                           hidden_layer_sizes=(int(self.clf['n_neurons']), int(self.clf['n_hidden']))) 
         
         while (self.tmax-self.tmin)<1: self.tmax+=0.5
         smin = math.floor(self.tmin * self.fs)
@@ -584,11 +583,11 @@ class BCI():
                 XV = np.concatenate([EV[0],EV[1]]) # Test data classes A + B 
                         
             if self.split == 'as_train':
-                XT = np.r_[XA[30:90], XB[30:90]]    # [:58]
-                XV = np.r_[XA[:30], XB[:30]]        # [58:86]
+                XT = np.r_[XA[:58], XB[:58]]
+                XV = np.r_[XA[58:86], XB[58:86]]
             if self.split == 'as_test': 
-                XT = np.r_[XA[30:90], XB[30:90]]    # [:58]
-                XV = np.r_[XA[90:], XB[90:]]        # [86:]
+                XT = np.r_[XA[:58], XB[:58]]
+                XV = np.r_[XA[86:], XB[86:]]
                   
             # print(np.asarray(XT).shape, np.asarray(XV).shape)
             yT = np.concatenate([self.class_ids[0] * np.ones(int(len(XT)/2)), self.class_ids[1] * np.ones(int(len(XT)/2))])
