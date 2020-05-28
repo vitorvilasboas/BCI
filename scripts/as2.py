@@ -29,11 +29,13 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from scipy.signal import lfilter, butter, filtfilt, firwin, iirfilter, decimate, welch
 from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit, StratifiedKFold
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
 
+from functools import partial
 
 np.seterr(divide='ignore', invalid='ignore')
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+mne.set_log_level(50, 50)
 
 def nanCleaner(epoch):
     """Removes NaN from data by interpolation
@@ -127,7 +129,7 @@ class CSP():
             S1 += np.dot(Xb[epoca, :, :], Xb[epoca, :, :].T) / Xb[epoca].shape[-1]  # sum((Xb * Xb.T)/q)
         S0 /= len(Xa)
         S1 /= len(Xb)
-        [D, W] = eigh(S0, (S0 + S1) + 1e-10 * np.eye(22))
+        [D, W] = eigh(S0, (S0 + S1))# + 1e-10 * np.eye(22))
         ind = np.empty(c, dtype=int)
         ind[0::2] = np.arange(c - 1, c // 2 - 1, -1) 
         ind[1::2] = np.arange(0, c // 2)
@@ -166,7 +168,7 @@ class BCI():
         self.clf_params = None
         self.csp_list = None
         self.split = split
-        
+    
     def evaluate(self): 
         if self.clf['model'] == 'LDA': self.clf_final = LDA()
             # lda_shrinkage = None
@@ -237,6 +239,7 @@ class BCI():
             train_size = train_size if (train_size % 2 == 0) else train_size - 1 # garantir balanço entre as classes (amostragem estratificada)
             epochsT, labelsT = self.epochs[:train_size], self.labels[:train_size] 
             epochsV, labelsV = self.epochs[train_size:], self.labels[train_size:]
+            
             ET = [ epochsT[np.where(labelsT == i)] for i in self.class_ids ] # Extrair épocas de cada classe
             EV = [ epochsV[np.where(labelsV == i)] for i in self.class_ids ]
             XA = np.r_[ET[0], EV[0]] # class A only
@@ -249,9 +252,14 @@ class BCI():
             if self.split == 'as_train':
                 XT = np.r_[XA[:58], XB[:58]]
                 XV = np.r_[XA[58:86], XB[58:86]]
+            
             if self.split == 'as_test': 
                 XT = np.r_[XA[:58], XB[:58]]
                 XV = np.r_[XA[86:], XB[86:]]
+                
+            if self.split == 'common1':
+                XT = np.concatenate([ET[0][:36],ET[1][:36]]) # Train data classes A + B
+                XV = np.concatenate([EV[0],EV[1]]) # Test data classes A + B 
                   
             # print(np.asarray(XT).shape, np.asarray(XV).shape)
             yT = np.concatenate([self.class_ids[0] * np.ones(int(len(XT)/2)), self.class_ids[1] * np.ones(int(len(XT)/2))])
@@ -259,6 +267,7 @@ class BCI():
             self.acc, self.kappa, self.clf_params = self.classic_approach(XT, XV, yT, yV) if (self.ap['option'] == 'classic') else self.sbcsp_approach(XT, XV, yT, yV)
     
     def classic_approach(self, XT, XV, yT, yV):
+
         self.filt = Filter(self.f_low, self.f_high, self.fs, self.filt_info)
         XTF = self.filt.apply_filter(XT)
         XVF = self.filt.apply_filter(XV)
@@ -277,6 +286,7 @@ class BCI():
         XV_CSP = self.csp.transform(XVF) 
         self.clf_final.fit(XT_CSP, yT)
         self.scores = self.clf_final.predict(XV_CSP)
+        y_proba = self.clf_final.predict_proba(XV_CSP)
         
         # # Option 2:
         # self.chain = Pipeline([('CSP', self.csp), ('SVC', self.clf_final)])
@@ -284,8 +294,8 @@ class BCI():
         # self.csp_filters = self.chain['CSP'].filters_
         # self.scores = self.chain.predict(XV)
         
-        classifier = {'csp_filt':self.csp_filters, 'lda':None, 
-                      'p0':None, 'p1':None, 'clf_final':self.clf_final}
+        classifier = {'csp_filt':self.csp_filters, 'lda':None, 'y':self.scores,
+                      'yp':y_proba, 'p0':None, 'p1':None, 'clf_final':self.clf_final}
         
         acc = np.mean(self.scores == yV)     
         kappa = cohen_kappa_score(self.scores, yV)
@@ -377,39 +387,60 @@ class BCI():
         META_SCORE_V = np.log(self.p0.pdf(SCORE_V) / self.p1.pdf(SCORE_V))
         self.clf_final.fit(META_SCORE_T, yT)
         self.scores = self.clf_final.predict(META_SCORE_V)
+        y_proba = self.clf_final.predict_proba(META_SCORE_V)
         
-        classifier = {'csp_filt':csp_filters_sblist, 'lda':lda_sblist, 
-                      'p0':self.p0, 'p1':self.p1, 'clf_final':self.clf_final}
+        classifier = {'csp_filt':csp_filters_sblist, 'lda':lda_sblist, 'y':self.scores,
+                      'yp':y_proba, 'p0':self.p0, 'p1':self.p1, 'clf_final':self.clf_final}
         
         acc = np.mean(self.scores == yV)
         kappa = cohen_kappa_score(self.scores, yV)
         return acc, kappa, classifier
 
 ##%% #############################################################################
-bci = BCI()
-bci2 = BCI()
-H = pd.DataFrame(columns=['fl','fh','tmin','tmax','ncsp','nbands','acc','p0','p1','lda','csp','clf_final', 'clf_model'])
+# bci = BCI()
+# bci2 = BCI()
+H = pd.DataFrame(columns=['fl','fh','tmin','tmax','ncsp','nbands','clf_model','csp','lda','p0','p1','clf_final','y','yp','acc'])
 
-def objective_tune(args_tune):
-    # print(args_tune)
-    bci2.csp_list = list(map(lambda x: int(x), args_tune))
-    bci2.evaluate()
-    return bci2.acc * (-1)
+# def objective_tune(args_tune):
+#     # print(args_tune)
+#     bci2.csp_list = list(map(lambda x: int(x), args_tune))
+#     bci2.evaluate()
+#     return bci2.acc * (-1)
 
-def objective(args):
-    # print(args)
+def objective(args, subj, classes):
+    bci = None
+    bci = BCI()
+    
+    bci.data, bci.events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A0'+str(suj)+'T.npy', allow_pickle=True)
+    bci.class_ids = class_ids  
+    bci.fs = info['fs'] 
+    bci.overlap = True
+    bci.crossval = False
+    bci.nfolds = 5 
+    bci.test_perc = 0.2 if bci.crossval else 0.5
+    bci.split = 'common' # common, as_train, as_test
+    bci.filt_info = {'design':'DFT'} 
+    # bci.clf = {'model':'SVM','kernel':{'kf':'linear'},'C':-4} 
+    # bci.ap = {'option':'sbcsp', 'nbands':9}
+    # bci.f_low, bci.f_high = 4, 40
+    # bci.tmin, bci.tmax = 0.5, 2.5
+    # bci.ncomp = 8
+    
     f_low, f_high, bci.tmin, bci.tmax, ncomp, nbands, bci.clf = args # 
     if nbands > (f_high - f_low): nbands = (f_high - f_low)
     bci.ap = {'option': 'sbcsp', 'nbands': nbands}
     bci.f_low, bci.f_high, bci.ncomp = int(f_low), int(f_high), int(ncomp)
     while (bci.tmax-bci.tmin)<1: bci.tmax+=0.5 # garante janela minima de 1seg
+    
     bci.evaluate()
     
-    H.loc[len(H)] = [bci.f_low, bci.f_high, bci.tmin, bci.tmax, bci.ncomp, nbands, bci.acc, bci.clf_params['p0'], 
-                     bci.clf_params['p1'], bci.clf_params['lda'], bci.clf_params['csp_filt'], bci.clf_params['clf_final'], bci.clf['model']]
+    # print(args) # subj,classes,bci.acc 
+    
+    H.loc[len(H)] = [bci.f_low, bci.f_high, bci.tmin, bci.tmax, bci.ncomp, nbands, bci.clf['model'], 
+                     bci.clf_params['csp_filt'], bci.clf_params['lda'], bci.clf_params['p0'], bci.clf_params['p1'], 
+                     bci.clf_params['clf_final'], bci.clf_params['y'],bci.clf_params['yp'], bci.acc]
 
     return bci.acc * (-1)
-
 
 def teste(h, suj, class_ids):
     data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A0'+str(suj)+'E.npy', allow_pickle=True)
@@ -482,46 +513,24 @@ def teste(h, suj, class_ids):
     acc = clf_final.score(META_SCORE, t)
     return acc, y_labels, y_proba, t
 
-
 #%%
 if __name__ == "__main__":
-    ds = 'IV2a'
-    n_iter = 200
-    path_to_setup = '../as_results/sbrt20/IV2a/'
-    if not os.path.isdir(path_to_setup): os.makedirs(path_to_setup)
-    data_split = 'common' # common, as_train, as_test
-    overlap = True
-    crossval = False
-    nfolds = 5
-    test_perc = 0.2 if crossval else 0.5  
+    n_iter = 20   
     subjects = range(1,10) 
-    classes = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]] # 
-    filtering = {'design':'DFT'}
-    # clf = {'model':'SVM','kernel':{'kf':'linear'},'C':-4}
-    # fl, fh = 4, 40
-    # tmin, tmax = 0.5, 2.5
-    # ncsp = 8
-    # approach = {'option':'sbcsp', 'nbands':9}
-    
-    # header = ['subj','A','B','tmin','tmax','fl','fh','ncsp','nbands','clf','clf_details','as_train','as_test','sb_dft','sb_iir','cla_dft','cla_iir','as_train_tune','as_test_tune']
-    header = ['subj','A','B','tmin','tmax','fl','fh','ncsp','nbands','clf','clf_details','as_train','as_test','sb_dft','sb_iir','cla_dft','cla_iir']
-    R = pd.DataFrame(columns=header)
-    
-    ##%% ###########################################################################
+    classes = [[1, 2]]#, [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]] # 
+    R = pd.DataFrame(columns=['subj','A','B','tmin','tmax','fl','fh','ncsp','nbands','clf','clf_details','as_train',
+                              'as_max','as_mode','as_pmean','as_mlr','as_best','sb_dft','sb_iir','cla_dft','cla_iir'])
     for suj in subjects:
-        sname = 'A0' + str(suj) + '' 
-        # data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/'+sname+'.npy', allow_pickle=True)
         for class_ids in classes:
             H = H.iloc[0:0] # cleaning df
-            
-            data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/'+sname+'T.npy', allow_pickle=True)
             print(f'###### {suj} {class_ids} ######')        
             space = (
                 hp.uniformint('fl', 0, 15),
                 hp.uniformint('fh', 25, 40),
                 hp.quniform('tmin', 0, 2, 0.5),
                 hp.quniform('tmax', 2, 4, 0.5),
-                hp.quniform('ncomp', 2, 10, 2), 
+                # hp.quniform('ncomp', 2, 10, 2), 
+                hp.choice('ncomp', [2,4,6,8,22]),
                 hp.uniformint('nbands', 1, 25),
                 hp.pchoice('clf', [
                     (0.2, {'model':'LDA'}),
@@ -532,39 +541,34 @@ if __name__ == "__main__":
                     (0.2, {'model':'LR'})
                     ])
                 )
-             
-            bci.data, bci.events, bci.class_ids, bci.fs, bci.overlap = data, events, class_ids, info['fs'], overlap
-            bci.crossval, bci.nfolds, bci.test_perc, bci.split = crossval, nfolds, test_perc, data_split
-            bci.filt_info = filtering 
-            # bci.clf = clf 
-            # bci.ap = approach
-            # bci.f_low, bci.f_high = fl, fh
-            # bci.tmin, bci.tmax = tmin, tmax
-            # bci.ncomp = ncsp
+            class_ids0 = np.copy(class_ids)
             
-            path_to_trials = path_to_setup + sname + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
-            acc_train = -1
-
-            try:
-                trials = pickle.load(open(path_to_trials, 'rb'))
-                acc_train = ((-1) * trials.best_trial['result']['loss'])
-            except: trials = base.Trials()
+            path = '../as_results/sbrt20/IV2a/'
+            path_to_trials = path + 'A0' + str(suj) + '_' + str(class_ids[0]) + 'x' + str(class_ids[1]) + '.pkl'
+            if not os.path.isdir(path): os.makedirs(path)
+            
+            # acc_train = -1
+            # try:
+            #     trials = pickle.load(open(path_to_trials, 'rb'))
+            #     acc_train = ((-1) * trials.best_trial['result']['loss'])
+            # except: trials = base.Trials()
             trials = base.Trials()  
             # trials = generate_trials_to_calculate(init_vals)
             init_vals = [{'fl':4,'fh':40,'tmin':0.5,'tmax':2.5,'ncomp':8,'nbands':9,'model':'SVM','C':1e-4,'kf':'linear'}] 
-            if acc_train < 1:
-                try:
-                    # print('N trials: ' + str(len(trials)))
-                    best = fmin(objective, space=space, algo=tpe.suggest, max_evals=len(trials) + n_iter, trials=trials, verbose=0, points_to_evaluate=init_vals)
-                    # pickle.dump(trials, open(path_to_trials, 'wb'))
-                except:
-                    print('Exception raised')
-                    # pickle.dump(trials, open(path_to_trials, 'wb'))
-                    raise  
+            # if acc_train < 1:
+            try:
+                # print('N trials: ' + str(len(trials)))
+                fmin_objective = partial(objective, subj=suj, classes=class_ids)
+                best = fmin(fmin_objective, space=space, algo=tpe.suggest, max_evals=len(trials) + n_iter, trials=trials, verbose=0, points_to_evaluate=init_vals)
+                # pickle.dump(trials, open(path_to_trials, 'wb'))
+            except:
+                print('Exception raised')
+                # pickle.dump(trials, open(path_to_trials, 'wb'))
+                raise  
 
             ##%% ###########################################################################
             # trials = pickle.load(open(path_to_trials, 'rb'))
-            acc_train = (-1) * trials.best_trial['result']['loss']
+            acc_train = round( (-1) * trials.best_trial['result']['loss'] * 100, 2)
             best = trials.best_trial['misc']['vals']
                         
             fl = int(best['fl'][0])
@@ -587,31 +591,61 @@ if __name__ == "__main__":
                 clf = {'model':'KNN','metric':knn_metric,'neig':int(best['neig'][0]), }
             elif best['clf'][0] == 3: clf = {'model':'LR'}
             
-            TOP = H[H['acc'] == H['acc'].max()].iloc[0]
-            acc_best, y_, yp_, t_ = teste(TOP, suj, class_ids)
-            print(acc_best)
-            # print(TOP['acc'])
+            ##%% #########################################################################
             
-            H = H.sort_values(by='acc', ascending=False)
-            H = H.iloc[:100]
+            TOP = H[ H['acc'] == H['acc'].max() ].iloc[0]
+            acc_max, y_, yp_, t_ = teste(TOP, suj, class_ids)
+            acc_max = round(acc_max*100,2)
             
-            U, P = [], []
+            # H = H.sort_values(by='acc', ascending=False)
+            # H = H.iloc[:100]
+            
+            V, P = [], []
             for i in range(len(H)):
                 acc_test, y_, yp_, t_ = teste(H.iloc[i], suj, class_ids)
-                U.append(y_)
+                V.append(y_)
                 P.append(yp_)
             
-            U = np.asarray(U).T
-            ym = np.asarray([mode(U[i])[0][0] for i in range(len(U))], dtype=int)
-            acc_mode = np.mean(ym == t_)
-            print(acc_mode)
+            ### Voting
+            V = np.asarray(V).T
+            ym = np.asarray([mode(V[i])[0][0] for i in range(len(V))], dtype=int) 
+            acc_mode = round(np.mean(ym == t_)*100,2)
             
-            P = np.mean(np.transpose(P, (1,2,0)), axis=2)
-            yp = np.asarray([ class_ids[0] if (P[p][0]>=P[p][1]) else class_ids[1] for p in range(len(P))], dtype=int)
-            acc_pmean = np.mean(yp == t_)
-            print(acc_pmean)
+            ### Averaging
+            PM = np.mean(np.transpose(P, (1,2,0)), axis=2)
+            yp = np.asarray([ class_ids[0] if (PM[p][0]>=PM[p][1]) else class_ids[1] for p in range(len(PM))], dtype=int)
+            acc_pmean = round(np.mean(yp == t_)*100,2)
             
-            acc_test = max(acc_best, acc_mode, acc_pmean)
+            ### Stacking
+            # # Pa = [ np.r_[np.asarray(H['prob'][i])[:72,0],np.asarray(H['prob'][i])[72:,1]] for i in range(len(H)) ]
+            # # Pb = [ np.r_[np.asarray(H['prob'][i])[:72,1],np.asarray(H['prob'][i])[72:,0]] for i in range(len(H)) ]
+            # Pa = np.asarray([ np.asarray(H['prob'][i])[:,0] for i in range(len(H)) ]).T
+            # Pb = np.asarray([ np.asarray(H['prob'][i])[:,1] for i in range(len(H)) ]).T
+            # # Pab = np.r_[Pa,Pb]
+            # tp = np.ones(len(Pa))
+            # Pa_te = (np.asarray(P)[:,:,0]).T # modelos x ep_treino_(prob_A) 
+            # Pb_te = (np.asarray(P)[:,:,1]).T # modelos x ep_treino_(prob_B)
+            # lr_model = LinearRegression()
+            # lr_model.fit(Pa, tp)
+            # y_pa = lr_model.predict(Pa_te)
+            # lr_model.fit(Pb, tp)
+            # y_pb = lr_model.predict(Pb_te)
+            # print(y_pa[0],y_pb[0])
+            # y_mlr = np.asarray([ class_ids[0] if (y_pa[p]>=y_pb[p]) else class_ids[1] for p in range(len(y_pa))], dtype=int)
+            # acc_mlr = np.mean(y_mlr == t_)        
+            YP = np.asarray([ np.asarray(H['y'][i]) for i in range(len(H)) ]).T
+            tp = np.r_[class_ids[0]*np.ones(int(len(YP)/2)), class_ids[1]*np.ones(int(len(YP)/2))]
+            lr_model = LinearRegression()
+            lr_model.fit(YP, tp)
+            y_pa = lr_model.predict(V)
+            y_mlr = np.asarray([ round(a) for a in y_pa], dtype=int)
+            acc_mlr = round(np.mean(y_mlr == t_)*100,2)
+            
+            # PH = np.transpose(np.asarray([ H['yp'][i] for i in range(len(H)) ]), (1,0,2))
+            # PHA = PH[:,:,0]
+            # PHB = PH[:,:,1]
+
+            acc_best = max(acc_max, acc_mode, acc_pmean, acc_mlr)
             
             ##################
             # desvio = 4 # desvio em torno do ncsp ótimo (deve ser par)
@@ -632,81 +666,52 @@ if __name__ == "__main__":
             # csp_list = [ int(best_tune['csp'+str(i)]) for i in range(nbands) ]
             ##################
             
-            data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/'+sname+'.npy', allow_pickle=True)
+            icm = BCI()
+            icm.data, icm.events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A0'+str(suj)+'.npy', allow_pickle=True)
+            icm.class_ids = class_ids
+            icm.split = 'common'
+            icm.fs=info['fs']; icm.overlap=True; crossval=False; nfolds=5; test_perc=0.5 
             
-            ###
-            # bci_test = BCI(data=data, events=events, class_ids=class_ids, fs=info['fs'], overlap=overlap, 
-            #                 # crossval=crossval, nfolds=nfolds, test_perc=test_perc, split='teste',
-            #                 crossval=crossval, nfolds=nfolds, test_perc=test_perc, split='as_test', 
-            #                 f_low=fl, f_high=fh, tmin=tmin, tmax=tmax, ncomp=ncsp, ap=approach, 
-            #                 filt_info=filtering, clf=clf)
-            # bci_test.evaluate()
-            # acc_test = bci_test.acc
-            
-            # ###
-            # # bci_test = BCI(data=data, events=events, class_ids=class_ids, fs=info['fs'], overlap=overlap, 
-            # #                 # crossval=crossval, nfolds=nfolds, test_perc=test_perc, split='teste',
-            # #                 crossval=crossval, nfolds=nfolds, test_perc=test_perc, split='as_test', 
-            # #                 f_low=fl, f_high=fh, tmin=tmin, tmax=tmax, ncomp=ncsp, ap=approach, 
-            # #                 filt_info=filtering, clf=clf)
-            # # bci_test.csp_list=csp_list
-            # # bci_test.evaluate()
-            # # acc_test_tune = bci_test.acc
+            icm.tmin=tmin; icm.tmax=tmax; icm.ncomp=ncsp; icm.f_low=fl; icm.f_high=fh
+            icm.ap=approach; icm.filt_info={'design':'DFT'}; icm.clf=clf
+            icm.evaluate()
+            acc_max1 = icm.acc
+            # icm.csp_list=csp_list; icm.evaluate(); acc_max1_tune = icm.acc
             
             ### Fixed SBCSP-DFT
-            bci_test = BCI(data=data, events=events, class_ids=class_ids, fs=info['fs'], overlap=overlap, 
-                            # crossval=crossval, nfolds=nfolds, test_perc=test_perc, split='teste',
-                            crossval=False, nfolds=nfolds, test_perc=0.5, split='common',  
-                            f_low=4, f_high=40, tmin=0.5, tmax=2.5, ncomp=8, ap={'option':'sbcsp','nbands':9}, 
-                            filt_info={'design':'DFT'}, clf={'model':'SVM','kernel':{'kf':'linear'},'C':-4}) #1e-4
-            bci_test.evaluate()
-            sb_dft = bci_test.acc
-            # print(sb_dft)
+            icm.csp_list = None
+            icm.tmin=0.5; icm.tmax=2.5; icm.ncomp=8; icm.f_low=4; icm.f_high=40;  
+            icm.ap={'option':'sbcsp','nbands':9}; icm.filt_info={'design':'DFT'}
+            icm.clf={'model':'SVM','kernel':{'kf':'linear'},'C':-4}
+            icm.evaluate(); sb_dft = round(icm.acc*100,2)
             
             ### Fixed SBCSP-IIR
-            bci_test = BCI(data=data, events=events, class_ids=class_ids, fs=info['fs'], overlap=overlap, 
-                            # crossval=crossval, nfolds=nfolds, test_perc=test_perc, split='teste',
-                            crossval=False, nfolds=nfolds, test_perc=0.5, split='common', 
-                            f_low=4, f_high=40, tmin=0.5, tmax=2.5, ncomp=8, ap={'option':'sbcsp','nbands':9}, 
-                            filt_info={'design':'IIR','iir_order':5}, clf={'model':'SVM','kernel':{'kf':'linear'},'C':-4}) #1e-4
-            bci_test.evaluate()
-            sb_iir = bci_test.acc
+            icm.filt_info={'design':'IIR','iir_order':5}
+            icm.evaluate(); sb_iir = round(icm.acc*100,2)
             
             ### Fixed CSP-LDA-DFT
-            bci_test = BCI(data=data, events=events, class_ids=class_ids, fs=info['fs'], overlap=overlap, 
-                            # crossval=crossval, nfolds=nfolds, test_perc=test_perc, split='teste',
-                            crossval=False, nfolds=nfolds, test_perc=0.5, split='common', 
-                            f_low=8, f_high=30, tmin=0.5, tmax=2.5, ncomp=8, ap={'option':'classic'}, 
-                            filt_info={'design':'DFT'}, clf={'model':'LDA'}) 
-            bci_test.evaluate()
-            cla_dft = bci_test.acc
+            icm.f_low=4; icm.f_high=40;
+            icm.ap={'option':'classic'}; icm.filt_info={'design':'DFT'}; icm.clf={'model':'LDA'}
+            icm.evaluate(); cla_dft = round(icm.acc*100,2)
             
             ### Fixed CSP-LDA-IIR
-            bci_test = BCI(data=data, events=events, class_ids=class_ids, fs=info['fs'], overlap=overlap, 
-                            # crossval=crossval, nfolds=nfolds, test_perc=test_perc, split='teste',
-                            crossval=False, nfolds=nfolds, test_perc=0.5, split='common', 
-                            f_low=8, f_high=30, tmin=tmin, tmax=tmax, ncomp=8, ap={'option':'classic'},
-                            filt_info={'design':'IIR','iir_order':5}, clf={'model':'LDA'}) 
-            bci_test.evaluate()
-            cla_iir = bci_test.acc
+            icm.filt_info={'design':'IIR','iir_order':5}
+            icm.evaluate(); cla_iir = round(icm.acc*100,2)
             
-            # acc_train_tune,acc_test_tune = acc_train, acc_test
-            R.loc[len(R)] = [suj, class_ids[0], class_ids[1], tmin, tmax, fl, fh, ncsp, nbands, clf['model'], clf,
-                             acc_train, acc_test, sb_dft, sb_iir, cla_dft, cla_iir]
-            # R.loc[len(R)] = [suj, class_ids[0], class_ids[1], tmin, tmax, fl, fh, ncsp, nbands, clf['model'], clf, 
-            #                  acc_train, acc_test, sb_dft, sb_iir, cla_dft, cla_iir,acc_train_tune,acc_test_tune]
-            
-            print(f"Best: {fl}-{fh}Hz; {tmin}-{tmax}s; Ns={nbands}; R={ncsp}; CLF={clf}") # {csp_list}  
+            # print(f"Best Setup:{fl}-{fh}Hz; {tmin}-{tmax}s; Ns={nbands}; R={ncsp}; CLF={clf}") # {csp_list}  
+            # print(f"Train:{acc_train} | Max:{acc_max} | Moda:{acc_mode} | Media:{acc_pmean} | Regre:{acc_mlr}")
+            # print(f"ASBEST:{acc_best} | SBDFT:{sb_dft}' | SBIIR:{sb_iir}' | CLDFT:{cla_dft}' | CLIIR:{cla_iir}\n")
 
-            # print(f"AS(tr):{round(acc_train*100,2)} | AS(trT):{round(acc_train_tune*100,2)} | AS(te):{round(acc_test*100,2)} | AS(teT):{round(acc_test_tune*100,2)} | SBDFT:{round(sb_dft*100,2)} | SBIIR:{round(sb_iir*100,2)} | CLADFT:{round(cla_dft*100,2)} | CLAIIR:{round(cla_iir*100,2)}")
-            print(f"AS(tr):{round(acc_train*100,2)} | AS(te):{round(acc_test*100,2)} | SBDFT:{round(sb_dft*100,2)} | SBIIR:{round(sb_iir*100,2)} | CLADFT:{round(cla_dft*100,2)} | CLAIIR:{round(cla_iir*100,2)}")
+            R.loc[len(R)] = [suj, class_ids[0], class_ids[1], tmin, tmax, fl, fh, ncsp, nbands, clf['model'], clf, acc_train, 
+                             acc_max, acc_mode, acc_pmean, acc_mlr, acc_best, sb_dft, sb_iir, cla_dft, cla_iir]
+    
+    print(R.iloc[:,11:].mean())
 
-    # print(f"\n>>> AS(tr):{round(R['as_train'].mean()*100, 2)} | AS(trT):{round(R['as_train_tune'].mean()*100, 2)} | AS(te):{round(R['as_test'].mean()*100, 2)} | AS(teT):{round(R['as_test_tune'].mean()*100, 2)} | SBDFT:{round(R['sb_dft'].mean()*100,2)} | SBIIR:{round(R['sb_iir'].mean()*100,2)} | CLADFT:{round(R['cla_dft'].mean()*100,2)} | CLAIIR:{round(R['cla_iir'].mean()*100,2)} <<<")
-    print(f"\n>>> AS(tr):{round(R['as_train'].mean()*100, 2)} AS(te):{round(R['as_test'].mean()*100, 2)} SBDFT:{round(R['sb_dft'].mean()*100,2)} SBIIR:{round(R['sb_iir'].mean()*100,2)} | CLADFT:{round(R['cla_dft'].mean()*100,2)} | CLAIIR:{round(R['cla_iir'].mean()*100,2)} <<<")
+
 
     #%% PLOT GRAFIC #####################################################################
-    acc_as = R['as_test']*100
-    ref = ['sb_dft','sb_iir']
+    acc_as = R['as_best']*100
+    ref = ['cla_iir','sb_dft']
     plt.rcParams.update({'font.size':12})
     plt.figure(3, facecolor='mintcream')
     plt.subplots(figsize=(10, 12), facecolor='mintcream')

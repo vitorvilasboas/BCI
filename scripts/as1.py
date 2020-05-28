@@ -29,11 +29,12 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from scipy.signal import lfilter, butter, filtfilt, firwin, iirfilter, decimate, welch
 from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit, StratifiedKFold
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
 
 
 np.seterr(divide='ignore', invalid='ignore')
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+mne.set_log_level(50, 50)
 
 def nanCleaner(epoch):
     """Removes NaN from data by interpolation
@@ -127,7 +128,7 @@ class CSP():
             S1 += np.dot(Xb[epoca, :, :], Xb[epoca, :, :].T) / Xb[epoca].shape[-1]  # sum((Xb * Xb.T)/q)
         S0 /= len(Xa)
         S1 /= len(Xb)
-        [D, W] = eigh(S0, (S0 + S1) + 1e-10 * np.eye(22))
+        [D, W] = eigh(S0, (S0 + S1))# + 1e-10 * np.eye(22))
         ind = np.empty(c, dtype=int)
         ind[0::2] = np.arange(c - 1, c // 2 - 1, -1) 
         ind[1::2] = np.arange(0, c // 2)
@@ -166,7 +167,8 @@ class BCI():
         self.clf_params = None
         self.csp_list = None
         self.split = split
-        
+    
+
     def evaluate(self): 
         if self.clf['model'] == 'LDA': self.clf_final = LDA()
             # lda_shrinkage = None
@@ -259,6 +261,7 @@ class BCI():
             self.acc, self.kappa, self.clf_params = self.classic_approach(XT, XV, yT, yV) if (self.ap['option'] == 'classic') else self.sbcsp_approach(XT, XV, yT, yV)
     
     def classic_approach(self, XT, XV, yT, yV):
+
         self.filt = Filter(self.f_low, self.f_high, self.fs, self.filt_info)
         XTF = self.filt.apply_filter(XT)
         XVF = self.filt.apply_filter(XV)
@@ -277,6 +280,7 @@ class BCI():
         XV_CSP = self.csp.transform(XVF) 
         self.clf_final.fit(XT_CSP, yT)
         self.scores = self.clf_final.predict(XV_CSP)
+        y_proba = self.clf_final.predict_proba(XV_CSP)
         
         # # Option 2:
         # self.chain = Pipeline([('CSP', self.csp), ('SVC', self.clf_final)])
@@ -284,7 +288,7 @@ class BCI():
         # self.csp_filters = self.chain['CSP'].filters_
         # self.scores = self.chain.predict(XV)
         
-        classifier = {'csp_filt':self.csp_filters, 'lda':None, 
+        classifier = {'csp_filt':self.csp_filters, 'lda':None, 'prob':self.scores,
                       'p0':None, 'p1':None, 'clf_final':self.clf_final}
         
         acc = np.mean(self.scores == yV)     
@@ -377,8 +381,10 @@ class BCI():
         META_SCORE_V = np.log(self.p0.pdf(SCORE_V) / self.p1.pdf(SCORE_V))
         self.clf_final.fit(META_SCORE_T, yT)
         self.scores = self.clf_final.predict(META_SCORE_V)
+        y_proba = self.clf_final.predict_proba(META_SCORE_V)
         
-        classifier = {'csp_filt':csp_filters_sblist, 'lda':lda_sblist, 
+        
+        classifier = {'csp_filt':csp_filters_sblist, 'lda':lda_sblist, 'prob':self.scores,
                       'p0':self.p0, 'p1':self.p1, 'clf_final':self.clf_final}
         
         acc = np.mean(self.scores == yV)
@@ -388,7 +394,7 @@ class BCI():
 ##%% #############################################################################
 bci = BCI()
 bci2 = BCI()
-H = pd.DataFrame(columns=['fl','fh','tmin','tmax','ncsp','nbands','acc','p0','p1','lda','csp','clf_final', 'clf_model'])
+H = pd.DataFrame(columns=['fl','fh','tmin','tmax','ncsp','nbands','acc','p0','p1','lda','csp','clf_final', 'clf_model', 'prob'])
 
 def objective_tune(args_tune):
     # print(args_tune)
@@ -405,8 +411,8 @@ def objective(args):
     while (bci.tmax-bci.tmin)<1: bci.tmax+=0.5 # garante janela minima de 1seg
     bci.evaluate()
     
-    H.loc[len(H)] = [bci.f_low, bci.f_high, bci.tmin, bci.tmax, bci.ncomp, nbands, bci.acc, bci.clf_params['p0'], 
-                     bci.clf_params['p1'], bci.clf_params['lda'], bci.clf_params['csp_filt'], bci.clf_params['clf_final'], bci.clf['model']]
+    H.loc[len(H)] = [bci.f_low, bci.f_high, bci.tmin, bci.tmax, bci.ncomp, nbands, bci.acc, bci.clf_params['p0'], bci.clf_params['p1'], 
+                     bci.clf_params['lda'], bci.clf_params['csp_filt'], bci.clf_params['clf_final'], bci.clf['model'], bci.clf_params['prob']]
 
     return bci.acc * (-1)
 
@@ -486,7 +492,7 @@ def teste(h, suj, class_ids):
 #%%
 if __name__ == "__main__":
     ds = 'IV2a'
-    n_iter = 200
+    n_iter = 20
     path_to_setup = '../as_results/sbrt20/IV2a/'
     if not os.path.isdir(path_to_setup): os.makedirs(path_to_setup)
     data_split = 'common' # common, as_train, as_test
@@ -494,8 +500,8 @@ if __name__ == "__main__":
     crossval = False
     nfolds = 5
     test_perc = 0.2 if crossval else 0.5  
-    subjects = range(1,10) 
-    classes = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]] # 
+    subjects = [6] # range(1,10) 
+    classes = [[1, 2]] #, [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]] # 
     filtering = {'design':'DFT'}
     # clf = {'model':'SVM','kernel':{'kf':'linear'},'C':-4}
     # fl, fh = 4, 40
@@ -521,7 +527,8 @@ if __name__ == "__main__":
                 hp.uniformint('fh', 25, 40),
                 hp.quniform('tmin', 0, 2, 0.5),
                 hp.quniform('tmax', 2, 4, 0.5),
-                hp.quniform('ncomp', 2, 10, 2), 
+                # hp.quniform('ncomp', 2, 10, 2), 
+                hp.choice('ncomp', [2,4,6,8,22]),
                 hp.uniformint('nbands', 1, 25),
                 hp.pchoice('clf', [
                     (0.2, {'model':'LDA'}),
@@ -589,29 +596,69 @@ if __name__ == "__main__":
             
             TOP = H[H['acc'] == H['acc'].max()].iloc[0]
             acc_best, y_, yp_, t_ = teste(TOP, suj, class_ids)
-            print(acc_best)
+            print(f'Max  : {round(acc_best*100,2)}')
             # print(TOP['acc'])
             
             H = H.sort_values(by='acc', ascending=False)
-            H = H.iloc[:100]
+            # H = H.iloc[:100]
             
-            U, P = [], []
+            V, P = [], []
             for i in range(len(H)):
                 acc_test, y_, yp_, t_ = teste(H.iloc[i], suj, class_ids)
-                U.append(y_)
+                V.append(y_)
                 P.append(yp_)
             
-            U = np.asarray(U).T
-            ym = np.asarray([mode(U[i])[0][0] for i in range(len(U))], dtype=int)
+            ### Voting
+            V = np.asarray(V).T
+            ym = np.asarray([mode(V[i])[0][0] for i in range(len(V))], dtype=int) 
             acc_mode = np.mean(ym == t_)
-            print(acc_mode)
+            print(f'Moda : {round(acc_mode*100,2)}')
             
-            P = np.mean(np.transpose(P, (1,2,0)), axis=2)
-            yp = np.asarray([ class_ids[0] if (P[p][0]>=P[p][1]) else class_ids[1] for p in range(len(P))], dtype=int)
+            ### Averaging
+            PM = np.mean(np.transpose(P, (1,2,0)), axis=2)
+            yp = np.asarray([ class_ids[0] if (PM[p][0]>=PM[p][1]) else class_ids[1] for p in range(len(PM))], dtype=int)
             acc_pmean = np.mean(yp == t_)
-            print(acc_pmean)
+            print(f'Media: {round(acc_pmean*100,2)}')
             
-            acc_test = max(acc_best, acc_mode, acc_pmean)
+            
+            ### Stacking
+            # # Pa = [ np.r_[np.asarray(H['prob'][i])[:72,0],np.asarray(H['prob'][i])[72:,1]] for i in range(len(H)) ]
+            # # Pb = [ np.r_[np.asarray(H['prob'][i])[:72,1],np.asarray(H['prob'][i])[72:,0]] for i in range(len(H)) ]
+            # Pa = np.asarray([ np.asarray(H['prob'][i])[:,0] for i in range(len(H)) ]).T
+            # Pb = np.asarray([ np.asarray(H['prob'][i])[:,1] for i in range(len(H)) ]).T
+            # # Pab = np.r_[Pa,Pb]
+            # tp = np.ones(len(Pa))
+            
+            # Pa_te = (np.asarray(P)[:,:,0]).T # modelos x ep_treino_(prob_A) 
+            # Pb_te = (np.asarray(P)[:,:,1]).T # modelos x ep_treino_(prob_B)
+            
+            # lr_model = LinearRegression()
+            
+            # lr_model.fit(Pa, tp)
+            # y_pa = lr_model.predict(Pa_te)
+            
+            # lr_model.fit(Pb, tp)
+            # y_pb = lr_model.predict(Pb_te)
+            # print(y_pa[0],y_pb[0])
+            
+            # y_mlr = np.asarray([ class_ids[0] if (y_pa[p]>=y_pb[p]) else class_ids[1] for p in range(len(y_pa))], dtype=int)
+            # acc_mlr = np.mean(y_mlr == t_)
+            # print(acc_mlr)
+            
+            Pa = np.asarray([ np.asarray(H['prob'][i]) for i in range(len(H)) ]).T
+            tp = np.r_[class_ids[0]*np.ones(int(len(Pa)/2)), class_ids[1]*np.ones(int(len(Pa)/2))]
+            lr_model = LinearRegression()
+            
+            lr_model.fit(Pa, tp)
+            y_pa = lr_model.predict(V)
+            
+            y_mlr = np.asarray([ round(a) for a in y_pa], dtype=int)
+            
+            acc_mlr = np.mean(y_mlr == t_)
+            print(f'Regre: {round(acc_mlr*100,2)}')
+            
+            
+            acc_test = max(acc_best, acc_mode, acc_pmean, acc_mlr)
             
             ##################
             # desvio = 4 # desvio em torno do ncsp ótimo (deve ser par)
@@ -685,7 +732,7 @@ if __name__ == "__main__":
             bci_test = BCI(data=data, events=events, class_ids=class_ids, fs=info['fs'], overlap=overlap, 
                             # crossval=crossval, nfolds=nfolds, test_perc=test_perc, split='teste',
                             crossval=False, nfolds=nfolds, test_perc=0.5, split='common', 
-                            f_low=8, f_high=30, tmin=tmin, tmax=tmax, ncomp=8, ap={'option':'classic'},
+                            f_low=8, f_high=30, tmin=0.5, tmax=2.5, ncomp=8, ap={'option':'classic'},
                             filt_info={'design':'IIR','iir_order':5}, clf={'model':'LDA'}) 
             bci_test.evaluate()
             cla_iir = bci_test.acc
@@ -706,7 +753,7 @@ if __name__ == "__main__":
 
     #%% PLOT GRAFIC #####################################################################
     acc_as = R['as_test']*100
-    ref = ['sb_dft','sb_iir']
+    ref = ['cla_iir','sb_dft']
     plt.rcParams.update({'font.size':12})
     plt.figure(3, facecolor='mintcream')
     plt.subplots(figsize=(10, 12), facecolor='mintcream')
@@ -725,9 +772,9 @@ if __name__ == "__main__":
         plt.xlabel('Acurácia ' + ('CSP-LDA' if i==0 else 'SBCSP' ) + ' (configuração única) (%)', fontsize=12)
         plt.ylabel('Acurácia Auto Setup (%)', fontsize=12)
         plt.legend(loc='lower right', fontsize=12)
-    # plt.savefig('/home/vboas/Desktop/scatter_y_'+datetime.now().strftime('%d-%m-%Y_%Hh%Mm')+'.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
+    plt.savefig('/home/vboas/Desktop/scatter_y_'+datetime.now().strftime('%d-%m-%Y_%Hh%Mm')+'.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
         
     ##%% SAVE RESULTS PICKLE FILE ########################################################
-    # pd.to_pickle(R, '/home/vboas/Desktop/RESULTS_'+datetime.now().strftime('%d-%m-%Y_%Hh%Mm')+'.pkl')           
+    pd.to_pickle(R, '/home/vboas/Desktop/RESULTS_'+datetime.now().strftime('%d-%m-%Y_%Hh%Mm')+'.pkl')           
     
     # R = pd.read_pickle("/home/vboas/Desktop/RESULTS_01.pkl")

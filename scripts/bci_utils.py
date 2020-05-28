@@ -529,6 +529,7 @@ class BCI():
         elif self.clf['model'] == 'SVM': 
             # degree = self.clf['kernel']['degree'] if self.clf['kernel']['kf'] == 'poly' else 3
             # gamma = self.clf['gamma'] if self.clf['gamma'] in ['scale', 'auto'] else 10 ** (self.clf['gamma']['gamma_float'])
+            # C=10**(self.clf['C']) # para C discretizado
             self.clf_final = SVC(kernel=self.clf['kernel']['kf'], C=10**(self.clf['C']), gamma='scale', degree=3, probability=True)
         elif self.clf['model'] == 'KNN':   
             self.clf_final = KNeighborsClassifier(n_neighbors=int(self.clf['neig']), metric=self.clf['metric'], p=3) # p=self.clf['p']                                       
@@ -603,12 +604,14 @@ class BCI():
             bmax = round(self.f_high * self.dft_size)
             XTF = XTF[:, :, bmin:bmax]
             XVF = XVF[:, :, bmin:bmax]
-        
+        # print('teste')
         self.csp = CSP(n_components=int(self.ncomp))
+        # self.csp = mne.decoding.CSP(n_components=int(self.ncomp))
         
         # # Option 1:
         self.csp.fit(XTF, yT)
-        # self.csp_filters = self.csp.filters_
+        print(self.csp.filters_.shape)
+        self.csp_filters = self.csp.filters_
         XT_CSP = self.csp.transform(XTF)
         XV_CSP = self.csp.transform(XVF) 
         self.clf_final.fit(XT_CSP, yT)
@@ -706,6 +709,9 @@ class BCI():
         META_SCORE_V = np.log(self.p0.pdf(SCORE_V) / self.p1.pdf(SCORE_V))
         self.clf_final.fit(META_SCORE_T, yT)
         self.scores = self.clf_final.predict(META_SCORE_V)
+        
+        self.classifier = {'csp_filt':csp_filters_sblist, 'lda':lda_sblist, 'p0':self.p0, 'p1':self.p1, 'clf_final':self.clf_final}
+        
         acc = np.mean(self.scores == yV)
         kappa = cohen_kappa_score(self.scores, yV)
         return acc, kappa
