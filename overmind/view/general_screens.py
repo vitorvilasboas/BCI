@@ -39,7 +39,6 @@ BUTTON_SIZE = (300, 50)
 BUTTON_BOX_SIZE = (1, 0.4)
 
 
-# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 class StartScreen(Screen):  # layout - A classe implementa Screen o gerenciador de tela kivy (screenmanager)
     login = ObjectProperty(None)  # var python para armazenar objeto kivy
     label_msg = StringProperty('')  # var python para armazenar valor string oriundo do kivy
@@ -49,7 +48,16 @@ class StartScreen(Screen):  # layout - A classe implementa Screen o gerenciador 
         super(StartScreen, self).__init__(**kwargs)  # atribui a lista de argumentos (Keywordsargs) à superclasse kivy Screen implementada
         self.session = session  # contém a sessão do usuário e seus atributos e métodos
 
+    def change_to_register(self, *args):
+        self.manager.current = 'Register'
+        self.manager.transition.direction = 'left'
+
+    def change_to_bci(self, *args):
+        self.manager.current = 'BCIMenu'
+        self.manager.transition.direction = 'left'
+
     def on_pre_enter(self, *args):
+        # print('Logado? >> ', self.session.info.flag)
         Window.bind(on_request_close=self.exit)
 
     def exit(self, *args, **kwargs):
@@ -64,15 +72,10 @@ class StartScreen(Screen):  # layout - A classe implementa Screen o gerenciador 
         pop.open()
         return True
 
-    def change_to_register(self, *args):
-        self.manager.current = 'Register'
-        self.manager.transition.direction = 'left'
-
-    def update_screen(self):
+    def update_screen(self): # chamada quando o usuário volta para a tela principal
         self.session.info.flag = False
         self.session.saveSession()
         print(self.session.info.nickname, 'saiu ({})'.format(self.session.info.flag))
-        # self.session = UserSession()
         self.label_msg = ''
         self.session_text = ''
 
@@ -81,7 +84,7 @@ class StartScreen(Screen):  # layout - A classe implementa Screen o gerenciador 
 
         if not os.path.isdir(PATH_TO_SESSION): os.makedirs(PATH_TO_SESSION)
 
-        if sname == '':  # if no login is provided, use latest modified folder in data/session
+        if sname == '':  # if no login is provided, use latest modified folder in userdata/session
             all_subdirs = []
             for d in os.listdir(PATH_TO_SESSION + '.'):
                 bd = os.path.join(PATH_TO_SESSION, d)
@@ -140,10 +143,6 @@ class StartScreen(Screen):  # layout - A classe implementa Screen o gerenciador 
                 self.session_text = ''
                 self.ids.usuario.text = self.session_text
 
-    def change_to_bci(self, *args):
-        self.manager.current = 'BCIMenu'
-        self.manager.transition.direction = 'left'
-
 
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 class Register(Screen):
@@ -158,18 +157,6 @@ class Register(Screen):
     def back_to_start(self, *args):
         self.manager.current = 'Start'
         self.manager.transition.direction = 'right'
-
-    def enable_dataset(self, *args):
-        if self.ids.belongs_dataset.active:
-            self.ids.item_dataset.disabled = False
-            self.ids.item_subject.disabled = False
-            self.ids.field_dataset.disabled = False
-            self.ids.field_subject.disabled = False
-        else:
-            self.ids.item_dataset.disabled = True
-            self.ids.item_subject.disabled = True
-            self.ids.field_dataset.disabled = True
-            self.ids.field_subject.disabled = True
 
     def clear_fields(self, *args):
         self.ids.field_nickname.value = ''
@@ -186,43 +173,19 @@ class Register(Screen):
         self.ids.field_srate.disabled = True
         self.ids.field_srate.value = 250
 
-    def update_user(self, *args):
-        self.session.saveSession()
-        box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        pop = Popup(title='Warning', content=box, size_hint=(None, None), size=(300, 180))
-        label = Label(text='Info about  ' + self.nick + '  already updated.')
-        botao = Button(text='Ok', on_release=pop.dismiss, size_hint=(None, None), size=(50, 30))
-        box.add_widget(label)
-        box.add_widget(botao)
-        pop.open()
-        self.back_to_start()
+    def enable_dataset(self, *args): # chamada ao acionar o interruptor belongs_dataset
+        if self.ids.belongs_dataset.active:
+            self.ids.item_dataset.disabled = False
+            self.ids.item_subject.disabled = False
+            self.ids.field_dataset.disabled = False
+            self.ids.field_subject.disabled = False
+        else:
+            self.ids.item_dataset.disabled = True
+            self.ids.item_subject.disabled = True
+            self.ids.field_dataset.disabled = True
+            self.ids.field_subject.disabled = True
 
-    def save_user(self, *args):
-        os.makedirs(PATH_TO_SESSION + self.nick)
-        self.session.saveSession()
-        box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        pop = Popup(title='Warning', content=box, size_hint=(None, None), size=(300, 180))
-        label = Label(text='User  ' + self.nick + '  successfully registered.')
-        botao = Button(text='Ok', on_release=pop.dismiss, size_hint=(None, None), size=(50, 30))
-        box.add_widget(label)
-        box.add_widget(botao)
-        pop.open()
-        self.back_to_start()
-
-    def popup_update(self, *args):
-        # popup usuário com este nickname já cadastrado, deseja sobrescrever as informações
-        box = BoxLayout(orientation='vertical', padding=10, spacing=10, size_hint=(1, None))
-        botoes = BoxLayout(padding=10, spacing=10, size_hint=(1, None), height=50)
-        pop = Popup(title='User  ' + self.nick + '  already exists. Do you want overwritten info?', content=box,
-                    size_hint=(None, None), size=(300, 180))
-        btnYes = Button(text='Yes', on_press=self.update_user, on_release=pop.dismiss)
-        btnNo = Button(text='No', on_release=pop.dismiss)
-        botoes.add_widget(btnYes)
-        botoes.add_widget(btnNo)
-        box.add_widget(botoes)
-        pop.open()
-
-    def update_subject_values(self, *args):
+    def update_subject_values(self, *args): # chamada ao selecionar um dataset no field_dataset
         if self.ids.field_dataset.text == 'III 3a':
             self.subj_list = ['K3', 'K6', 'L1']
             self.ids.field_srate.value = 250
@@ -240,6 +203,41 @@ class Register(Screen):
             self.ids.field_srate.value = 250
         self.ids.field_subject.values = self.subj_list
 
+    def update_exist_user(self, *args):
+        self.session.saveSession()
+        box = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        pop = Popup(title='Warning', content=box, size_hint=(None, None), size=(300, 180))
+        label = Label(text='Info about  ' + self.nick + '  already updated.')
+        botao = Button(text='Ok', on_release=pop.dismiss, size_hint=(None, None), size=(50, 30))
+        box.add_widget(label)
+        box.add_widget(botao)
+        pop.open()
+        self.back_to_start()
+
+    def popup_update(self, *args):
+        # popup usuário com este nickname já cadastrado, deseja sobrescrever as informações
+        box = BoxLayout(orientation='vertical', padding=10, spacing=10, size_hint=(1, None))
+        botoes = BoxLayout(padding=10, spacing=10, size_hint=(1, None), height=50)
+        pop = Popup(title='User  ' + self.nick + '  already exists. Do you want overwritten info?', content=box,
+                    size_hint=(None, None), size=(300, 180))
+        btnYes = Button(text='Yes', on_press=self.update_exist_user, on_release=pop.dismiss)
+        btnNo = Button(text='No', on_release=pop.dismiss)
+        botoes.add_widget(btnYes)
+        botoes.add_widget(btnNo)
+        box.add_widget(botoes)
+        pop.open()
+
+    def save_user(self, *args):
+        os.makedirs(PATH_TO_SESSION + self.nick)
+        self.session.saveSession()
+        box = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        pop = Popup(title='Warning', content=box, size_hint=(None, None), size=(300, 180))
+        label = Label(text='User  ' + self.nick + '  successfully registered.')
+        botao = Button(text='Ok', on_release=pop.dismiss, size_hint=(None, None), size=(50, 30))
+        box.add_widget(label)
+        box.add_widget(botao)
+        pop.open()
+        self.back_to_start()
 
     def check_register(self, *args):
         self.nick = self.ids.field_nickname.value
@@ -265,8 +263,8 @@ class Register(Screen):
                         self.session.info.ds_subject = self.ids.field_subject.text
 
                         if not os.path.isdir(PATH_TO_SESSION): os.makedirs(PATH_TO_SESSION)
-                        if os.path.isdir(PATH_TO_SESSION + self.nick): self.popup_update()
-                        else: self.save_user()  # caso ainda não existir usuário com o nick
+                        if os.path.isdir(PATH_TO_SESSION + self.nick): self.popup_update() # caso usuário ja existe, confirma atualização de dados
+                        else: self.save_user()  # caso ainda não existir usuário com o nick, salva dados do novo usuário (tipo dataset)
 
                     else:
                         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
@@ -279,8 +277,8 @@ class Register(Screen):
                 else:
                     self.session.info.is_dataset = False
                     if not os.path.isdir(PATH_TO_SESSION): os.makedirs(PATH_TO_SESSION)
-                    if os.path.isdir(PATH_TO_SESSION + self.nick): self.popup_update()
-                    else: self.save_user()  # caso ainda não existir usuário com o nick
+                    if os.path.isdir(PATH_TO_SESSION + self.nick): self.popup_update() # caso usuário ja existe, confirma atualização de dados
+                    else: self.save_user()  # caso ainda não existir usuário com o nick, salva dados do novo usuário
             else:
                 box = BoxLayout(orientation='vertical', padding=10, spacing=10)
                 pop = Popup(title='Attention', content=box, size_hint=(None, None), size=(300, 180))

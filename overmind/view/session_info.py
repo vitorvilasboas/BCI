@@ -21,16 +21,16 @@ class UserSession:
 
 class InfoHeader:
     def __init__(self):
-        self.flag = False # True quando uma sessão é criada/salva pela primeira vez (nova sessão)
-        self.is_dataset = False
+        self.flag = False # controla usuário logado ou não
+        self.is_dataset = False # diz se o usuário cadastrado pertence a um dataset publico ou nao
         self.nickname = None
         self.fullname = None
         self.save_date = None
         self.age = None
         self.gender = None
         self.pnd = False
-        self.ds_name = None
-        self.ds_subject = None
+        self.ds_name = None # usado somente para usuários de data sets públicos (is_dataset == True)
+        self.ds_subject = None # usado somente para usuários de data sets públicos (is_dataset == True)
 
 class AcquisitionHeader:
     def __init__(self):
