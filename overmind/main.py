@@ -7,7 +7,7 @@ from kivy.uix.screenmanager import ScreenManager
 from view.session_info import UserSession
 import view.screens as scr
 
-def load_all_kv_files(start="view"): #Load all .kv files
+def load_all_kv_files(start="view/kv/"): #Load all .kv files
     pattern = re.compile(r".*?\.kv")
     kv_files = []
     for root, dirs, files in os.walk(start): # add .kv files of view/kv in kv_files vector
