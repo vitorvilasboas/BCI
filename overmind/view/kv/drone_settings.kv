@@ -1,0 +1,31 @@
+<DroneSettings>:
+    on_pre_enter: if root.session.control.flag: root.update_settings()
+    BoxLayout:
+        orientation: 'vertical'
+        ScrollView:
+            canvas:
+                Color:
+                    rgba: 0, 0, 0,0
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            StdSettingsContainer:
+                StdSettingTitle:
+                    title: 'Ardrone Game Settings'
+                    desc: 'Set ardrone game parameters'
+        GridLayout:
+            rows: 1
+            size_hint: (1, None)
+            height: 50
+            spacing: 5
+            padding: 5
+            Button:
+                font_size: 20
+                text: 'Back'
+                size: 430,50
+                on_press: root.change_to_drone()
+            Button:
+                font_size: 20
+                text: 'Save'
+                size: 430,50
+                on_press: root.save_config()
