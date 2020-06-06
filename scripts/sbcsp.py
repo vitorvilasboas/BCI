@@ -19,12 +19,12 @@ from sklearn.neighbors import KNeighborsClassifier
 from scipy.signal import lfilter, butter, iirfilter, filtfilt
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 #%%
-suj = 1
+suj = 2
 class_ids = [1, 2]
 session = 'T'
 data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A0'+str(suj)+session+'.npy', allow_pickle=True)
 Fs = info['fs']
-f_low, f_high, ncsp, tmin, tmax, nbands = 0, 40, 8, 0.5, 2.5, 9
+f_low, f_high, ncsp, tmin, tmax, nbands = 4, 40, 8, 0.5, 2.5, 9
 filtering = 'DFT' # IIR, DFT  
 
 #%%
@@ -42,6 +42,7 @@ size = step / overlap
 
 n_samples = smax - smin
 dft_resf = Fs/n_samples 
+print(dft_resf)
 bin_size = 2/dft_resf # 2 representa sen e cos
 nyq = 0.5 * Fs
 
@@ -71,6 +72,7 @@ if filtering == 'DFT':
     REAL = np.transpose(np.real(ZF), (2, 0, 1))
     IMAG = np.transpose(np.imag(ZF), (2, 0, 1))
     ZF = list(itertools.chain.from_iterable(zip(IMAG, REAL)))
+    # ZF = REAL - IMAG
     ZF = np.transpose(ZF, (1, 2, 0))
     X = [ ZF[:, :, sb_dft[i][0]:sb_dft[i][1]] for i in range(nbands) ]
       
@@ -143,6 +145,7 @@ clf_final.fit(META_SCORE, t)
 
 
 #%% EVALUATE
+smin, smax = math.floor(1.5 * Fs), math.floor(3.5 * Fs)
 session = 'E'
 data, events, info = np.load('/mnt/dados/eeg_data/IV2a/npy/A0'+str(suj)+session+'.npy', allow_pickle=True)
 epochs, labels = extractEpochs(data, events, smin, smax, class_ids)
@@ -150,11 +153,15 @@ epochs = [epochs[np.where(labels==i)] for i in class_ids]
 Z = np.r_[epochs[0],epochs[1]]
 t = np.r_[class_ids[0]*np.ones(int(len(Z)/2)), class_ids[1]*np.ones(int(len(Z)/2))]
 
+dft_resf = Fs/n_samples 
+bin_size = 2/dft_resf # 2 representa sen e cos
+
 if filtering == 'DFT':
     ZF = fft(Z)
     REAL = np.transpose(np.real(ZF), (2, 0, 1))
     IMAG = np.transpose(np.imag(ZF), (2, 0, 1))
     ZF = list(itertools.chain.from_iterable(zip(IMAG, REAL)))
+    # ZF = REAL - IMAG
     ZF = np.transpose(ZF, (1, 2, 0))
     X = [ ZF[:, :, sb_dft[i][0]:sb_dft[i][1]] for i in range(nbands) ]
     
@@ -186,4 +193,4 @@ acc = clf_final.score(META_SCORE, t)
 acc = np.mean(y_labels == t)
 kappa = cohen_kappa_score(y_labels, t)
 print('Accuracy:', round(acc,4))
-print('kappa:', round(kappa,4))
+# print('kappa:', round(kappa,4))

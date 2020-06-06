@@ -610,7 +610,7 @@ class BCI():
         
         # # Option 1:
         self.csp.fit(XTF, yT)
-        print(self.csp.filters_.shape)
+        # print(self.csp.filters_.shape)
         self.csp_filters = self.csp.filters_
         XT_CSP = self.csp.transform(XTF)
         XV_CSP = self.csp.transform(XVF) 

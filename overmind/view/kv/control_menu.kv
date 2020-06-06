@@ -1,0 +1,53 @@
+<ControlMenu>:
+    on_pre_enter: root.update_screen()
+#    label_text: label_text
+    AnchorLayout:
+        anchor_x: 'center'
+        anchor_y: 'center'
+        canvas:
+            Color:
+                rgba: 185, 182, 183, 0.67 # 128, 128, 128, 0.5
+            Rectangle:
+                size:self.size
+                pos:self.pos
+        BoxLayout:
+            id: box
+            orientation: 'vertical'
+            spacing: 20
+            padding: 20
+            size_hint: None, None
+            size: self.minimum_size
+            Label:
+                id: label_msg
+                font_size: 20
+                text: root.label_text
+            Button:
+                text: 'Settings'
+                on_press: root.change_to_settings()
+                size_hint: None,None
+                size: 200,50
+#            Button:
+#                text: 'ArDrone'
+#                on_press: root.change_to_ardrone()
+#                size_hint: None,None
+#                size: 200,50
+            Button:
+                text: 'Bars Game'
+                on_press: root.change_to_bars()
+                size_hint: None,None
+                size: 200,50
+            Button:
+                text: 'Galaxy Game'
+                on_press: root.change_to_galaxy()
+                size_hint: None,None
+                size: 200,50
+            Button:
+                text: 'Target Game'
+                on_press: root.change_to_target()
+                size_hint: None,None
+                size: 200,50
+            Button:
+                text: 'Back'
+                on_press: root.back_to_bci()
+                size_hint: None,None
+                size: 200,50

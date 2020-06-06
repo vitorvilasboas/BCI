@@ -1,0 +1,148 @@
+<AcqMode>:
+    on_pre_enter: if root.session.acq.flag_mode: root.load_saved_settings()
+    BoxLayout:
+        orientation: 'vertical'
+        ScrollView:
+            canvas:
+                Color:
+                    rgba: 0, 0, 0, 0
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            StdSettingsContainer:
+                pos_hint: {'top': 1}
+                StdSettingTitle:
+                    title: 'Acquisition configuration'
+                    desc: 'Configure the connection with Acquisition board'
+                StdSettingItem:
+                    id: item_acq_board
+                    title: 'Acquisition Board'
+                    desc: 'Set the acquisition equipment for EEG measurement'
+                    Spinner:
+                        id: acq_board
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: ['< Select >','OpenBCI Cyton']
+                        on_text: root.update_settings()
+                StdSettingString:
+                    id: com_port
+                    title: 'COM port'
+                    desc: 'Serial port which USB dongle is connected to (in linux use lsusb to find out)'
+                    value: '/dev/ttyUSB0'
+                    disabled: True
+                StdSettingBoolean:
+                    id: daisy
+                    title: 'Enable Daisy'
+                    desc: 'Check if you want to use the additional daisy channels. (daisy must be plugged in)'
+                    button_text: 'Daisy'
+                    value: False
+                    on_value: srate.value = 125 if self.value else 250
+                    disabled: True
+                StdSettingSlider:
+                    id: srate
+                    title: 'Sample Rate'
+                    type: 'int'
+                    desc: 'Sample Rate in Hz of the input dataset'
+                    disabled: True
+                    value: 250
+                    min: 0
+                    max: 1000
+                StdSettingString:
+                    id: ch_labels
+                    title: 'Channel Labels'
+                    desc: 'Give labels to used channels. ex: Cz C3 P3 P4'
+                    value: ''
+                    disabled: True
+                StdSettingTitle:
+                    title: 'Simulator configuration'
+                    desc: 'Set the params to simulate acquisition'
+                StdSettingItem:
+                    id: item_simulator
+                    title: 'Simulate Acquisition?'
+                    desc: 'Check to simulate from other eeg data'
+                    Switch:
+                        id: simulator
+                        active: False
+                        size_hint: None,None
+                        on_touch_down: root.update_settings()
+                        on_touch_move: root.update_settings() #simu_data_path.disabled = False if self.active else True
+                        on_touch_up: root.update_settings() #simu_data_path.disabled = False if self.active else True
+
+                GridLayout:
+                    size_hint_y: None
+                    height: 70
+                    rows: 1
+                    canvas:
+                        Color:
+                            rgba: 47 / 255., 167 / 255., 212 / 255., .1
+                        Rectangle:
+                            pos: self.x, self.y + 1
+                            size: self.size
+                        Color:
+                            rgb: .2, .2, .2
+                        Rectangle:
+                            pos: self.x, self.y - 2
+                            size: self.width, 1
+                    Label:
+                        size_hint_x: .6
+                        id: labellayout
+                        markup: True
+                        title: 'Path to EEG data file'
+                        desc: 'The path to the EEG dataset for playback (.omi)'
+                        text: u'{0}\n[size=13sp][color=999999]{1}[/color][/size]'.format(self.title or '', self.desc or '')
+                        font_size: '15sp'
+                        text_size: self.size
+                        valign: 'top'
+                    AnchorLayout:
+                        id: eeg_path
+                        size_hint_x: None
+                        width: 500
+                        value: input.text
+                        TextInput:
+                            id: input
+                            size_hint_y: None
+                            height: 30
+                            multiline: True
+                            text: eeg_path.value
+                            on_focus: root.update_settings()
+
+                StdSettingItem:
+                    id: item_class_ids
+                    title: 'Event Ids'
+                    desc: 'List of event labels for epoch extraction. ex: 1 2'
+                    disabled: True
+                    Spinner:
+                        id: class_ids
+                        disabled: True
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: ''
+                        on_text: root.update_settings()
+
+#                StdSettingBoolean:
+#                    id: dummy_data
+#                    title: 'Use Dummy Data' #u'Usar Dados fict\u00edcios?'
+#                    #u'Produz dados fict\u00edcios simulando uma placa OpenBCI com m\u00f3dulo daisy acoplado'
+#                    desc: 'Output dummy data by simulating an OpenBCI board with daisy module'
+#                    value: False
+#                    on_value:
+#                        if self.value: srate.value = 125
+
+        GridLayout:
+            rows: 1
+            size_hint: (1, None)
+            height: 50
+            spacing: 5
+            padding: 5
+            Button:
+                font_size: 20
+                text: 'Back'
+                on_press: root.back_to_bci()
+            Button:
+                id: btn_next_step_acq
+                disabled: True
+                font_size: 20
+                text: 'Next'
+                on_press: root.change_to_acq_protocol()

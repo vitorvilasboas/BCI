@@ -15,23 +15,23 @@ if __name__ == "__main__":
     overlap = True
     crossval = False
     nfolds = 10 
-    test_perc = 0.1 if crossval else 0.5
+    test_perc = 0.2 if crossval else 0.5
     cortex_only = True # used when ds == Lee19 - True to used only cortex channels
     
-    fl, fh, ncsp, tmin, tmax = 8, 30, 8, 0.5, 2.5
+    fl, fh, ncsp, tmin, tmax = 0, 40, 8, 0.5, 2.5
     
     # clf = {'model':'Bayes'}
-    clf = {'model':'LDA', 'lda_solver':'svd'} # 'lda_solver': 'svd','lsqr','eigen'
+    # clf = {'model':'LDA', 'lda_solver':'svd'} # 'lda_solver': 'svd','lsqr','eigen'
     # clf = {'model':'KNN', 'metric':'euclidean', 'neig':86} # 'metric': 'euclidean','manhattan','minkowski','chebyshev'
-    # clf = {'model':'SVM', 'kernel':{'kf':'linear'}, 'C':-4} # 'kernel': 'linear', 'poly', 'sigmoid', 'rbf'
+    clf = {'model':'SVM', 'kernel':{'kf':'linear'}, 'C':-4} # 'kernel': 'linear', 'poly', 'sigmoid', 'rbf'
     # clf = {'model':'MLP', 'eta':-4, 'activ':{'af':'tanh'}, 'alpha':-1, 'n_neurons':465, 'n_hidden':2, 'mlp_solver':'adam'} # 'mlp_solver':'adam', 'lbfgs', 'sgd' # 'af':'identity', 'logistic', 'tanh', 'relu'
     # clf = {'model':'DTree', 'crit':'gini'} # 'crit': 'entropy' or 'gini'
     
-    approach = {'option':'classic'}
-    # approach = {'option':'sbcsp', 'nbands':9}
+    # approach = {'option':'classic'}
+    approach = {'option':'sbcsp', 'nbands':9}
     
-    # filtering = {'design':'DFT'}
-    filtering = {'design':'IIR', 'iir_order':5}
+    filtering = {'design':'DFT'}
+    # filtering = {'design':'IIR', 'iir_order':5}
     # filtering = {'design':'FIR', 'fir_order':5} 
     
     prefix, suffix = '', ''

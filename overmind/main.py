@@ -18,7 +18,6 @@ def load_all_kv_files(start="view"): #Load all .kv files
 class OverMind(App):
     def build(self):
         user_session = UserSession()
-
         # CREATE SCREENS
         start_screen = scr.StartScreen(user_session, name='Start')
         register = scr.Register(user_session, name='Register')

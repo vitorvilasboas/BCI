@@ -46,8 +46,7 @@ class StartScreen(Screen):  # layout - A classe implementa Screen o gerenciador 
     session_text = StringProperty('')
 
     def __init__(self, session, **kwargs):  # session_header recebe a sessão_do_usuário ativo
-        super(StartScreen, self).__init__(
-            **kwargs)  # atribui a lista de argumentos (Keywordsargs) à superclasse implementada Screen
+        super(StartScreen, self).__init__(**kwargs)  # atribui a lista de argumentos (Keywordsargs) à superclasse kivy Screen implementada
         self.session = session  # contém a sessão do usuário e seus atributos e métodos
 
     def on_pre_enter(self, *args):

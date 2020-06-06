@@ -31,12 +31,12 @@ channels = None
 prefix, suffix = 'A0', ''
 
 #%% Load data
-d_train, e_train, i_train = labeling(path=path, ds=ds, session=sessions[0], subj=suj, channels=channels, save=False)
-# d_train, e_train, i_train = np.load(path + 'npy/' + prefix + str(suj) + '' + sessions[0] + '.npy', allow_pickle=True)
+# d_train, e_train, i_train = labeling(path=path, ds=ds, session=sessions[0], subj=suj, channels=channels, save=False)
+d_train, e_train, i_train = np.load(path + 'npy/' + prefix + str(suj) + '' + sessions[0] + '.npy', allow_pickle=True)
 
 if not ds in ['III3a','III4a']: 
-    d_test, e_test, i_test = labeling(path=path, ds=ds, session=sessions[1], subj=suj, channels=channels, save=False)
-    # d_test, e_test, i_test = np.load(path + 'npy/' + prefix + str(suj) + '' + sessions[1] + '.npy', allow_pickle=True)
+    # d_test, e_test, i_test = labeling(path=path, ds=ds, session=sessions[1], subj=suj, channels=channels, save=False)
+    d_test, e_test, i_test = np.load(path + 'npy/' + prefix + str(suj) + '' + sessions[1] + '.npy', allow_pickle=True)
 
 #%% Segmentation
 # Fs = 250 if dataset in ['IV2a', 'IV2b', 'III3a', 'Lee19'] else 100

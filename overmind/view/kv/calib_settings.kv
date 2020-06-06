@@ -1,0 +1,323 @@
+<CalSettings>:
+    on_pre_enter: if root.session.dp.flag_setup: root.update_settings()
+    BoxLayout:
+        orientation: 'vertical'
+        ScrollView:
+            canvas:
+                Color:
+                    rgba: 0, 0, 0,0
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            StdSettingsContainer:
+                StdSettingTitle:
+                    title: 'Auto-setup Definitions'
+                    desc: 'Set parameters to setup system'
+                StdSettingItem:
+                    title: 'Auto-setup?'
+                    desc: 'Check if you want a automatic calibration params'
+                    Switch:
+                        id: check_auto_cal
+                        size_hint: None,None
+                        on_touch_down: root.set_enabled_field()
+                        on_touch_move: root.set_enabled_field()
+                        on_touch_up: root.set_enabled_field()
+                StdSettingItem:
+                    id: item_load_last_setup
+                    title: 'Load last auto setup?'
+                    CheckBox:
+                        id: load_last_setup
+                        #on_release: root.update_screen()
+                StdSettingSlider:
+                    id: n_iter
+                    title: 'Auto Setup Iterations Number' #'Taxa de amostragem'
+                    type: 'int'
+                    desc: 'Iteration number to calibrate the system' #'Taxa de amostragem em Hz do conjunto de dados de entrada'
+                    value: 100
+                    min: 1
+                    max: 10000
+                StdSettingTitle:
+                    title: 'Epoch Extraction Settings'
+                    desc: 'Define the epoch limits and properties'
+                StdSettingSlider:
+                    id: epoch_start
+                    title: 'Epoch Start'
+                    type: 'float'
+                    desc: 'Time in sec after the event when the epoch starts'
+                    value: 0
+                    min: root.epoch_lim_min
+                    max: root.epoch_lim_max - 1
+                    on_touch_move: buf_len.value = int(epoch_end.value * root.srate) - int(epoch_start.value * root.srate)
+                    on_touch_up: buf_len.value = int(epoch_end.value * root.srate) - int(epoch_start.value * root.srate)
+                    on_touch_down: buf_len.value = int(epoch_end.value * root.srate) - int(epoch_start.value * root.srate)
+                StdSettingSlider:
+                    id: epoch_end
+                    title: 'Epoch End'
+                    type: 'float'
+                    desc: 'Time in sec after the event when the epoch ends'
+                    value: epoch_start.value + 2
+                    min: epoch_start.value + 1
+                    max: root.epoch_lim_max
+                    on_touch_move: buf_len.value = int(epoch_end.value * root.srate) - int(epoch_start.value * root.srate)
+                    on_touch_up: buf_len.value = int(epoch_end.value * root.srate) - int(epoch_start.value * root.srate)
+                    on_touch_down: buf_len.value = int(epoch_end.value * root.srate) - int(epoch_start.value * root.srate)
+                StdSettingSlider:
+                    id: buf_len
+                    title: 'Buffer Length'
+                    type: 'int'
+                    desc: 'Length in samples of the circular buffer'
+                    value: int(epoch_end.value * root.srate) - int(epoch_start.value * root.srate)
+                    min: 0
+                    max: 2000
+                    disabled: True
+#                StdSettingTitle:
+#                    title: 'Epoch Rejection Settings'
+#                    desc: 'Define properties for valid epochs'
+#                StdSettingSlider:
+#                    id: max_amp
+#                    title: 'Maximum Amplitude'
+#                    type: 'float'
+#                    desc: 'Maximum amplitude (uV) allowed for filtered epoch'
+#                    value: 50
+#                    min: 0
+#                    max: 500
+#                StdSettingSlider:
+#                    id: max_mse
+#                    title: 'Maximum MSE from mean fft'
+#                    type: 'float'
+#                    desc: 'Maximum mean squared error between epoch fft and mean fft from training set'
+#                    value: 0.1
+#                    min: 0.01
+#                    max: 1
+                StdSettingTitle:
+                    title: 'Sub-band Approach Definitions'
+                    desc: 'Choice between sub-band or classic approach and defines params'
+                StdSettingItem:
+                    id: item_sb_method
+                    title: 'Uses Sub-band Approach'
+                    desc: 'Check if use sub-bands approach'
+                    Switch:
+                        id: sb_method
+                        size_hint: None,None
+                        #size: 200,50
+                StdSettingSlider:
+                    id: n_sbands
+                    title: 'Sub-bands number'
+                    type: 'int'
+                    desc: 'Number of sub-bands'
+                    value: 1
+                    min: 1
+                    max: 50
+                StdSettingItem:
+                    id: item_overlap
+                    title: 'Use Overlap'
+                    desc: 'Check if use overlap between sub-bands'
+                    Switch:
+                        id: overlap
+                        size_hint: None,None
+                        #size: 200,50
+
+                StdSettingTitle:
+                    title: 'Temporal Filter configuration'
+                    desc: 'Set filter parameters'
+                StdSettingItem:
+                    id: item_filt_approach
+                    title: 'Filter Type'
+                    desc: 'Choose between IIR or FFT Filtering'
+                    Spinner:
+                        id: filt_approach
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: ['IIR', 'FIR', 'DFT']
+                        on_text: root.set_enabled_field()
+                StdSettingSlider:
+                    id: f_low
+                    title: 'Lower Cuttoff Frequency'
+                    type: 'float'
+                    desc: 'The lower frequency limit in Hz of the bandpass filter'
+                    value: 8
+                    min: 0 # 0.5
+                    max: 50
+                StdSettingSlider:
+                    id: f_high
+                    title: 'Upper Cuttoff Frequency'
+                    type: 'float'
+                    desc: 'The upper frequency limit in Hz of the bandpass filter'
+                    value: 30
+                    min: f_low.value
+                    max: 100
+                StdSettingSlider:
+                    id: f_order
+                    title: 'Filter Order'
+                    type: 'float'
+                    desc: 'The IIR filter Order'
+                    value: 5
+                    min: 1
+                    max: 10
+
+                StdSettingTitle:
+                    title: 'Learner Settings'
+                    desc: 'Set parameters of machine learning algorithms'
+                StdSettingSlider:
+                    id: csp_nei
+                    title: 'Number of CSP eigenvectors'
+                    type: 'int'
+                    desc: 'Must be an even number'
+                    value: 8
+                    min: 2
+                    max: 22
+                StdSettingItem:
+                    id: item_clf1
+                    title: 'Final Classification Model'
+                    desc: 'Choose the classification model'
+                    Spinner:
+                        id: clf1
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: ['KNN', 'LDA', 'MLP', 'SVM', 'DTree', 'Bayes']
+#                        on_release: root.set_enabled_field()
+#                        on_press: root.set_enabled_field()
+                        on_text: root.set_enabled_field()
+#                StdSettingItem:
+#                    id: item_clf2
+#                    title: 'Sub-band Classification Model'
+#                    desc: 'Choose the classification model to sub-bands'
+#                    Spinner:
+#                        id: clf2
+#                        size_hint: None,None
+#                        size: 200,50
+#                        text: '< Select >'
+#                        values: ['KNN', 'LDA', 'MLP', 'SVM', 'DTree', 'Bayes']
+                StdSettingItem:
+                    id: item_lda_solver
+                    title: 'LDA Solver'
+                    desc: ''
+                    Spinner:
+                        id: lda_solver
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: ['svd','lsqr','eigen']
+                StdSettingSlider:
+                    id: svm_c
+                    title: 'SVM Regularization Parameter'
+                    type: 'int'
+                    desc: 'Set the regularization parameter to use in SVM case (log(10^x))'
+                    value: -4
+                    min: -10
+                    max: 10
+                StdSettingItem:
+                    id: item_svm_kernel
+                    title: 'SVM Kernel'
+                    desc: ''
+                    Spinner:
+                        id: svm_kernel
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: ['Linear', 'Poly', 'Sigmoid', 'RBF']
+#                StdSettingSlider:
+#                    id: svm_gamma
+#                    title: 'SVM Gamma Parameter'
+#                    type: 'int'
+#                    desc: 'Set the gamma parameter to use in SVM case (log(10^x))'
+#                    value: -4
+#                    min: -10
+#                    max: 10
+                StdSettingSlider:
+                    id: neighbors_knn
+                    title: 'KNN Neighbors number'
+                    type: 'int'
+                    desc: 'Set the neighbors number to use in kNN case'
+                    value: 5
+                    min: 2
+                    max: 180 # root.session.acq.ds_trials_per_class * 2
+                StdSettingItem
+                    id: item_metric_knn
+                    title: 'KNN Metric'
+                    desc: ''
+                    Spinner:
+                        id: metric_knn
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: ['euclidean','manhattan','minkowski','chebyshev'] #['cityblock', 'cosine', 'euclidean', 'l1', 'l2', 'manhattan', 'minkowski', 'chebyshev']
+                StdSettingItem:
+                    id: item_dtree_criterion
+                    title: 'Decision Tree Criterion'
+                    desc: ''
+                    Spinner:
+                        id: dtree_criterion
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: ['gini', 'entropy']
+                StdSettingSlider:
+                    id: mlp_eta
+                    title: 'MLP learn rate'
+                    desc: ''
+                    type: 'float'
+                    value: -3
+                    min: -8
+                    max: 1
+#                StdSettingSlider:
+#                    id: mlp_alpha
+#                    title: 'MLP Regularization Parameter'
+#                    type: 'float'
+#                    desc: ''
+#                    value: -4
+#                    min: -8
+#                    max: 1
+                StdSettingSlider:
+                    id: mlp_hidden_neurons
+                    title: 'MLP hidden layer neurons number'
+                    type: 'int'
+                    desc: 'Set the number of neurons in the hidden layer in MLP case'
+                    value: 100
+                    min: 10
+                    max: 500
+                StdSettingSlider:
+                    id: mlp_hidden_size
+                    title: 'MLP hidden layers'
+                    type: 'int'
+                    desc: 'Set the number of neurons in the hidden layer in MLP case'
+                    value: 1
+                    min: 1
+                    max: 5
+                StdSettingItem:
+                    id: item_mlp_activation
+                    title: 'MLP Activation Function'
+                    desc: ''
+                    Spinner:
+                        id: mlp_activation
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: ['identity','logistic','tanh','relu']
+                StdSettingItem:
+                    id: item_mlp_solver
+                    title: 'MLP Activation Function'
+                    desc: ''
+                    Spinner:
+                        id: mlp_solver
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: ['adam','sgd','lbfgs']
+
+        GridLayout:
+            rows: 1
+            size_hint: (1, None)
+            height: 50
+            spacing: 5
+            padding: 5
+            Button:
+                font_size: 20
+                text: 'Back'
+                on_press: root.back_to_calLoad()
+            Button:
+                font_size: 20
+                text: 'Train Model'
+                on_press: root.calibrate()

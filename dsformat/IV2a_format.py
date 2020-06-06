@@ -69,6 +69,7 @@ for suj in range(1,10):
     raw = mne.io.read_raw_gdf(path + 'A0' + str(suj) + 'T.gdf').load_data()
     dt = raw.get_data()[:22] # [channels x samples]
     et_raw = mne.events_from_annotations(raw)  # raw.find_edf_events()
+    
     et = np.delete(et_raw[0], 1, axis=1) # remove MNE zero columns
     et = np.delete(et,np.where(et[:,1] == 1), axis=0) # remove rejected trial
     et = np.delete(et,np.where(et[:,1] == 3), axis=0) # remove eye movements/unknown
@@ -108,8 +109,8 @@ for suj in range(1,10):
 
     #%% prepare agregate file (single npy file with all sessions)
     ev1 = np.copy(ev)
-    ev1[:,0] += len(dt.T) # ev pos + last dt pos (et is continued by ev)
-    events = np.r_[et, ev1]
+    ev[:,0] += len(dt.T) # ev pos + last dt pos (et is continued by ev)
+    events = np.r_[et, ev]
     data = np.c_[dt, dv]
     info['trials_per_class'] = 144
 
