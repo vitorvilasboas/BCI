@@ -550,6 +550,7 @@ class BCI():
         # print(smax-smin)
         self.res_freq = self.fs/(smax-smin) # rf=Fs/Q
         self.dft_size = 2/self.res_freq # 2=sen/cos complexo fft
+        
         self.epochs, self.labels = extractEpochs(self.data, self.events, smin, smax, self.class_ids)
         self.epochs = nanCleaner(self.epochs)
         # print(self.epochs.shape)
@@ -568,27 +569,32 @@ class BCI():
                 self.cross_scores.append(acc_fold) # self.cross_scores.append(self.chain.score(XV, yV))
                 self.cross_kappa.append(kappa_fold)
             self.acc, self.kappa = np.mean(self.cross_scores), np.mean(self.cross_kappa)
+        
         else:
             test_size = int(len(self.epochs) * self.test_perc)
             train_size = int(len(self.epochs) - test_size)
             train_size = train_size if (train_size % 2 == 0) else train_size - 1 # garantir balanço entre as classes (amostragem estratificada)
+            
             epochsT, labelsT = self.epochs[:train_size], self.labels[:train_size] 
             epochsV, labelsV = self.epochs[train_size:], self.labels[train_size:]
+            
             ET = [ epochsT[np.where(labelsT == i)] for i in self.class_ids ] # Extrair épocas de cada classe
             EV = [ epochsV[np.where(labelsV == i)] for i in self.class_ids ]
-            XA = np.r_[ET[0], EV[0]] # class A only
-            XB = np.r_[ET[1], EV[1]] # class B only
-                        
-            if self.split == 'common':
-                XT = np.concatenate([ET[0],ET[1]]) # Train data classes A + B
-                XV = np.concatenate([EV[0],EV[1]]) # Test data classes A + B 
-                        
-            if self.split == 'as_train':
-                XT = np.r_[XA[:58], XB[:58]]
-                XV = np.r_[XA[58:86], XB[58:86]]
-            if self.split == 'as_test': 
-                XT = np.r_[XA[:58], XB[:58]]
-                XV = np.r_[XA[86:], XB[86:]]
+            
+            XT = np.concatenate([ET[0],ET[1]]) # Train data classes A + B
+            XV = np.concatenate([EV[0],EV[1]]) # Test data classes A + B 
+            
+            # XA = np.r_[ET[0], EV[0]] # class A only
+            # XB = np.r_[ET[1], EV[1]] # class B only           
+            # if self.split == 'common':
+            #     XT = np.concatenate([ET[0],ET[1]]) # Train data classes A + B
+            #     XV = np.concatenate([EV[0],EV[1]]) # Test data classes A + B          
+            # if self.split == 'as_train':
+            #     XT = np.r_[XA[:58], XB[:58]]
+            #     XV = np.r_[XA[58:86], XB[58:86]]
+            # if self.split == 'as_test': 
+            #     XT = np.r_[XA[:58], XB[:58]]
+            #     XV = np.r_[XA[86:], XB[86:]]
                   
             # print(np.asarray(XT).shape, np.asarray(XV).shape)
             yT = np.concatenate([self.class_ids[0] * np.ones(int(len(XT)/2)), self.class_ids[1] * np.ones(int(len(XT)/2))])

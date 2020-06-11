@@ -18,7 +18,7 @@ if __name__ == "__main__":
     test_perc = 0.2 if crossval else 0.5
     cortex_only = True # used when ds == Lee19 - True to used only cortex channels
     
-    fl, fh, ncsp, tmin, tmax = 0, 40, 8, 0.5, 2.5
+    fl, fh, ncsp, tmin, tmax = 4, 40, 8, 0.5, 2.5
     
     # clf = {'model':'Bayes'}
     # clf = {'model':'LDA', 'lda_solver':'svd'} # 'lda_solver': 'svd','lsqr','eigen'
@@ -30,8 +30,8 @@ if __name__ == "__main__":
     # approach = {'option':'classic'}
     approach = {'option':'sbcsp', 'nbands':9}
     
-    filtering = {'design':'DFT'}
-    # filtering = {'design':'IIR', 'iir_order':5}
+    # filtering = {'design':'DFT'}
+    filtering = {'design':'IIR', 'iir_order':5}
     # filtering = {'design':'FIR', 'fir_order':5} 
     
     prefix, suffix = '', ''
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         prefix = 'S'
         suffix = '' # 'sess1' or 'sess2'
         
-    subjects = [1] # uncomment to run one subject only
+    subjects = [5] # uncomment to run one subject only
     classes = [[1, 2]] # uncomment to run LH x RH classification only
     
     R = pd.DataFrame(columns=['acc','kpa','cost'])
@@ -80,4 +80,4 @@ if __name__ == "__main__":
             print(str(round(bci.acc*100,2))+'%', str(round(bci.kappa,3)), str(round(cost, 2))+'s')
             # if crossval: print(bci.cross_scores)
         R.loc[len(R)] = [bci.acc, bci.kappa, cost]        
-    print(R.mean())
+    # print(R.mean())
