@@ -1,0 +1,165 @@
+<CalLoad>:
+    on_pre_enter: if root.session.dp.flag_load: root.load_saved_settings()
+    BoxLayout:
+        orientation: 'vertical'
+        ScrollView:
+            canvas:
+                Color:
+                    rgba: 0, 0, 0, 0
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            StdSettingsContainer:
+                StdSettingTitle:
+                    title: 'User Data Info and General Settings for Calibration'
+                    desc: 'Set EEG files to load and first info about data'
+
+#                StdSettingStringLong:
+#                    id: eeg_path
+#                    title: 'Path to EEG file'
+#                    desc: 'The path to the EEG dataset for processing'
+#                    value: ''
+#                    # on_enter: root.update_eeg_info()
+
+                GridLayout:
+                    size_hint_y: None
+                    height: 70
+                    rows: 1
+                    canvas:
+                        Color:
+                            rgba: 47 / 255., 167 / 255., 212 / 255., .1
+                        Rectangle:
+                            pos: self.x, self.y + 1
+                            size: self.size
+                        Color:
+                            rgb: .2, .2, .2
+                        Rectangle:
+                            pos: self.x, self.y - 2
+                            size: self.width, 1
+                    Label:
+                        size_hint_x: .6
+                        id: labellayout
+                        markup: True
+                        title: 'Path to EEG file'
+                        desc: 'The path to the EEG dataset for processing'
+                        text: u'{0}\n[size=13sp][color=999999]{1}[/color][/size]'.format(self.title or '', self.desc or '')
+                        font_size: '15sp'
+                        text_size: self.size
+                        valign: 'top'
+                    AnchorLayout:
+                        id: eeg_path
+                        size_hint_x: None
+                        width: 500
+                        value: input.text
+                        TextInput:
+                            id: input
+                            size_hint_y: None
+                            height: 30
+                            multiline: True
+                            text: eeg_path.value
+                            on_focus: root.update_settings()
+                    AnchorLayout:
+                        id: btn_explorer
+                        size_hint_x: None
+                        width: 30
+                        value: input.text
+                        Button:
+                            id: openex
+                            size_hint_y: None
+                            height: 30
+                            font_size: 10
+                            on_release: root.choose()
+                            text: '...'
+
+#                StdSettingStringLong:
+#                    id: labels_path
+#                    title: 'Path to labels'
+#                    desc: 'The path to the labels of EEG dataset'
+#                    value: ''
+
+#                StdSettingString:
+#                    id: class_ids
+#                    title: 'Event Ids'
+#                    desc: 'List of event labels for epoch extraction. ex: 1 2'
+#                    value: '1 2'
+
+                StdSettingItem:
+                    id: item_class_ids
+                    title: 'Event Ids'
+                    desc: 'List of event labels for epoch extraction. ex: 1 2'
+                    disabled: True
+                    Spinner:
+                        id: class_ids
+                        disabled: True
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: '' # root.class_ids_list
+                        # on_text: root.update_subject_values()
+
+                StdSettingSlider:
+                    id: srate
+                    title: 'Sample Rate'
+                    type: 'int'
+                    desc: 'Sample Rate in Hz of the input dataset'
+                    value: 250
+                    min: 0
+                    max: 1000
+                    disabled: True
+                StdSettingString:
+                    id: channels
+                    title: 'Channels'
+                    desc: 'List of channels idx used for signal processing. Indexes must be between 1 and ' + str(root.max_channels) + ' ( -1 for all )\nEx: 1 2 3 6 11  or  2:10'
+                    value: '-1'
+                    disabled: True
+                StdSettingTitle:
+                    title: 'Performance Analysis Definitions'
+                    desc: 'Set parameters for validation analysis'
+                StdSettingItem:
+                    id: item_cross_val
+                    title: 'Use Cross-validation'
+                    desc: 'Check if use cross-validation'
+                    disabled: True
+                    Switch:
+                        id: cross_val
+                        disabled: True
+                        active: False
+                        size_hint: None,None
+                        #size: 200,50
+                        on_touch_down: n_folds.disabled = False if self.active else True # root.check_crossval_enabled()
+                        on_touch_move: n_folds.disabled = False if self.active else True # root.check_crossval_enabled()
+                        on_touch_up: n_folds.disabled = False if self.active else True # root.check_crossval_enabled()
+                StdSettingSlider:
+                    id: n_folds
+                    title: 'Number of Cross-validation Iteractions'
+                    type: 'int'
+                    desc: 'The model will be trained and applied'
+                    value: 10
+                    min: 1
+                    max: 20
+                    disabled: True
+                StdSettingSlider:
+                    id: test_perc
+                    title: 'Fraction of test epochs'
+                    type: 'float'
+                    desc: 'The model will be trained using (1-perc) and tested on perc of the dataset (also for each cross-validation iteraction)'
+                    value: 0.5
+                    min: 0.1
+                    max: 0.8
+                    disabled: True
+        GridLayout:
+            rows: 1
+            size_hint: (1, None)
+            height: 50
+            spacing: 5
+            padding: 5
+            Button:
+                font_size: 20
+                text: 'Back'
+                on_press: root.back_to_bci()
+            Button:
+                id: btn_save_progress
+                font_size: 20
+                text: 'Save and Progress'
+                on_press: root.save_and_progress()
+                disabled: True

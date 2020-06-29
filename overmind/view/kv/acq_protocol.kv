@@ -1,0 +1,98 @@
+<AcqProtocol>:
+    on_pre_enter: if root.session.acq.flag_mode and root.session.acq.flag_protocol: root.update_settings()
+    BoxLayout:
+        orientation: 'vertical'
+        #ScreenManager:
+            #Screen:
+        ScrollView:
+            canvas:
+                Color:
+                    rgba: 0, 0, 0, 0
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            StdSettingsContainer:
+                pos_hint: {'top': 1}
+                StdSettingTitle:
+                    title: 'Calibration and Validation Settings'
+                    desc: 'Set config for input data'
+                StdSettingSlider:
+                    id: n_runs
+                    title: 'Number of Runs'
+                    type: 'int'
+                    desc: 'A run is a set of trials'
+                    value: 2 #4
+                    min: 1
+                    max: 200
+                StdSettingSlider:
+                    id: n_trials
+                    title: 'Number of Trials per run'
+                    type: 'int'
+                    desc: 'Number of trials to be displayed per run (must be even)' #
+                    value: 4 #14
+                    min: 1
+                    max: 200
+                StdSettingSlider:
+                    id: runs_interval
+                    title: 'Time interval in seconds between runs'
+                    type: 'float'
+                    desc: 'A run is a set of trials.'
+                    value: 10 #30
+                    min: 0
+                    max: 120
+                StdSettingSlider:
+                    id: cue_offset
+                    title: 'Cue Offset (s)'
+                    type: 'float'
+                    desc: 'Time in seconds from the beginning of a trial until the cue display'
+                    value: 3
+                    min: 1
+                    max: 20
+                    on_touch_move: trial_duration.value = cue_offset.value + cue_time.value + pause_min.value + 1   # root.update_trial_duration()
+                    on_touch_up: trial_duration.value = cue_offset.value + cue_time.value + pause_min.value + 1     # root.update_trial_duration()
+                    on_touch_down: trial_duration.value = cue_offset.value + cue_time.value + pause_min.value + 1   # root.update_trial_duration()
+                StdSettingSlider:
+                    id: cue_time
+                    title: 'Cue display time (s)'
+                    type: 'float'
+                    desc: 'Duration in seconds of cue display'
+                    value: 6
+                    min: 1
+                    max: 20
+                    on_touch_move: trial_duration.value = cue_offset.value + cue_time.value + pause_min.value + 1   # root.update_trial_duration()
+                    on_touch_up: trial_duration.value = cue_offset.value + cue_time.value + pause_min.value + 1     # root.update_trial_duration()
+                    on_touch_down: trial_duration.value = cue_offset.value + cue_time.value + pause_min.value + 1   # root.update_trial_duration()
+                StdSettingSlider:
+                    id: pause_min
+                    title: 'Min Pause Time (s)'
+                    type: 'float'
+                    desc: 'Minimal time in seconds to wait to start a new trial'
+                    value: 3
+                    min: 1
+                    max: 20
+                    on_touch_move: trial_duration.value = cue_offset.value + cue_time.value + pause_min.value + 1   # root.update_trial_duration()
+                    on_touch_up: trial_duration.value = cue_offset.value + cue_time.value + pause_min.value + 1     # root.update_trial_duration()
+                    on_touch_down: trial_duration.value = cue_offset.value + cue_time.value + pause_min.value + 1   # root.update_trial_duration()
+                StdSettingSlider:
+                    id: trial_duration
+                    title: 'End Of Trial Offset (s)'
+                    type: 'float'
+                    desc: 'Time in seconds from the beginning of a trial to the point when the trial ends'
+                    value: 8
+                    min: cue_offset.value + cue_time.value + pause_min.value + 1
+                    max: 62
+                    disabled: True
+        GridLayout:
+            rows: 1
+            size_hint: (1, None)
+            height: 50
+            spacing: 5
+            padding: 5
+            Button:
+                font_size: 20
+                text: 'Back'
+                on_press: root.back_to_bci()
+            Button:
+                font_size: 20
+                text: 'Save & Run'
+                on_press: root.run_acq()

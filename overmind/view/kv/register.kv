@@ -1,0 +1,96 @@
+<Register>
+    on_pre_enter: root.clear_fields()
+    BoxLayout:
+        orientation: 'vertical'
+        ScrollView:
+            canvas:
+                Color:
+                    rgba: 0, 0, 0,0
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            StdSettingsContainer:
+                pos_hint: {'top': 1}
+                StdSettingTitle:
+                    title: 'Real user Selection'
+                    desc: 'Set the info about user'
+                StdSettingString:
+                    id: field_nickname
+                    title: 'Nick'
+                    desc: 'Set user nickname'
+                    value: ''
+                StdSettingString:
+                    id: field_fullname
+                    title: 'Full Name'
+                    desc: 'Set user full Name'
+                    value: ''
+                StdSettingSlider:
+                    id: field_age
+                    title: 'Age'
+                    type: 'int'
+                    desc: 'Set user age'
+                    value: 25
+                    min: 0
+                    max: 120
+                StdSettingItem:
+                    id: item_gender
+                    title: 'Gender'
+                    desc: 'User gender'
+                    Spinner:
+                        id: field_gender
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: ['Male', 'Female', 'Other']
+
+                StdSettingItem:
+                    id: item_belongs_dataset
+                    title: 'Does it belong to a public data set?'
+                    CheckBox:
+                        id: belongs_dataset
+                        on_release: root.enable_dataset()
+                StdSettingItem:
+                    id: item_dataset
+                    title: 'Dataset'
+                    desc: 'Choose dataset'
+    #                disabled: True if root.parent.parent.mode_menu.belongs_dataset.active else False
+                    Spinner:
+                        id: field_dataset
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: root.ds_list
+                        on_text: root.update_subject_values()
+                StdSettingItem:
+                    id: item_subject
+                    title: 'Subject'
+                    desc: 'Choose subject'
+                    Spinner:
+                        id: field_subject
+                        size_hint: None,None
+                        size: 200,50
+                        text: '< Select >'
+                        values: ''
+                StdSettingSlider:
+                    id: field_srate
+                    title: 'Sample Rate'
+                    type: 'int'
+                    desc: 'Sample Rate in Hz of the input dataset'
+                    value: 250
+                    min: 0
+                    max: 1000
+                    disabled: True
+        GridLayout:
+            rows: 1
+            size_hint: (1, None)
+            height: 50
+            spacing: 5
+            padding: 5
+            Button:
+                font_size: 20
+                text: 'Back'
+                on_press: root.back_to_start()
+            Button:
+                font_size: 20
+                text: 'Save'
+                on_press: root.check_register()

@@ -1,0 +1,93 @@
+<GalaxyMenu>:
+#    on_pre_enter: self.wt = self.session.control.game_threshold / root.session.control.warning_threshold
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: 0
+        padding: 5
+        canvas.before:
+            Rectangle:
+                pos: self.pos
+                size: self.size
+                source: "tests/galaxy_game/space2.png"
+#        Label:
+#            font_size: 20
+#            text: 'Galaxy Game'
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: 10
+            padding: 20
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: (1, 0.3)
+            spacing: 10
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint: (0.3, 1)
+                Button:
+                    text: root.label_on_toggle_button
+                    on_press: root.toogle_stream()
+                    size_hint: None,None
+                    size: 200,50
+                Button:
+                    text: 'Settings'
+                    on_press: root.change_to_settingsGalaxy()
+                    size_hint: None,None
+                    size: 200,50
+                Button:
+                    text: 'Back'
+                    on_press: root.back_to_control_menu()
+                    size_hint: None,None
+                    size: 200,50
+
+<GameDataPopup>:
+    size_hint: None, None
+    size: 300, 250
+    title: 'Game Results'
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            TextInput:
+                id: save_name
+                hint_text: 'save as'
+        BoxLayout:
+            orientation: 'horizontal'
+            Button:
+                text: 'Save Results'
+                on_press: root.save_data(save_name.text)
+
+
+#    AnchorLayout:
+#        anchor_x: 'center'
+#        anchor_y: 'center'
+#        canvas:
+#            Color:
+#                rgba: 185, 182, 183, 0.67 # 128, 128, 128, 0.5
+#            Rectangle:
+#                size:self.size
+#                pos:self.pos
+#        BoxLayout:
+#            id: box
+#            orientation: 'vertical'
+#            spacing: 20
+#            padding: 20
+#            size_hint: None, None
+#            size: self.minimum_size
+#            Label:
+#                font_size: 20
+#                text: 'Galaxy Game Menu'
+#            Button:
+#                id: acq_button
+#                text: 'Settings'
+#                on_press: root.change_to_settingsGalaxy()
+#                size_hint: None,None
+#                size: 200,50
+#            Button:
+#                text: 'Start Game'
+#                on_press: root.change_to_playGalaxy()
+#                size_hint: None,None
+#                size: 200,50
+#            Button:
+#                text: 'Back'
+#                on_press: root.back_to_control_menu()
+#                size_hint: None,None
+#                size: 200,50
