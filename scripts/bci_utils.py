@@ -399,7 +399,7 @@ def extractEpochs(data, events, smin, smax, class_ids):
         epoch = data[:, sBegin[i]:sEnd[i]]
         if epoch.shape[1] == n_samples: epochs[i, :, :] = epoch # Check if epoch is complete
         else:
-            print('Incomplete epoch detected...')
+            print('Incomplete epoch detected...', n_samples, '!=', epoch.shape[1])
             bad_epoch_list.append(i)
     labels = np.delete(labels, bad_epoch_list)
     epochs = np.delete(epochs, bad_epoch_list, axis=0)
@@ -452,7 +452,8 @@ class Filter:
                 real, imag = np.real(XF).T, np.imag(XF).T
                 XF = np.transpose(list(itertools.chain.from_iterable(zip(imag, real))))
             else:
-                real, imag = np.transpose(np.real(XF), (2, 0, 1)), np.transpose(np.imag(XF), (2, 0, 1))
+                real = np.transpose(np.real(XF), (2, 0, 1))
+                imag = np.transpose(np.imag(XF), (2, 0, 1))
                 XF = np.transpose(list(itertools.chain.from_iterable(zip(imag, real))), (1, 2, 0)) 
         return XF
 
@@ -477,17 +478,18 @@ class CSP():
             S1 += np.dot(Xb[epoca, :, :], Xb[epoca, :, :].T) / Xb[epoca].shape[-1]  # sum((Xb * Xb.T)/q)
         S0 /= len(Xa)
         S1 /= len(Xb)
-        [D, W] = eigh(S0, S0 + S1)
+        [D, W] = eigh(S0, S0 + S1) # + 1e-10 * np.eye(22))
         ind = np.empty(c, dtype=int)
         ind[0::2] = np.arange(c - 1, c // 2 - 1, -1) 
         ind[1::2] = np.arange(0, c // 2)
+        # W += 1e-1 * np.eye(22)
         W = W[:, ind]
         self.filters_ = W.T[:self.n_components]
         return self # instruction add because cross-validation pipeline
     def transform(self, X):        
         XT = np.asarray([np.dot(self.filters_, epoch) for epoch in X])
-        XVAR = np.log(np.mean(XT ** 2, axis=2)) # Xcsp
-        # XVAR = np.log(np.var(XT, axis=2))
+        # XVAR = np.log(np.mean(XT ** 2, axis=2)) # Xcsp
+        XVAR = np.log(np.var(XT, axis=2))
         return XVAR
 
 

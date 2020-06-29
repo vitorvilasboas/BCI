@@ -30,10 +30,10 @@ path = '/mnt/dados/eeg_data/Lee19/' ## >>> ENTER THE PATH TO THE DATASET HERE
 downsampling = True
 cortex_only = False
 
-path_out = path + 'npy/npy_1000Hz/'
+path_out = path + 'npy0/' #npy
 if not os.path.isdir(path_out): os.makedirs(path_out)
 
-for suj in range(1, 55):
+for suj in range(1, 2):
     Fs = 1000
     suj_in = str(suj) if suj >= 10 else ('0' + str(suj))
     S1 = loadmat(path + 'session1/sess01_subj' + suj_in + '_EEG_MI.mat') ## >>> ENTER THE SESSION 1 PATH
@@ -57,24 +57,33 @@ for suj in range(1, 55):
     e2 = np.r_[eventsT2, eventsV2]
     d1 = np.c_[dataT1, dataV1]
     d2 = np.c_[dataT2, dataV2]
+    
+    # eventsT2[:,0] += dataT1.shape[-1]
+    # eventsV2[:,0] += dataV1.shape[-1]
+    # e1 = np.r_[eventsT1, eventsT2]
+    # e2 = np.r_[eventsV1, eventsV2]
+    # d1 = np.c_[dataT1, dataT2]
+    # d2 = np.c_[dataV1, dataV2]
+    
     e1[:, 1] = np.where(e1[:, 1] == 2, 1, 2) # troca class_ids 1=LH, 2=RH
     e2[:, 1] = np.where(e2[:, 1] == 2, 1, 2)
 
     info = {'fs':Fs, 'class_ids':[1, 2], 'trial_tcue':3.0, 'trial_tpause':7.0,
             'trial_mi_time':4.0, 'trials_per_class':100, 'eeg_channels':62,
             'ch_labels':list(['Fp1','Fp2','F7','F3','Fz','F4','F8','FC5','FC1','FC2','FC6','T7','C3','Cz','C4','T8','TP9','CP5','CP1','CP2','CP6','TP10','P7','P3','Pz','P4','P8','PO9','O1','Oz','O2','PO10','FC3','FC4',
-                               'C5','C1','C2','C6','CP3','CPz','CP4','P1','P2','POz','FT9','FTT9h','TTP7h','TP7','TPP9h','FT10','FTT10h','TPP8h','TP8','TPP10h','F9','F10','AF7','AF3','AF4','AF8','PO3','PO4']),
+                              'C5','C1','C2','C6','CP3','CPz','CP4','P1','P2','POz','FT9','FTT9h','TTP7h','TP7','TPP9h','FT10','FTT10h','TPP8h','TP8','TPP10h','F9','F10','AF7','AF3','AF4','AF8','PO3','PO4']),
             'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
      
     if cortex_only:
-        cortex = [7, 32, 8, 9, 33, 10, 34, 12, 35, 13, 36, 14, 37, 17, 38, 18, 39, 19, 40, 20]
+        cortex = [7, 8, 9, 10, 12, 13, 14, 17, 18, 19, 20, 32, 33, 34, 35, 36, 37, 38, 39, 40]
         d1, d2 = d1[cortex], d2[cortex]
         info['eeg_channels'] = len(cortex)
-        info['ch_labels'] = ['FC5', 'FC3', 'FC1', 'FC2', 'FC4', 'FC6', 'C5', 'C3', 'C1', 'Cz', 'C2', 'C4', 'C6', 'CP5', 'CP3', 'CP1', 'CPz', 'CP2', 'CP4', 'CP6']
+        info['ch_labels'] = ['FC5','FC1','FC2','FC6','C3','Cz','C4','CP5','CP1','CP2','CP6','FC3', 'FC4','C5','C1','C2','C6', 'CP3', 'CPz','CP4']
     
     if downsampling:
-        factor = 4
-        Fs = Fs/factor
+        factor = 10 #4
+        Fs = Fs//factor
+        info['fs'] = Fs
         d1 = np.asarray([d1[:,i] for i in range(0,d1.shape[-1],factor)]).T # resample(d1, round(d1.shape[-1]/factor), axis=1) # decimate(d1,factor) # 
         d2 = np.asarray([d2[:,i] for i in range(0,d2.shape[-1],factor)]).T # resample(d2, round(d2.shape[-1]/factor), axis=1) # decimate(d2,factor) # 
         e1[:,0] = [round(e1[i,0]/factor) for i in range(e1.shape[0])]
@@ -82,8 +91,8 @@ for suj in range(1, 55):
     
     
     #%% save npy session files
-    np.save(path_out + 'S' + str(suj) + 'sess1', [d1, e1, info])
-    np.save(path_out + 'S' + str(suj) + 'sess2', [d2, e2, info])
+    np.save(path_out + 'S' + str(suj) + 'T', [d1, e1, info]) #sess1
+    np.save(path_out + 'S' + str(suj) + 'E', [d2, e2, info]) #sess2
     # np.save(path_out + 'sess01_subj' + suj_in + '_EEG_MI', [d1, e1, info])
     # np.save(path_out + 'sess02_subj' + suj_in + '_EEG_MI', [d2, e2, info])
 

@@ -10,7 +10,7 @@ from time import time
 from scripts.bci_utils import BCI 
 
 if __name__ == "__main__": 
-    ds = 'IV2a' # III3a, III4a, IV2a, IV2b, LINCE, Lee19
+    ds = 'Lee19' # III3a, III4a, IV2a, IV2b, LINCE, Lee19
     data_split = 'common' # common, as_train, as_test
     overlap = True
     crossval = False
@@ -18,17 +18,17 @@ if __name__ == "__main__":
     test_perc = 0.2 if crossval else 0.5
     cortex_only = True # used when ds == Lee19 - True to used only cortex channels
     
-    fl, fh, ncsp, tmin, tmax = 4, 40, 8, 0.5, 2.5
+    fl, fh, ncsp, tmin, tmax = 8, 30, 4, 1., 3.5
     
     # clf = {'model':'Bayes'}
-    # clf = {'model':'LDA', 'lda_solver':'svd'} # 'lda_solver': 'svd','lsqr','eigen'
+    clf = {'model':'LDA', 'lda_solver':'svd'} # 'lda_solver': 'svd','lsqr','eigen'
     # clf = {'model':'KNN', 'metric':'euclidean', 'neig':86} # 'metric': 'euclidean','manhattan','minkowski','chebyshev'
-    clf = {'model':'SVM', 'kernel':{'kf':'linear'}, 'C':-4} # 'kernel': 'linear', 'poly', 'sigmoid', 'rbf'
+    # clf = {'model':'SVM', 'kernel':{'kf':'linear'}, 'C':-4} # 'kernel': 'linear', 'poly', 'sigmoid', 'rbf'
     # clf = {'model':'MLP', 'eta':-4, 'activ':{'af':'tanh'}, 'alpha':-1, 'n_neurons':465, 'n_hidden':2, 'mlp_solver':'adam'} # 'mlp_solver':'adam', 'lbfgs', 'sgd' # 'af':'identity', 'logistic', 'tanh', 'relu'
     # clf = {'model':'DTree', 'crit':'gini'} # 'crit': 'entropy' or 'gini'
     
-    # approach = {'option':'classic'}
-    approach = {'option':'sbcsp', 'nbands':9}
+    approach = {'option':'classic'}
+    # approach = {'option':'sbcsp', 'nbands':9}
     
     # filtering = {'design':'DFT'}
     filtering = {'design':'IIR', 'iir_order':5}
@@ -55,11 +55,11 @@ if __name__ == "__main__":
     elif ds == 'Lee19':
         subjects = range(1, 55) 
         classes = [[1, 2]]
-        prefix = 'S'
+        prefix = ''
         suffix = '' # 'sess1' or 'sess2'
         
-    subjects = [5] # uncomment to run one subject only
-    classes = [[1, 2]] # uncomment to run LH x RH classification only
+    # subjects =  [2] # uncomment to run one subject only
+    # classes = [[1, 2]] # uncomment to run LH x RH classification only
     
     R = pd.DataFrame(columns=['acc','kpa','cost'])
     for suj in subjects:
@@ -77,7 +77,7 @@ if __name__ == "__main__":
             st = time()
             bci.evaluate()
             cost = time() - st
-            print(str(round(bci.acc*100,2))+'%', str(round(bci.kappa,3)), str(round(cost, 2))+'s')
+            # print(suj, class_ids, str(round(bci.acc*100,2))+'%', str(round(bci.kappa,3)), str(round(cost, 2))+'s')
             # if crossval: print(bci.cross_scores)
         R.loc[len(R)] = [bci.acc, bci.kappa, cost]        
-    # print(R.mean())
+    print(R.mean())
