@@ -200,10 +200,10 @@ if __name__ == "__main__":
     FT = [ csp[i].transform(XT[i]) for i in range(nbands) ]
     FV = [ csp[i].transform(XV[i]) for i in range(nbands) ]
     
-    ldas = [ LDA() for i in range(nbands) ]
-    for i in range(nbands): ldas[i].fit(FT[i], tt)
-    ST = np.asarray([ np.ravel(ldas[i].predict(FT[i])) for i in range(nbands) ]).T # Score LDA
-    SV = np.asarray([ np.ravel(ldas[i].predict(FV[i])) for i in range(nbands) ]).T
+    # ldas = [ LDA() for i in range(nbands) ]
+    # for i in range(nbands): ldas[i].fit(FT[i], tt)
+    # ST = np.asarray([ np.ravel(ldas[i].predict(FT[i])) for i in range(nbands) ]).T # Score LDA
+    # SV = np.asarray([ np.ravel(ldas[i].predict(FV[i])) for i in range(nbands) ]).T
     
     FT = np.vstack(np.transpose(FT, (0,2,1))).T    
     FV = np.vstack(np.transpose(FV, (0,2,1))).T 
