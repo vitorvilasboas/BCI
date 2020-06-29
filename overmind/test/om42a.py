@@ -30,7 +30,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from scipy.signal import lfilter, butter, filtfilt, firwin, iirfilter, decimate, welch
 from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit, StratifiedKFold
 from sklearn.linear_model import LogisticRegression, LinearRegression
-from bci_utils import nanCleaner, corrigeNaN, extractEpochs, Filter #, CSP
+from bci_utils import nanCleaner, corrigeNaN, extractEpochs, Filter, CSP
 from functools import partial
 import random
 from sklearn.preprocessing import normalize
@@ -39,34 +39,6 @@ from sklearn.preprocessing import normalize
 np.seterr(divide='ignore', invalid='ignore')
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 mne.set_log_level(50, 50)
-
-
-class CSP():
-    def __init__(self, n_components):
-        self.n_components = n_components
-        self.filters_ = None
-    def fit(self, X, y):
-        ch = X.shape[1]
-        classes = np.unique(y)
-        X1 = X[classes[1] == y,:,:]
-        X2 = X[classes[2] == y,:,:]
-        S1, S2 = np.zeros((ch, ch)), np.zeros((ch, ch))  
-        for i in range(len(X1)): S1 += np.dot(X1[i, :, :], X1[i, :, :].T) / X1[i].shape[-1]  # sum((X0 * X0.T)/q)
-        for i in range(len(X2)): S2 += np.dot(X2[i, :, :], X2[i, :, :].T) / X2[i].shape[-1] 
-        S1 /= len(X1); S2 /= len(X2)
-        [D, W] = eigh(S1, S1 + S2) # + 1e-10 * np.eye(22))
-        ind = np.empty(ch, dtype=int)
-        ind[0::2] = np.arange(ch - 1, ch // 2 - 1, -1) 
-        ind[1::2] = np.arange(0, ch // 2)
-        # W += 1e-1 * np.eye(22)
-        W = W[:, ind]
-        self.filters_ = W.T[:self.n_components]
-    def transform(self, X):        
-        Y = np.asarray([np.dot(self.filters_, epoch) for epoch in X])
-        # FEAT = np.log(np.mean(Y**2, axis=2))
-        FEAT = np.var(Y, axis=2)
-        return FEAT
-
 
 def classic_approach(ZT, ZV, tt, tv, fl, fh, ncsp, clf, Fs='250', filtering={'design':'DFT'}, csp_reg=None):
     filt = Filter(fl, fh, Fs, filtering)
