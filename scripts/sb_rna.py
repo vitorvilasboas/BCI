@@ -124,7 +124,7 @@ if __name__ == "__main__":
     for i in range(2): TT[:,i] = np.where(tt == i+1, 1, TT[:,i])
     for i in range(2): TV[:,i] = np.where(tv == i+1, 1, TV[:,i])
     
-    mlp = MLPClassifier(hidden_layer_sizes=(100,2), max_iter=10000, activation='tanh', tol=1e-4, verbose=False) #, random_state=42)
+    mlp = MLPClassifier(hidden_layer_sizes=(100,2), max_iter=10000, activation='tanh', verbose=False) #, random_state=42)
     mlp.out_activation = 'softmax' # 'logistic', 'softmax', # mlp.outputs = 3
     mlp.fit(META_ST, TT)
     Y, YP = mlp.predict(META_SV), mlp.predict_proba(META_SV)
@@ -135,9 +135,9 @@ if __name__ == "__main__":
     print('runtime:', round(time()-t0,3), '\n')
     
     # =============================================================================
-    #     #FULL TRIAL 
+    # FULL TRIAL (3 classes)
     # =============================================================================
-    smin, smax = int(-2*Fs), int(4*Fs)
+    smin, smax = int(-2*Fs), int(5*Fs)
     
     ### to gdf file
     trialsT, labelsT = extractEpochs(data1, events1, smin, smax, lb_utils)
@@ -171,6 +171,7 @@ if __name__ == "__main__":
     ZT, ZV = np.asarray(ZT), np.asarray(ZV)
     tt, tv = np.asarray(tt), np.asarray(tv)
     
+    t0 = time()
     step = (fh-fl) / (nbands+1) # n_bins/setup['nbands']+1
     size = step / 0.5 # step/overlap
     sub_bands = []
@@ -226,7 +227,7 @@ if __name__ == "__main__":
     for i in range(3): TT[:,i] = np.where(tt == i, 1, TT[:,i])
     for i in range(3): TV[:,i] = np.where(tv == i, 1, TV[:,i])
     
-    mlp = MLPClassifier(hidden_layer_sizes=(100,2), max_iter=10000, activation='tanh', tol=1e-4, verbose=False) #, random_state=42)
+    mlp = MLPClassifier(hidden_layer_sizes=(100,2), max_iter=10000, activation='tanh', verbose=False) #, random_state=42)
     mlp.out_activation = 'softmax' # 'logistic', 'softmax', # mlp.outputs = 3
     mlp.fit(FT, TT)
     Y, YP = mlp.predict(FV), mlp.predict_proba(FV)
@@ -234,3 +235,5 @@ if __name__ == "__main__":
     acc_mlp_on = round(np.mean(y == tv)*100,2)
     print('On MLP acc:', round(mlp.score(FV, TV)*100,2), acc_mlp_on) 
     # print(confusion_matrix(tv, y))
+    
+    print('runtime:', round(time()-t0,3))
