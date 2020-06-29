@@ -203,15 +203,15 @@ if __name__ == "__main__":
     
     # ldas = [ LDA() for i in range(nbands) ]
     # for i in range(nbands): ldas[i].fit(FT[i], tt)
-    # ST = np.asarray([ np.ravel(ldas[i].predict(FT[i])) for i in range(nbands) ]).T # Score LDA
-    # SV = np.asarray([ np.ravel(ldas[i].predict(FV[i])) for i in range(nbands) ]).T
+    # ST = np.asarray([ np.ravel(ldas[i].transform(FT[i])) for i in range(nbands) ]).T # Score LDA
+    # SV = np.asarray([ np.ravel(ldas[i].transform(FV[i])) for i in range(nbands) ]).T
     
     FT = np.vstack(np.transpose(FT, (0,2,1))).T    
     FV = np.vstack(np.transpose(FV, (0,2,1))).T 
     # FT = normalize(FT, norm='l2')
     # FV = normalize(FV, norm='l2')
     
-    svm = SVC(kernel='linear', C=1e-4, probability=True, decision_function_shape='ovr')
+    svm = SVC(kernel='linear', C=1e-4, probability=True, decision_function_shape='ovo')
     svm.fit(FT, tt)
     y, yp = svm.predict(FV), svm.predict_proba(FV); 
     acc_svm_on = round(np.mean(y == tv)*100,2)
