@@ -111,14 +111,14 @@ if __name__ == "__main__":
     svm = SVC(kernel='linear', C=1e-4, probability=True)
     svm.fit(META_ST, tt)
     y, yp = svm.predict(META_SV), svm.predict_proba(META_SV); 
-    acc_svm = round(np.mean(y == tv)*100,2)
-    print('SVM acc:', round(svm.score(META_SV, tv)*100,2), acc_svm)
+    acc_svm = round(np.mean(y == tv)*100,2) # round(svm.score(META_SV, tv)*100,2)
+    print('Off SVM acc:', acc_svm)
     
     lda = LDA()
     lda.fit(META_ST, tt)
     y, yp = lda.predict(META_SV), lda.predict_proba(META_SV)
-    acc_lda = round(np.mean(y == tv)*100,2)
-    print('LDA acc:', round(lda.score(META_SV, tv)*100,2), acc_lda)
+    acc_lda = round(np.mean(y == tv)*100,2) # round(lda.score(META_SV, tv)*100,2)
+    print('Off LDA acc:', acc_lda)
     
     TT, TV = np.zeros((len(ZT), 2)), np.zeros((len(ZV), 2))
     for i in range(2): TT[:,i] = np.where(tt == i+1, 1, TT[:,i])
@@ -129,14 +129,43 @@ if __name__ == "__main__":
     mlp.fit(META_ST, TT)
     Y, YP = mlp.predict(META_SV), mlp.predict_proba(META_SV)
     y = np.argmax(YP, axis=1)+1
-    acc_mlp = round(np.mean(y == tv)*100,2)
-    print('MLP acc:', round(mlp.score(META_SV, TV)*100,2), acc_mlp)
+    acc_mlp = round(np.mean(y == tv)*100,2) # round(mlp.score(META_SV, TV)*100,2)
+    print('Off MLP acc:', acc_mlp)
 
     print('runtime:', round(time()-t0,3), '\n')
     
     ### =============================================================================
     ### FULL TRIAL (3 classes)
     ### =============================================================================
+
+    ####################################
+    # trialsT, labelsT = extractEpochs(data1, events1, int(0.5*Fs), int(2.5*Fs), lb_utils)
+    # for i,k in zip(lb_utils, range(1, 5)): labelsT = np.where(labelsT == i, k, labelsT)
+    # trialsT = [ trialsT[np.where(labelsT == k)] for k in class_ids ]
+    # ZTa, ZTb = trialsT[0], trialsT[1] 
+    
+    # trialsT, labelsT = extractEpochs(data1, events1, int(-2*Fs), 0, lb_utils)
+    # for i,k in zip(lb_utils, range(1, 5)): labelsT = np.where(labelsT == i, k, labelsT)
+    # ZT0 = np.vstack([ trialsT[np.where(labelsT == k)] for k in class_ids ])
+    # ZT0 = np.vstack([ZT0[:36], ZT0[108:]])
+    # ZT = np.vstack([ZT0, ZTa, ZTb])
+    # tt = np.hstack([np.ones(len(ZT)//3)*k for k in [0,1,2]])
+    
+    # #######
+    
+    # trialsV, _ = extractEpochs(data2, events2, int(0.5*Fs), int(2.5*Fs), [4])
+    # labelsV = np.ravel(loadmat(path_trues + str(suj) + 'E.mat' )['classlabel'])
+    # trialsV = [ trialsV[np.where(labelsV == k)] for k in class_ids ]
+    # ZVa, ZVb = trialsV[0], trialsV[1] 
+    
+    # trialsV, _ = extractEpochs(data2, events2, int(0.5*Fs), int(2.5*Fs), [4])
+    # labelsV = np.ravel(loadmat(path_trues + str(suj) + 'E.mat' )['classlabel'])
+    # ZV0 = np.vstack([ trialsV[np.where(labelsV == k)] for k in class_ids ])
+    # ZV0 = np.vstack([ZV0[:36], ZV0[108:]])
+    # ZV = np.vstack([ZV0, ZVa, ZVb])
+    # tv = np.hstack([np.ones(len(ZV)//3)*k for k in [0,1,2]])
+    ####################################
+    
     smin, smax = int(-2*Fs), int(5*Fs)
     
     ### to gdf file
@@ -214,14 +243,14 @@ if __name__ == "__main__":
     svm = SVC(kernel='linear', C=1e-4, probability=True, decision_function_shape='ovo')
     svm.fit(FT, tt)
     y, yp = svm.predict(FV), svm.predict_proba(FV); 
-    acc_svm_on = round(np.mean(y == tv)*100,2)
-    print('On SVM acc:', round(svm.score(FV, tv)*100,2), acc_svm_on)
+    acc_svm_on = round(np.mean(y == tv)*100,2) # round(svm.score(FV, tv)*100,2)
+    print('On SVM acc:', acc_svm_on)
     
     lda = LDA()
     lda.fit(FT, tt)
     y, yp = lda.predict(FV), lda.predict_proba(FV)
-    acc_lda_on = round(np.mean(y == tv)*100,2)
-    print('On LDA acc:', round(lda.score(FV, tv)*100,2), acc_lda_on)
+    acc_lda_on = round(np.mean(y == tv)*100,2) # round(lda.score(FV, tv)*100,2)
+    print('On LDA acc:', acc_lda_on)
      
     TT, TV = np.zeros((len(ZT), 3)), np.zeros((len(ZV), 3))
     for i in range(3): TT[:,i] = np.where(tt == i, 1, TT[:,i])
@@ -232,8 +261,8 @@ if __name__ == "__main__":
     mlp.fit(FT, TT)
     Y, YP = mlp.predict(FV), mlp.predict_proba(FV)
     y = np.argmax(YP, axis=1)
-    acc_mlp_on = round(np.mean(y == tv)*100,2)
-    print('On MLP acc:', round(mlp.score(FV, TV)*100,2), acc_mlp_on) 
+    acc_mlp_on = round(np.mean(y == tv)*100,2) # round(mlp.score(FV, TV)*100,2) 
+    print('On MLP acc:', acc_mlp_on) 
     # print(confusion_matrix(tv, y))
     
     print('runtime:', round(time()-t0,3))

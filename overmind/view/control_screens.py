@@ -216,10 +216,8 @@ class BarsRun(Screen):
 
         ##### controla o tempo em que o buffer A é analisado para envio ou não do comando (qto maior o tempo self.session.control.window_overlap, menor a sobreposicao com o ultimo buffer
         Clock.schedule_interval(self.update_accum_bars, 0.5) # , self.session.control.window_overlap) # /1000 ? # executado após cada execucao de get_probs
-
-
         if self.session.acq.mode == 'simu': # and not self.session.acq.dummy and not self.session.acq.path_to_labels_file == '':
-            Clock.schedule_interval(self.update_current_label, 0.05)ddddddddddddddddddddddddddddddddddddddddddddddddddddddaddddd
+            Clock.schedule_interval(self.update_current_label, 0.05)
 
     def clock_unscheduler(self):
         Clock.unschedule(self.get_probs) # cancela o agendamento do método get_prob
@@ -711,9 +709,14 @@ class GalaxyMenu(Screen):
         self.stream_flag = True
         self.clock_scheduler()
 
+    def espera(self, dt):
+        print('...')
+        Clock.schedule_interval(self.get_probs, 1./2)
+        
     def clock_scheduler(self):
+        Clock.schedule_once(self.espera, 5)
         # Clock.schedule_interval(self.galaxy_screen2, 30)
-        Clock.schedule_interval(self.get_probs, 1. / 20.)
+        #Clock.schedule_interval(self.get_probs, 1./3)
         # Clock.schedule_interval(self.update_command, 2)
         # Clock.schedule_interval(self.update_accum_bars, self.session.control.window_overlap)
         # if self.session.acq.mode == 'simu': # and not self.session.acq.dummy and not self.session.acq.path_to_labels_file == '':
@@ -736,6 +739,7 @@ class GalaxyMenu(Screen):
             p1 = self.p[0]
             p2 = self.p[1]
             u = p1 - p2
+            # print(u)
             if u > 0:
                 pyautogui.hotkey("a", interval=0.1)
             else:
@@ -818,7 +822,7 @@ class GalaxyPlay(threading.Thread):
         self.play = False  # partida já iniciada?
         self.game_over = False  # fim de partida ?
 
-        self.fps = 33  # controla o tempo de jogo também
+        self.fps = 40  # também controla o tempo de jogo
 
     def run(self):
         self.define_pygame()
@@ -850,7 +854,7 @@ class GalaxyPlay(threading.Thread):
             # self.tela.blit(self.space, (0, 0))  # imagem de fundo
             pygame.display.update()
 
-            if self.colisoes != 5: self.play = True
+            if self.colisoes != 4: self.play = True
 
             if self.game_over == True and self.play == False:
                 self.tela.fill((0, 0, 0))  # preenche com uma cor sólida
@@ -872,16 +876,16 @@ class GalaxyPlay(threading.Thread):
                 self.tela.fill((0, 0, 0))
                 self.tela.blit(self.space, (0, 0))
                 if self.timev2 <= 1: self.ready_(self.x, self.y)
-                if self.timev2 >= 3: self.asteroidy += (500/self.session.dp.buf_len)
+                if self.timev2 >= 3: self.asteroidy += (600/self.session.dp.buf_len)
                 # nave_mechanics
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_a:
                         self.x -= 10 # 7
-                        self.move.play()
+                        #self.move.play()
 
                     if event.key == pygame.K_d:
                         self.x += 10 #7
-                        self.move.play()
+                        #self.move.play()
 
                 if self.x <= 0: self.x = 0
                 elif self.x >= 670: self.x = 670 #670
@@ -903,7 +907,7 @@ class GalaxyPlay(threading.Thread):
                     self.nave = pygame.image.load(os.path.dirname(__file__) + "/../game/galaxy/explosion.png")
                     self.x = self.asteroidx + 230
 
-                if self.colisoes == 5: # self.timev2 == 132:
+                if self.colisoes == 4: # self.timev2 == 132:
                     self.game_over = True
                     self.play = False
 

@@ -69,8 +69,8 @@ class SampleManager(threading.Thread): # define a classe manager
                 # neste ponto, terei duas épocas inteiras [ ch x (2*buf_len)+1 ] em playbackData
 
     def append_epoch(self):
-        # if self.current_cmd == 1: print(f'Command {self.current_cmd} << LH')
-        # else: print(f'Command {self.current_cmd} >> RH')
+        if self.current_cmd == 1: print(f'Expected command {self.current_cmd} << LH')
+        else: print(f'Expected command {self.current_cmd} >> RH')
         # self.winning = np.random.choice(2, 1)
         if self.current_cmd == 0:  # usado quando o rótulo da classe NÃO é passado
             idx_a = np.where(self.labels == self.class_ids[0])[0]
@@ -85,6 +85,7 @@ class SampleManager(threading.Thread): # define a classe manager
                 idx = idx_a[k]
                 # self.current_cmd = self.class_ids[0]
         else:
+
             idx_ab = np.where(self.labels == self.current_cmd)[0]  # usado quando o rótulo da classe é passado
             k = randint(0, len(idx_ab) - 1)
             idx = idx_ab[k]
