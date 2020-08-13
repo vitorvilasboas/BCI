@@ -102,6 +102,12 @@ for suj in range(1,10):
     info = {'fs':250, 'class_ids':[1,2,3,4], 'trial_tcue':2.0, 'trial_tpause':6.0, 'trial_mi_time':4.0,
             'trials_per_class':72, 'eeg_channels':dt.shape[0], 'ch_labels':raw.ch_names,
             'datetime':datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
+    
+    # ### to 8 channels m1 grid 
+    # grid_8ch = [7,8,9,10,11,13,15,17]
+    # dt, dv = dt[grid_8ch], dv[grid_8ch]
+    # info['ch_labels'] = ['EEG-C3','EEG-C1','EEG-Cz','EEG-C2','EEG-C4','EEG-CP3','EEG-CPz','EEG-CP4']
+    # info['eeg_channels'] = len(grid_8ch)
 
     #%% save npy session files
     np.save(path_out + 'A0' + str(suj) + 'T', [dt,et,info], allow_pickle=True)

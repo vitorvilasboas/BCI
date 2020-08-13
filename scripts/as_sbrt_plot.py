@@ -121,7 +121,7 @@ for suj in subjects:
     
 plt.figure(figsize=(10,7), facecolor='mintcream')
 
-plt.plot(np.linspace(0, 10, 10), np.ones(10)*R['acc'].mean(), color='orange', linewidth=1.5, alpha=.3, linestyle='--', label='Média Autor Setup', zorder=0)
+plt.plot(np.linspace(0, 10, 10), np.ones(10)*R['acc'].mean(), color='orange', linewidth=1.5, alpha=.3, linestyle='--', label='Média Auto Setup', zorder=0)
 plt.plot(np.linspace(0, 10, 10), np.ones(10)*R['sb_iir'].mean(), color='aqua', linewidth=1.5, alpha=.3, linestyle='-.', label='Média SBCSP', zorder=0)
 plt.plot(np.linspace(0, 10, 10), np.ones(10)*R['cla_iir'].mean(), color='pink', linewidth=1.8, alpha=1, linestyle=':', label='Média CSP-LDA', zorder=0)
 

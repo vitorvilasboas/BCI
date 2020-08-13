@@ -32,7 +32,7 @@ mne.set_log_level(50, 50)
 
 path = '/mnt/dados/eeg_data/III3a/' ## >>> ENTER THE PATH TO THE DATASET HERE
 
-path_out = path + 'npy/'
+path_out = path + 'npy8/'
 if not os.path.isdir(path_out): os.makedirs(path_out)
 
 for suj in ['K3','K6','L1']:
@@ -42,6 +42,7 @@ for suj in ['K3','K6','L1']:
     e_raw = mne.events_from_annotations(raw) # raw.find_edf_events()
     e = np.delete(e_raw[0], 1, axis=1) # elimina coluna de zeros
     truelabels = np.ravel(pd.read_csv(path + 'true_labels/' + suj + '.csv'))
+    ch_names = raw.ch_names
        
     cond = False
     for i in [1, 2, 3]: cond += (e[:,1] == i)
@@ -56,10 +57,16 @@ for suj in ['K3','K6','L1']:
     for i in range(0, len(e)):
         if e[i,1] == 0: e[i,1] = (e[i+1,1]+10) # labeling start trial [11 a 14] according cue [1,2,3,4]
     
-    i = {'fs':250, 'class_ids': [1, 2, 3, 4], 'trial_tcue': 3.0, 'trial_tpause': 7.0, 'trial_mi_time': 4.0,
-            'trials_per_class': 90 if suj == 'K3' else 60, 'eeg_channels':d.shape[0], 'ch_labels': raw.ch_names,
+    info = {'fs':250, 'class_ids': [1, 2, 3, 4], 'trial_tcue': 3.0, 'trial_tpause': 7.0, 'trial_mi_time': 4.0,
+            'trials_per_class': 90 if suj == 'K3' else 60, 'eeg_channels':d.shape[0], 'ch_labels': ch_names,
             'datetime': datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
+    
+    # ### to 8 channels m1 grid 
+    # grid_8ch = [27,28,30,32,33,38,40,42]
+    # d = d[grid_8ch]
+    # info['ch_labels'] = ['EEG-C3','EEG-C1','EEG-Cz','EEG-C2','EEG-C4','EEG-CP3','EEG-CPz','EEG-CP4']
+    # info['eeg_channels'] = len(grid_8ch)
 
     #%% save npy file
-    np.save(path_out + suj, [d, e, i], allow_pickle=True)
+    np.save(path_out + suj, [d, e, info], allow_pickle=True)
     # pickle.dump([data, ev, info], open(path_out + suj + '.pkl', 'wb'))

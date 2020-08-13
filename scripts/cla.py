@@ -10,9 +10,10 @@ import numpy as np
 from scipy.linalg import eigh
 from scipy.fftpack import fft
 from sklearn.metrics import cohen_kappa_score
-from bci_utils import labeling, extractEpochs
+from bci_utils import extractEpochs
 from scipy.signal import lfilter, butter, iirfilter, filtfilt, decimate
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
+import matplotlib.pyplot as plt
            
 #%% DATASET AND SCENARIO INFO
 ''' III3a: subjects={'K3','K6','L1'}; prefix=''; class_ids={1,2,3,4}; sessions={None}; channels=[:60]     
@@ -22,21 +23,21 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
     Lee19: subjects={1,2,...,54}; prefix='S'; class_ids={1,2}; sessions={1,2}; channels=[:62]; suffix='sess'; ch_cortex=[7,32,8,9,33,10,34,12,35,13,36,14,37,17,38,18,39,19,40,20] 
 '''
 
-ds = 'IV2a' # 'IV2a','IV2b','III3a','III4a','Lee19'      
+ds = 'Lee19' # 'IV2a','IV2b','III3a','III4a','Lee19'      
 path = '/mnt/dados/eeg_data/' + ds + '/' # PATH TO DATASET
-suj = 1
+suj = 54
 class_ids = [1, 2]
-sessions = ['T', 'E']
+sessions = '' # ['T', 'E']
 channels = None
-prefix, suffix = 'A0', ''
+prefix, suffix = 'S', ''
 
 #%% Load data
 # d_train, e_train, i_train = labeling(path=path, ds=ds, session=sessions[0], subj=suj, channels=channels, save=False)
-d_train, e_train, i_train = np.load(path + 'npy/' + prefix + str(suj) + '' + sessions[0] + '.npy', allow_pickle=True)
+d_train, e_train, i_train = np.load(path + 'npy/' + prefix + str(suj) + '' + '.npy', allow_pickle=True)
 
 if not ds in ['III3a','III4a']: 
     # d_test, e_test, i_test = labeling(path=path, ds=ds, session=sessions[1], subj=suj, channels=channels, save=False)
-    d_test, e_test, i_test = np.load(path + 'npy/' + prefix + str(suj) + '' + sessions[1] + '.npy', allow_pickle=True)
+    d_test, e_test, i_test = np.load(path + 'npy/' + prefix + str(suj) + '' + '.npy', allow_pickle=True)
 
 #%% Segmentation
 # Fs = 250 if dataset in ['IV2a', 'IV2b', 'III3a', 'Lee19'] else 100
@@ -122,6 +123,22 @@ Sa /= (len(Xa) * s)
 Sb /= (len(Xb) * s)
 
 [D, W] = eigh(Sa, Sa + Sb)
+
+plt.figure(figsize=(10,8), facecolor='mintcream')
+plt.plot(range(len(D)), D, color='royalblue', linewidth=1, marker='o', 
+                           markersize=10,
+                           markeredgecolor='royalblue',
+                           markeredgewidth=2,
+                           markerfacecolor='lavender')
+plt.yticks(np.linspace(0,1.1,11, endpoint=False), fontsize=10)
+plt.xticks(range(0,61,10), fontsize=11)
+plt.ylabel('Autovalores', fontsize=12)
+plt.grid(axis='both', **dict(ls='--', alpha=0.6))
+plt.ylim((0,1))
+plt.xlim((-2,62))
+plt.xlabel(r'N$^o$ de autovalores', fontsize=12)
+plt.savefig('/home/vboas/Desktop/autovalores.png', format='png', dpi=300, transparent=True, bbox_inches='tight')
+
 ind = np.empty(c, dtype=int)
 ind[0::2] = np.arange(c - 1, c // 2 - 1, -1) 
 ind[1::2] = np.arange(0, c // 2)

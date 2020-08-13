@@ -91,7 +91,7 @@ if not os.path.isdir(path_out): os.makedirs(path_out)
 for suj in range(1,10):
 
     info = {'fs': 250, 'class_ids': [1, 2], 'trial_tcue': 3.0, 'trial_tpause': 7.0, 'trial_mi_time': 4.0,
-            'trials_per_class': 60, 'eeg_channels': 3, 'ch_labels': {'EEG1': 'C3', 'EEG2': 'Cz', 'EEG3': 'C4'},
+            'trials_per_class': 60, 'eeg_channels': 3, 'ch_labels': ['EEG-C3','EEG-Cz','EEG-C4'],
             'datetime': datetime.now().strftime('%d-%m-%Y_%Hh%Mm')}
 
     DT, EV = [], []
@@ -126,7 +126,7 @@ for suj in range(1,10):
         for i in range(0, len(ev)):
             if ev[i,1] == 0: ev[i,1] = (ev[i+1,1]+10) # labeling start trial [11,12] according cue [1,2]
 
-        #%% save npy session file
+        # #%% save npy session file
         np.save(path_out + 'B0' + str(suj) + session, [data, ev, info], allow_pickle=True)
         
         DT.append(data)
@@ -145,3 +145,24 @@ for suj in range(1,10):
     np.save(path_out + 'B0' + str(suj), [all_data, all_events, info], allow_pickle=True)
     # pickle.dump([all_data, all_events, info], open(path_out + 'B0' + str(suj) + '.pkl', 'wb'))
 
+
+    #%% Para gerar dois arquivos agregados (T e V)
+    # # soma = 0
+    # # for i in range(1,3): 
+    # #     soma += len(DT[i-1].T)
+    # #     EV[i][:,0] += soma
+        
+    # EV[1][:,0] += len(DT[0].T)
+    # EV[2][:,0] += (len(DT[0].T) + len(DT[1].T))
+    # dataT = np.c_[DT[0],DT[1],DT[2]]
+    # eventsT = np.r_[EV[0],EV[1],EV[2]]
+    # info['trials_per_class'] = 180
+    # np.save(path_out + 'B0' + str(suj) + 'T', [dataT, eventsT, info], allow_pickle=True)
+    
+    # EV[4][:,0] += len(DT[3].T)
+    # dataV = np.c_[DT[3],DT[4]]
+    # eventsV = np.r_[EV[3],EV[4]]
+    # info['trials_per_class'] = 120
+    # np.save(path_out + 'B0' + str(suj) + 'E', [dataV, eventsV, info], allow_pickle=True)
+    
+    

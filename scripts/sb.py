@@ -10,7 +10,7 @@ from sklearn.svm import SVC
 from scipy.stats import norm
 from scipy.linalg import eigh
 from scipy.fftpack import fft
-from bci_utils import labeling, extractEpochs
+from scripts.bci_utils import extractEpochs
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import cohen_kappa_score
 from sklearn.tree import DecisionTreeClassifier
@@ -18,6 +18,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from scipy.signal import lfilter, butter, iirfilter, filtfilt
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
+import matplotlib.pyplot as plt
 #%%
 suj = 2
 class_ids = [1, 2]
@@ -108,6 +109,7 @@ for i in range(nbands):
     ind[1::2] = np.arange(0, c // 2)
     W = W[:, ind]
     csp_filters.append(W.T[:ncsp])
+
 
 
 Y = [ np.asarray([ np.dot(csp_filters[i], ep) for ep in X[i] ]) for i in range(nbands)] # Spatial Filtering
