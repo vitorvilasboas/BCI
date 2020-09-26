@@ -1,7 +1,7 @@
 # BCI projects #
 -------------------------------------------------------------------------
-* ./overmind/ &nbsp; :: Overmind: a MI-based BCI Platform
-* ./dsformat/ &nbsp;&nbsp; :: Scripts para normalização de dados públicos de EEG (Formato para Overmind)
+* ./autobci/ &nbsp; :: AutoBCI: a MI-based BCI Platform
+* ./dsformat/ &nbsp;&nbsp; :: Scripts para normalização de dados públicos de EEG (Formato para AutoBCI)
 * ./scripts/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; :: Scripts python de laboratório (cenários independentes)
 
 ### Demo: 
@@ -41,4 +41,4 @@ sudo chmod 777 /dev/input/event*
 * BCI Competition IV: http://bbci.de/competition/iv/index.html
 * LEE et al., 2019: http://gigadb.org/dataset/view/id/100542
 
-* Dados III3a, III4a, IV2a e IV2b devidamente compatibilizados com o Overmind disponíveis <a href="https://iftoedubr-my.sharepoint.com/:u:/g/personal/vitorvilasboas_ifto_edu_br/EUNu9fhzsUBJudJuNybEX38B2-xhEln8z0SZjUau0XI3ag?e=FtWXp1" target="blank">aqui</a>.
+* Dados III3a, III4a, IV2a e IV2b devidamente compatibilizados com o AutoBCI disponíveis <a href="https://iftoedubr-my.sharepoint.com/:u:/g/personal/vitorvilasboas_ifto_edu_br/EUNu9fhzsUBJudJuNybEX38B2-xhEln8z0SZjUau0XI3ag?e=FtWXp1" target="blank">aqui</a>.
