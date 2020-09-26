@@ -1,6 +1,6 @@
 # BCI projects #
 -------------------------------------------------------------------------
-* ./autobci/ &nbsp;&nbsp; :: AutoBCI: a MI-based BCI Platform
+* ./autobci/ &nbsp;&nbsp;&nbsp; :: AutoBCI: a MI-based BCI Platform
 * ./dsformat/ &nbsp;&nbsp; :: Scripts para normalização de dados públicos de EEG (Formato para AutoBCI)
 * ./scripts/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; :: Scripts python de laboratório (cenários independentes)
 
